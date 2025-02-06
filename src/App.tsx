@@ -1,10 +1,24 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from "react";
+import reactLogo from "./assets/react.svg";
+import viteLogo from "/vite.svg";
+import "./App.css";
+import { Card } from "./lib/card";
+import { Blackjack } from "./lib/blackjack";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [card, setCard] = useState<Card | null>(null);
+
+  const blackjack = new Blackjack();
+
+  function drawCard() {
+    setCard(blackjack.draw());
+  }
+
+  console.log("Card drawn:", card);
+
+  if (!card) {
+    drawCard();
+  }
 
   return (
     <>
@@ -18,9 +32,9 @@ function App() {
       </div>
       <h1>Vite + React</h1>
       <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
+        <button onClick={drawCard}>{`card is ${
+          card !== null ? card.abbr() : "null"
+        }`}</button>
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR
         </p>
@@ -29,7 +43,8 @@ function App() {
         Click on the Vite and React logos to learn more
       </p>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
+
