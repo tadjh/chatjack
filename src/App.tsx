@@ -1,60 +1,48 @@
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
 import "./App.css";
 import { Blackjack } from "./lib/blackjack";
-import { useState } from "react";
-
-const blackjack = new Blackjack();
+import { useRef, useState } from "react";
 
 function App() {
-  const [, setTick] = useState<number>(0);
+  const gameRef = useRef<Blackjack>(new Blackjack());
+  const [, setTable] = useState<boolean>(false);
+  const blackjack = gameRef.current;
 
   function dealCards() {
     blackjack.deal();
-    setTick((prev) => prev + 1);
+    setTable(true);
   }
 
   const { dealer, players } = blackjack;
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
+      <h1>ChatJack</h1>
       <div className="card">
         <button onClick={dealCards}>Deal Card</button>
         <div>
           <h2>Dealer</h2>
           <p>{dealer.hand.map((card) => card.abbr).join(" ")}</p>
+          <p>{`Score: ${dealer.hand.score}`}</p>
         </div>
         {players.map((player) => (
           <div key={player.name}>
             <h2>{player.name}</h2>
             {player.hands.length > 1 ? (
-              player.hands.map((hand) => (
-                <p>
-                  {hand.map((card) => card.abbr).join(" ")}
-                  {`Score: ${hand.score}`}
-                </p>
+              player.hands.map((hand, i) => (
+                <div key={i}>
+                  <p>{hand.map((card) => card.abbr).join(" ")}</p>
+                  <p>{`Score: ${hand.score}`}</p>
+                </div>
               ))
             ) : (
-              <p>{player.hand.map((card) => card.abbr).join(" ")}</p>
+              <>
+                <p>{player.hand.map((card) => card.abbr).join(" ")}</p>
+                <p>{`Score: ${player.hand.score}`}</p>
+              </>
             )}
           </div>
         ))}
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
     </>
   );
 }
