@@ -59,7 +59,7 @@ export class Card extends Number {
   }
 
   name() {
-    return `${this.face} of ${this.suit}`;
+    return `${Face[this.face]} of ${Suit[this.suit]}`;
   }
 
   abbr() {
@@ -78,34 +78,37 @@ export class Card extends Number {
     return this.hidden;
   }
 
-  points() {
+  score(highAce = false) {
     switch (this.face) {
       case Face.Ace:
-        return [1, 11];
+        if (highAce) {
+          return 11;
+        }
+        return 1;
       case Face.Two:
-        return [2];
+        return 2;
       case Face.Three:
-        return [3];
+        return 3;
       case Face.Four:
-        return [4];
+        return 4;
       case Face.Five:
-        return [5];
+        return 5;
       case Face.Six:
-        return [6];
+        return 6;
       case Face.Seven:
-        return [7];
+        return 7;
       case Face.Eight:
-        return [8];
+        return 8;
       case Face.Nine:
-        return [9];
+        return 9;
       case Face.Ten:
-        return [10];
+        return 10;
       case Face.Jack:
-        return [10];
+        return 10;
       case Face.Queen:
-        return [10];
+        return 10;
       case Face.King:
-        return [10];
+        return 10;
       default:
         throw new Error("Invalid card");
     }

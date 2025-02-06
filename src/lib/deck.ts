@@ -3,6 +3,7 @@ import { Card, Face, Suit } from "./card";
 export class Deck {
   readonly cards: Card[] = [];
   readonly count: number;
+  lastCard: Card | undefined;
   constructor(count = 1) {
     if (count < 1 || count > 8) {
       throw new Error("Invalid deck count");
@@ -31,6 +32,7 @@ export class Deck {
 
     if (isHidden) card.hide();
     console.log("Card drawn:", card.name());
+    this.lastCard = card;
     return card;
   }
 

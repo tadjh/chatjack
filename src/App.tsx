@@ -1,24 +1,23 @@
-import { useState } from "react";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import "./App.css";
-import { Card } from "./lib/card";
 import { Blackjack } from "./lib/blackjack";
+import { useState } from "react";
+import { Dealer } from "./lib/dealer";
+import { Player } from "./lib/player";
+
+const blackjack = new Blackjack();
 
 function App() {
-  const [card, setCard] = useState<Card | null>(null);
-
-  const blackjack = new Blackjack();
-
-  function drawCard() {
-    setCard(blackjack.draw());
+  const [dealer, setDealer] = useState<Dealer | null>(null);
+  const [players, setPlayers] = useState<Player[] | null>(null);
+  function dealCards() {
+    const [dHands, pHands] = blackjack.deal();
+    setDealer(dHands);
+    setPlayers(pHands);
   }
 
-  console.log("Card drawn:", card);
-
-  if (!card) {
-    drawCard();
-  }
+  console.log("hands", blackjack.players[0].hand, blackjack.dealer.hand);
 
   return (
     <>
@@ -32,9 +31,20 @@ function App() {
       </div>
       <h1>Vite + React</h1>
       <div className="card">
-        <button onClick={drawCard}>{`card is ${
-          card !== null ? card.abbr() : "null"
-        }`}</button>
+        <button onClick={dealCards}>Deal Card</button>
+        {dealer && dealer.hand.length > 0 && (
+          <div>
+            <h2>Dealer</h2>
+            <p>{blackjack.dealer.hand.map((card) => card.abbr()).join(", ")}</p>
+          </div>
+        )}
+        {players &&
+          players.map((player) => (
+            <div key={player.name}>
+              <h2>{player.name}</h2>
+              <p>{player.hand.map((card) => card.abbr()).join(", ")}</p>
+            </div>
+          ))}
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR
         </p>
