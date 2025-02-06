@@ -1,51 +1,69 @@
 import { Card, Face, Suit } from "./card";
 
-export class Deck {
-  readonly cards: Card[] = [];
-  readonly count: number;
-  lastCard: Card | undefined;
+export class Deck extends Array<Card> {
+  readonly count: number = 0;
+  readonly type = "Deck";
+
   constructor(count = 1) {
-    if (count < 1 || count > 8) {
+    super();
+    if (count < 0 || count > 8) {
       throw new Error("Invalid deck count");
     }
 
-    for (let i = 0; i < count; i++) {
-      this.cards.push(...createDeck());
+    if (count > 0) {
+      for (let i = 0; i < count; i++) {
+        this.push(...createDeck());
+      }
+      this.count = count;
+      this.shuffle();
     }
-
-    this.count = count;
-    this.shuffle();
   }
 
+  // Fisher–Yates shuffle
   shuffle() {
-    for (let i = this.cards.length - 1; i > 0; i--) {
+    for (let i = this.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]]; // Swap elements
+      [this[i], this[j]] = [this[j], this[i]]; // Swap elements
     }
+
+    return this;
+  }
+
+  peek() {
+    if (!this.length) {
+      throw new Error(`No cards left in the ${this.type.toLowerCase()}`);
+    }
+    return this[this.length - 1];
   }
 
   draw(isHidden = false) {
-    const card = this.cards.pop();
+    const card = this.pop();
+
     if (card === undefined) {
-      throw new Error("No card drawn");
+      throw new Error("Card drawn: none");
     }
 
-    if (isHidden) card.hide();
-    console.log("Card drawn:", card.name());
-    this.lastCard = card;
+    if (isHidden) {
+      card.hide();
+    }
+
+    console.log("Card drawn:", card.name);
     return card;
   }
 
   empty() {
-    return this.cards.length === 0;
+    this.length = 0;
+
+    return this;
   }
 
   print() {
     let output = "";
-    for (const card of this.cards) {
-      output += "\t" + card.name() + "\n";
+    for (const card of this) {
+      output += "\t" + card.name + "\n";
     }
-    console.log("Deck:\n", output);
+
+    console.log(this.type + ":\n", output);
   }
 }
 

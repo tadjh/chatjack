@@ -1,35 +1,93 @@
-import { Card, Face } from "./card";
+import { Card } from "./card";
+import { Hand } from "./hand";
+
+let id = 0;
 
 export class Player {
-  name: string;
-  hand: Card[] = [];
-  score = 0;
-  constructor(name: string) {
-    this.name = name;
+  readonly id = id++;
+  readonly name: string;
+  readonly role: Roles;
+  readonly isDealer: boolean;
+  readonly isPlayer: boolean;
+  #isPlaying = true;
+  #isSplit = false;
+  #hands: Hand[];
+  get hand(): Hand {
+    return this.#hands[0];
+  }
+  get hands(): readonly Hand[] {
+    return this.#hands;
+  }
+  get isPlaying() {
+    return this.#isPlaying;
+  }
+  get isSplit() {
+    return this.#isSplit;
   }
 
-  addCard(...cards: Card[]) {
-    this.hand.push(...cards);
-    for (const card of cards) {
-      this.accumulateScore(card);
-    }
+  constructor({ name = "Player", role = Roles.Player } = {}) {
+    this.isDealer = role === Roles.Dealer;
+    this.isPlayer = !this.isDealer;
+    this.name = this.isDealer ? "Dealer" : name;
+    this.role = role;
+    this.#hands = [new Hand()];
   }
 
-  accumulateScore(card: Card) {
-    if (card.face === Face.Ace) {
-      if (this.score + 11 > 21) {
-        this.score += card.score();
-      } else {
-        this.score += card.score(true);
-      }
-    } else {
-      this.score += card.score();
+  addCard(card: Card, id = 0) {
+    this.protect();
+
+    this.#hands[id].add(card);
+
+    return this;
+  }
+
+  split() {
+    this.protect();
+
+    if (this.#isSplit || this.hands.length > 1) {
+      throw new Error("Player has already split");
     }
+
+    if (this.hand.length !== 2) {
+      throw new Error("Hand must have exactly two cards to split");
+    }
+
+    const [card1, card2] = this.hand;
+    const hand1 = new Hand().add(card1);
+    const hand2 = new Hand().add(card2);
+    this.#hands = [hand1, hand2];
+    this.#isSplit = true;
+
+    return this;
+  }
+
+  getScore(handIndex = 0) {
+    if (handIndex >= this.#hands.length) {
+      throw new Error("Hand does not exist");
+    }
+    return this.#hands[handIndex].score;
+  }
+
+  getScores() {
+    return this.#hands.map((hand) => hand.score);
   }
 
   reset() {
-    this.hand = [];
-    this.score = 0;
+    this.#hands = [];
+    this.#isPlaying = true;
+    this.#isSplit = false;
+    return this;
   }
+
+  protect() {
+    if (!this.isPlaying) {
+      throw new Error("Player is not allowed to perform this action");
+    }
+  }
+}
+
+export enum Roles {
+  Player,
+  Dealer,
 }
 

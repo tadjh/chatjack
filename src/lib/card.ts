@@ -21,7 +21,7 @@ export enum Face {
   King,
 }
 
-const FaceInitial: Map<Face, string> = new Map([
+const Letter: Map<Face, string> = new Map([
   [Face.Ace, "A"],
   [Face.Two, "2"],
   [Face.Three, "3"],
@@ -37,7 +37,7 @@ const FaceInitial: Map<Face, string> = new Map([
   [Face.King, "K"],
 ]);
 
-const SuitInitial: Map<Suit, string> = new Map([
+const Icon: Map<Suit, string> = new Map([
   [Suit.Clubs, "♣"],
   [Suit.Diamonds, "♦"],
   [Suit.Hearts, "♥"],
@@ -47,7 +47,34 @@ const SuitInitial: Map<Suit, string> = new Map([
 export class Card extends Number {
   readonly suit: Suit;
   readonly face: Face;
-  private hidden: boolean = false;
+  readonly #abbr: string;
+  #name: string;
+  #points: number = 0;
+  #isAce: boolean = false;
+  #isHidden: boolean = false;
+  get points() {
+    return this.#points;
+  }
+  get isAce() {
+    return this.#isAce;
+  }
+
+  get isHidden() {
+    return this.#isHidden;
+  }
+  get name() {
+    if (this.#isHidden) {
+      return "Hidden";
+    }
+    return this.#name;
+  }
+  get abbr() {
+    if (this.#isHidden) {
+      return "🂠";
+    }
+    return this.#abbr;
+  }
+
   constructor(card: number, hidden = false) {
     if (card < 0 || card > 52) {
       throw new Error("Invalid card");
@@ -55,63 +82,81 @@ export class Card extends Number {
     super(card);
     this.suit = this.toSuit(card);
     this.face = card - this.suit;
-    this.hidden = hidden;
-  }
-
-  name() {
-    return `${Face[this.face]} of ${Suit[this.suit]}`;
-  }
-
-  abbr() {
-    return `${FaceInitial.get(this.face)} ${SuitInitial.get(this.suit)}`;
+    this.#isHidden = hidden;
+    this.#isAce = this.face === Face.Ace;
+    this.#name = `${Face[this.face]} of ${Suit[this.suit]}`;
+    this.#abbr = `${Letter.get(this.face)} ${Icon.get(this.suit)}`;
+    this.setPoints();
   }
 
   show() {
-    this.hidden = false;
+    this.#isHidden = false;
+    return this;
   }
 
   hide() {
-    this.hidden = true;
+    this.#isHidden = true;
+    return this;
   }
 
-  isHidden() {
-    return this.hidden;
-  }
-
-  score(highAce = false) {
+  setPoints() {
     switch (this.face) {
       case Face.Ace:
-        if (highAce) {
-          return 11;
-        }
-        return 1;
+        this.#points = 11;
+        break;
       case Face.Two:
-        return 2;
+        this.#points = 2;
+        break;
       case Face.Three:
-        return 3;
+        this.#points = 3;
+        break;
       case Face.Four:
-        return 4;
+        this.#points = 4;
+        break;
       case Face.Five:
-        return 5;
+        this.#points = 5;
+        break;
       case Face.Six:
-        return 6;
+        this.#points = 6;
+        break;
       case Face.Seven:
-        return 7;
+        this.#points = 7;
+        break;
       case Face.Eight:
-        return 8;
+        this.#points = 8;
+        break;
       case Face.Nine:
-        return 9;
+        this.#points = 9;
+        break;
       case Face.Ten:
-        return 10;
+        this.#points = 10;
+        break;
       case Face.Jack:
-        return 10;
+        this.#points = 10;
+        break;
       case Face.Queen:
-        return 10;
+        this.#points = 10;
+        break;
       case Face.King:
-        return 10;
+        this.#points = 10;
+        break;
       default:
         throw new Error("Invalid card");
     }
+
+    return this;
+  }
+
+  updatePoints(lowAce: boolean) {
+    if (this.#isAce) {
+      if (lowAce) {
+        this.#points = 1;
+      } else {
+        this.#points = 11;
+      }
+    }
+
+    return this;
   }
 
   toFace(card: number) {
