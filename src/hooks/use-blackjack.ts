@@ -26,6 +26,11 @@ export function useBlackjack(deckCount = 1, playerCount = 1) {
     updateSnapshot();
   }
 
+  function stand(player: Player, i = 0) {
+    player.stand(i);
+    updateSnapshot();
+  }
+
   function split(player: Player) {
     blackjack.current.split(player);
     updateSnapshot();
@@ -36,14 +41,23 @@ export function useBlackjack(deckCount = 1, playerCount = 1) {
     updateSnapshot();
   }
 
+  function reset() {
+    blackjack.current.reset();
+    updateSnapshot();
+  }
+
   return {
-    blackjack: gameState,
     dealer: gameState.dealer,
     players: gameState.players,
+    isDealt: blackjack.current.isDealt,
+    isDealerTurn: blackjack.current.isDealerTurn,
+    playerTurn: blackjack.current.playerTurn,
     deal,
     hit,
+    stand,
     split,
     play,
+    reset,
   };
 }
 

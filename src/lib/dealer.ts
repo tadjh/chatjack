@@ -23,7 +23,7 @@ export class Dealer extends Player {
       this.hit(card);
       console.log(`Dealer hits and draws: ${card.name}`);
 
-      if (this.hand.status === "busted") {
+      if (this.hand.status === "bust") {
         console.log("Dealer busts");
         break;
       }

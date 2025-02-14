@@ -1,28 +1,14 @@
 import { Card, Rank } from "./card";
 import { Deck } from "./deck";
 
-type Status =
-  | "playing"
-  | "busted"
-  | "blackjack"
-  | "stand"
-  | "surrender"
-  | "split"
-  | "double"
-  | "insurance"
-  | "push"
-  | "win"
-  | "lose";
+type Status = "playing" | "bust" | "blackjack" | "stand" | "split";
 
 export class Hand extends Deck {
   #score: number = 0;
-  #status: Status;
-  #isPlaying: boolean;
+  #status: Status = "playing";
 
   constructor() {
     super(0);
-    this.#status = "playing";
-    this.#isPlaying = true;
   }
 
   get score() {
@@ -34,7 +20,19 @@ export class Hand extends Deck {
   }
 
   get isPlaying() {
-    return this.#isPlaying;
+    return this.status === "playing";
+  }
+
+  get isBust() {
+    return this.#status === "bust";
+  }
+
+  get isStand() {
+    return this.#status === "stand";
+  }
+
+  get isBlackjack() {
+    return this.#status === "blackjack";
   }
 
   add(card: Card) {
@@ -62,24 +60,17 @@ export class Hand extends Deck {
 
   updateStatus() {
     this.protect();
-
     if (this.#score === 21) {
       this.#status = "blackjack";
-      this.#isPlaying = false;
     } else if (this.#score > 21) {
-      this.#status = "busted";
-      this.#isPlaying = false;
+      this.#status = "bust";
     }
-
     return this;
   }
 
   stand() {
     this.protect();
-
     this.#status = "stand";
-    this.#isPlaying = false;
-
     return this;
   }
 
@@ -100,7 +91,6 @@ export class Hand extends Deck {
     super.empty();
     this.#score = 0;
     this.#status = "split";
-    this.#isPlaying = false;
 
     return [hand1, hand2];
   }
@@ -109,13 +99,12 @@ export class Hand extends Deck {
     super.empty();
     this.#score = 0;
     this.#status = "playing";
-    this.#isPlaying = true;
     return this;
   }
 
   protect() {
     if (!this.isPlaying) {
-      throw new Error("Player is not allowed to perform this action");
+      throw new Error("Hand is not allowed to perform this action");
     }
   }
 }

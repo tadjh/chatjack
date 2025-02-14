@@ -5,6 +5,8 @@ import { Player, Role } from "./player";
 export class Blackjack {
   #table: [Dealer, ...Player[]] = [new Dealer()];
   #isDealt = false;
+  #isDealerTurn = false;
+  #playerTurn = -1;
   #deck: Deck = new Deck();
 
   constructor(deckCount = 1, playerCount = 1) {
@@ -26,6 +28,14 @@ export class Blackjack {
 
   get isDealt() {
     return this.#isDealt;
+  }
+
+  get isDealerTurn() {
+    return this.#isDealerTurn;
+  }
+
+  get playerTurn() {
+    return this.#playerTurn;
   }
 
   get remaining() {
@@ -66,6 +76,7 @@ export class Blackjack {
     });
 
     this.#isDealt = true;
+    this.#playerTurn++;
     return this;
   }
 
@@ -102,11 +113,14 @@ export class Blackjack {
     return this;
   }
 
-  destroy() {
-    this.dealer.reset();
+  reset(deckCount = 1, playerCount = 1) {
+    this.#table.forEach((player) => player.reset());
     this.#table = [this.dealer];
+    this.#isDealerTurn = false;
+    this.#playerTurn = -1;
     this.#isDealt = false;
     this.#deck.empty();
+    this.init(deckCount, playerCount);
     return this;
   }
 }

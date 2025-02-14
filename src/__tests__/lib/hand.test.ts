@@ -35,7 +35,7 @@ describe("Hand", () => {
     const card3 = new Card(Suit.Hearts + Rank.Two); // Two of Hearts
     hand.add(card1).add(card2).add(card3);
     expect(hand.score).toBe(22);
-    expect(hand.status).toBe("busted");
+    expect(hand.status).toBe("bust");
     expect(hand.isPlaying).toBe(false);
   });
 

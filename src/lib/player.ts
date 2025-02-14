@@ -61,6 +61,14 @@ export class Player {
     return this;
   }
 
+  stand(index = 0) {
+    if (index >= this.#hands.length) {
+      throw new Error("Hand does not exist");
+    }
+    this.#hands[index].stand();
+    return this;
+  }
+
   split() {
     if (this.#isSplit) {
       throw new Error("Player has already split");
@@ -84,7 +92,8 @@ export class Player {
   }
 
   reset() {
-    this.#hands = [];
+    this.#hands.forEach((hand) => hand.reset());
+    this.#hands = [new Hand()];
     this.#isSplit = false;
     return this;
   }
