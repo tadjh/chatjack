@@ -1,45 +1,32 @@
-import "./App.css";
-import { Blackjack } from "./lib/blackjack";
-import { useRef, useState } from "react";
+import { useBlackjack } from "./hooks/use-blackjack";
 
 function App() {
-  const gameRef = useRef<Blackjack>(new Blackjack());
-  const [, setTable] = useState<boolean>(false);
-  const blackjack = gameRef.current;
-
-  function dealCards() {
-    blackjack.deal();
-    setTable(true);
-  }
-
-  const { dealer, players } = blackjack;
+  const { dealer, players, deal, hit, split, play } = useBlackjack();
 
   return (
     <>
       <h1>ChatJack</h1>
-      <div className="card">
-        <button onClick={dealCards}>Deal Card</button>
+      <div>
+        <button onClick={deal}>Deal</button>
         <div>
           <h2>Dealer</h2>
           <p>{dealer.hand.map((card) => card.abbr).join(" ")}</p>
           <p>{`Score: ${dealer.hand.score}`}</p>
+          <button onClick={play}>Hit</button>
         </div>
         {players.map((player) => (
           <div key={player.name}>
             <h2>{player.name}</h2>
-            {player.hands.length > 1 ? (
-              player.hands.map((hand, i) => (
+            <div className="flex">
+              {player.hands.map((hand, i) => (
                 <div key={i}>
                   <p>{hand.map((card) => card.abbr).join(" ")}</p>
                   <p>{`Score: ${hand.score}`}</p>
+                  <button onClick={() => hit(player, i)}>Hit</button>
                 </div>
-              ))
-            ) : (
-              <>
-                <p>{player.hand.map((card) => card.abbr).join(" ")}</p>
-                <p>{`Score: ${player.hand.score}`}</p>
-              </>
-            )}
+              ))}
+            </div>
+            <button onClick={() => split(player)}>Split</button>
           </div>
         ))}
       </div>

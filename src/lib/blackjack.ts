@@ -1,67 +1,112 @@
+import { Dealer } from "./dealer";
 import { Deck } from "./deck";
-import { Player, Roles } from "./player";
+import { Player, Role } from "./player";
 
 export class Blackjack {
-  #table: Player[] = [];
+  #table: [Dealer, ...Player[]] = [new Dealer()];
   #isDealt = false;
-  readonly deck: Deck;
-  readonly dealerIndex: number;
-  get dealer() {
-    return this.#table[this.dealerIndex];
+  #deck: Deck = new Deck();
+
+  constructor(deckCount = 1, playerCount = 1) {
+    this.init(deckCount, playerCount);
   }
+
   get table() {
     return this.#table;
   }
-  get players() {
-    return this.#table.filter((player) => player.isPlayer);
+
+  get dealer() {
+    return this.#table[0];
   }
+
+  get players() {
+    const [, ...players] = this.#table;
+    return players;
+  }
+
   get isDealt() {
     return this.#isDealt;
   }
 
-  constructor(deckCount = 1, playerCount = 1) {
-    this.deck = new Deck(deckCount);
-    const dealer = new Player({ name: "Dealer", role: Roles.Dealer });
-    this.dealerIndex = dealer.id;
-    this.#table.push(dealer);
-    for (let i = 0; i < playerCount; i++) {
-      this.#table.push(new Player({ name: `Player ${i + 1}` }));
-    }
+  get remaining() {
+    return this.#deck.length;
   }
 
-  public draw(isHidden = false) {
-    return this.deck.draw(isHidden);
+  init(deckCount: number, playerCount: number) {
+    this.#deck.init(deckCount);
+    for (let i = 0; i < playerCount; i++) {
+      this.#table.push(new Player(`Player ${i + 1}`));
+    }
+    return this;
+  }
+
+  draw(isHidden = false) {
+    return this.#deck.draw(isHidden);
   }
 
   public empty() {
-    return this.deck.empty();
+    this.#deck.empty();
+    return this;
   }
 
-  deal() {
+  public deal() {
     if (this.#isDealt) {
       throw new Error("Cards have already been dealt");
     }
 
     // Deal a card to each player
     this.#table.forEach((player) => {
-      player.addCard(this.draw());
+      player.hit(this.draw());
     });
 
     // Deal a second face down card to each player expect the dealer
     this.#table.forEach((player) => {
-      if (player.isDealer) {
-        return;
-      }
-      const card = this.draw(true);
-      player.addCard(card);
+      if (player.role === Role.Dealer) return;
+      player.hit(this.draw());
     });
 
     this.#isDealt = true;
     return this;
   }
 
-  hit(player: Player) {
-    player.addCard(this.draw());
+  hit(player: Player, index = 0) {
+    if (player.getScore(index) >= 21) {
+      throw new Error("Player cannot hit");
+    }
+    player.hit(this.draw());
+    return this;
+  }
+
+  split(player: Player) {
+    if (player.isSplit) {
+      throw new Error("Player has already split");
+    }
+
+    const hand = player.hand;
+    if (hand.length !== 2) {
+      throw new Error("Player cannot split");
+    }
+
+    console.log(player.split());
+    // player.hit(this.draw());
+    // player.hit(this.draw(), 1);
+    return this;
+  }
+
+  play() {
+    if (!this.#isDealt) {
+      throw new Error("Cards have not been dealt");
+    }
+
+    this.dealer.play(this.#deck);
+    return this;
+  }
+
+  destroy() {
+    this.dealer.reset();
+    this.#table = [this.dealer];
+    this.#isDealt = false;
+    this.#deck.empty();
     return this;
   }
 }

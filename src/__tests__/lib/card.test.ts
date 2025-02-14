@@ -1,10 +1,10 @@
-import { Card, Suit, Face } from "@/lib/card";
+import { Card, Suit, Rank } from "@/lib/card";
 
 describe("Card", () => {
   it("should create a card with correct suit and face", () => {
-    const card = new Card(Suit.Clubs + Face.Ace);
+    const card = new Card(Suit.Clubs + Rank.Ace);
     expect(card.suit).toBe(Suit.Clubs);
-    expect(card.face).toBe(Face.Ace);
+    expect(card.rank).toBe(Rank.Ace);
   });
 
   it("should throw an error for invalid card number", () => {
@@ -13,17 +13,17 @@ describe("Card", () => {
   });
 
   it("should return the correct name of the card", () => {
-    const card = new Card(Suit.Clubs + Face.Ace);
+    const card = new Card(Suit.Clubs + Rank.Ace);
     expect(card.name).toBe("Ace of Clubs");
   });
 
   it("should return the correct abbreviation of the card", () => {
-    const card = new Card(Suit.Clubs + Face.Ace);
+    const card = new Card(Suit.Clubs + Rank.Ace);
     expect(card.abbr).toBe("A ♣");
   });
 
   it("should show and hide the card correctly", () => {
-    const card = new Card(Suit.Clubs + Face.Ace);
+    const card = new Card(Suit.Clubs + Rank.Ace);
     card.hide();
     expect(card.isHidden).toBe(true);
     card.show();
@@ -31,8 +31,8 @@ describe("Card", () => {
   });
 
   it("should return the correct score for the card", () => {
-    const aceCard = new Card(Suit.Clubs + Face.Ace);
-    const tenCard = new Card(Suit.Clubs + Face.Ten);
+    const aceCard = new Card(Suit.Clubs + Rank.Ace);
+    const tenCard = new Card(Suit.Clubs + Rank.Ten);
     expect(aceCard.points).toBe(11);
     aceCard.updatePoints(true);
     expect(aceCard.points).toBe(1);
@@ -40,19 +40,19 @@ describe("Card", () => {
   });
 
   it("should identify if the card is an Ace", () => {
-    const aceCard = new Card(Suit.Clubs + Face.Ace);
-    const tenCard = new Card(Suit.Clubs + Face.Ten);
+    const aceCard = new Card(Suit.Clubs + Rank.Ace);
+    const tenCard = new Card(Suit.Clubs + Rank.Ten);
     expect(aceCard.isAce).toBe(true);
     expect(tenCard.isAce).toBe(false);
   });
 
   it("should convert card number to correct face", () => {
-    const card = new Card(Suit.Clubs + Face.Ace);
-    expect(card.face).toBe(Face.Ace);
+    const card = new Card(Suit.Clubs + Rank.Ace);
+    expect(card.rank).toBe(Rank.Ace);
   });
 
   it("should convert card number to correct suit", () => {
-    const card = new Card(Suit.Clubs + Face.Ace);
+    const card = new Card(Suit.Clubs + Rank.Ace);
     expect(card.suit).toBe(Suit.Clubs);
   });
 });

@@ -5,7 +5,7 @@ export enum Suit {
   Spades = 39,
 }
 
-export enum Face {
+export enum Rank {
   Ace,
   Two,
   Three,
@@ -21,59 +21,37 @@ export enum Face {
   King,
 }
 
-const Letter: Map<Face, string> = new Map([
-  [Face.Ace, "A"],
-  [Face.Two, "2"],
-  [Face.Three, "3"],
-  [Face.Four, "4"],
-  [Face.Five, "5"],
-  [Face.Six, "6"],
-  [Face.Seven, "7"],
-  [Face.Eight, "8"],
-  [Face.Nine, "9"],
-  [Face.Ten, "10"],
-  [Face.Jack, "J"],
-  [Face.Queen, "Q"],
-  [Face.King, "K"],
-]);
-
-const Icon: Map<Suit, string> = new Map([
+const Icon: Map<number, string> = new Map([
   [Suit.Clubs, "♣"],
   [Suit.Diamonds, "♦"],
   [Suit.Hearts, "♥"],
   [Suit.Spades, "♠"],
 ]);
 
+const Letter: Map<number, string> = new Map([
+  [Rank.Ace, "A"],
+  [Rank.Two, "2"],
+  [Rank.Three, "3"],
+  [Rank.Four, "4"],
+  [Rank.Five, "5"],
+  [Rank.Six, "6"],
+  [Rank.Seven, "7"],
+  [Rank.Eight, "8"],
+  [Rank.Nine, "9"],
+  [Rank.Ten, "10"],
+  [Rank.Jack, "J"],
+  [Rank.Queen, "Q"],
+  [Rank.King, "K"],
+]);
+
 export class Card extends Number {
-  readonly suit: Suit;
-  readonly face: Face;
+  readonly suit: number;
+  readonly rank: number;
   readonly #abbr: string;
   #name: string;
   #points: number = 0;
-  #isAce: boolean = false;
-  #isHidden: boolean = false;
-  get points() {
-    return this.#points;
-  }
-  get isAce() {
-    return this.#isAce;
-  }
-
-  get isHidden() {
-    return this.#isHidden;
-  }
-  get name() {
-    if (this.#isHidden) {
-      return "Hidden";
-    }
-    return this.#name;
-  }
-  get abbr() {
-    if (this.#isHidden) {
-      return "🂠";
-    }
-    return this.#abbr;
-  }
+  #isAce: boolean;
+  #isHidden: boolean;
 
   constructor(card: number, hidden = false) {
     if (card < 0 || card > 52) {
@@ -81,12 +59,38 @@ export class Card extends Number {
     }
     super(card);
     this.suit = this.toSuit(card);
-    this.face = card - this.suit;
+    this.rank = card - this.suit;
     this.#isHidden = hidden;
-    this.#isAce = this.face === Face.Ace;
-    this.#name = `${Face[this.face]} of ${Suit[this.suit]}`;
-    this.#abbr = `${Letter.get(this.face)} ${Icon.get(this.suit)}`;
+    this.#isAce = this.rank === Rank.Ace;
+    this.#name = `${Rank[this.rank]} of ${Suit[this.suit]}`;
+    this.#abbr = `${Letter.get(this.rank)} ${Icon.get(this.suit)}`;
     this.setPoints();
+  }
+
+  get points() {
+    return this.#points;
+  }
+
+  get isAce() {
+    return this.#isAce;
+  }
+
+  get isHidden() {
+    return this.#isHidden;
+  }
+
+  get name() {
+    if (this.#isHidden) {
+      return "Hidden";
+    }
+    return this.#name;
+  }
+
+  get abbr() {
+    if (this.#isHidden) {
+      return "🂠";
+    }
+    return this.#abbr;
   }
 
   show() {
@@ -100,44 +104,44 @@ export class Card extends Number {
   }
 
   setPoints() {
-    switch (this.face) {
-      case Face.Ace:
+    switch (this.rank) {
+      case Rank.Ace:
         this.#points = 11;
         break;
-      case Face.Two:
+      case Rank.Two:
         this.#points = 2;
         break;
-      case Face.Three:
+      case Rank.Three:
         this.#points = 3;
         break;
-      case Face.Four:
+      case Rank.Four:
         this.#points = 4;
         break;
-      case Face.Five:
+      case Rank.Five:
         this.#points = 5;
         break;
-      case Face.Six:
+      case Rank.Six:
         this.#points = 6;
         break;
-      case Face.Seven:
+      case Rank.Seven:
         this.#points = 7;
         break;
-      case Face.Eight:
+      case Rank.Eight:
         this.#points = 8;
         break;
-      case Face.Nine:
+      case Rank.Nine:
         this.#points = 9;
         break;
-      case Face.Ten:
+      case Rank.Ten:
         this.#points = 10;
         break;
-      case Face.Jack:
+      case Rank.Jack:
         this.#points = 10;
         break;
-      case Face.Queen:
+      case Rank.Queen:
         this.#points = 10;
         break;
-      case Face.King:
+      case Rank.King:
         this.#points = 10;
         break;
       default:
@@ -163,14 +167,14 @@ export class Card extends Number {
     if (card < 0 || card > 52) {
       throw new Error("Invalid card");
     }
-    return (card % 13) as Face;
+    return (card % 13) as number;
   }
 
   toSuit(card: number) {
     if (card < 0 || card > 52) {
       throw new Error("Invalid card");
     }
-    return (Math.floor(card / 13) * 13) as Suit;
+    return (Math.floor(card / 13) * 13) as number;
   }
 }
 

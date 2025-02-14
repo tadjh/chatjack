@@ -1,5 +1,5 @@
 import { Deck } from "@/lib/deck";
-import { Card, Face, Suit } from "@/lib/card";
+import { Card, Rank, Suit } from "@/lib/card";
 
 describe("Deck", () => {
   test("should create a deck with a valid count", () => {
@@ -48,7 +48,7 @@ describe("Deck", () => {
 
   test("should add a card to the deck", () => {
     const deck = new Deck(1);
-    const card = new Card(Suit.Clubs + Face.Ace);
+    const card = new Card(Suit.Clubs + Rank.Ace);
     deck.push(card);
     expect(deck.length).toBe(53);
   });
