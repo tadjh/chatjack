@@ -103,8 +103,12 @@ export function Blackjack() {
         "Jacquard",
         `url("${isDevelopment ? "/src" : ""}/assets/fonts/Jacquard24-Regular.ttf")`
       );
-      await font.load();
-      document.fonts.add(font);
+      if (!document.fonts.has(font)) {
+        await font.load();
+        document.fonts.add(font);
+      } else {
+        return Promise.resolve();
+      }
     };
 
     const drawBackground = () => {
