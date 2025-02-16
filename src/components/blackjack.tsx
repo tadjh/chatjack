@@ -5,9 +5,11 @@ const SUBTITLE_TEXT = "Twitch Chat Plays Blackjack";
 const FONT_NAME = "Jacquard";
 const FPS = 12;
 const TICK_RATE = 1000 / FPS;
-const FADE_SPEED = 0.1;
+const ANIMATION_SPEED = 1 / 24;
+const FLOAT_SPEED = 1 / 6;
+const FLOAT_AMPLITUDE = 3;
 const SPACING = { 1: 4, 2: 8, 4: 16, 8: 32 } as const;
-const SUBTITLE_DELAY_FRAMES = 12;
+const isDevelopment = import.meta.env.MODE === "development";
 
 type Vector3 = [number, number, number];
 
@@ -39,13 +41,56 @@ const spacing = (size: keyof typeof SPACING = 1) => SPACING[size];
 const rgba = (color: Vector3, alpha: number) =>
   `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${alpha})`;
 const rgb = (color: Vector3) => rgba(color, 1);
+const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 
 export function Blackjack() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const lastTick = useRef(0);
-  const fadeTitle = useRef(0);
-  const fadeSubtitle = useRef(0);
-  const frameCount = useRef(0);
+  const lastTickRef = useRef(0);
+  const timeRef = useRef(0);
+  const animationsRef = useRef([
+    {
+      id: "title",
+      text: TITLE_TEXT,
+      color: Palette.Yellow,
+      progress: { fade: 0, slide: 0, kerning: 0 },
+      fadeInDelay: 0,
+      maxWidth: "full",
+      offsetX: { start: 0, end: 0 },
+      offsetY: { start: 50, end: 0 },
+      kerning: { start: 40, end: 0 },
+      shadow: {
+        color: Palette.DarkestGreen,
+        x: spacing(2),
+        y: spacing(2),
+        size: spacing(4),
+      },
+      stroke: {
+        width: spacing(4),
+        color: Palette.Black,
+      },
+    },
+    {
+      id: "subtitle",
+      text: SUBTITLE_TEXT,
+      color: Palette.Yellow,
+      progress: { fade: 0, slide: 0, kerning: 1 },
+      fadeInDelay: 12,
+      maxWidth: "title",
+      offsetX: { start: 0, end: 0 },
+      offsetY: { start: 50, end: 0 },
+      kerning: { start: 0, end: 0 },
+      shadow: {
+        color: Palette.DarkestGreen,
+        x: spacing(),
+        y: spacing(),
+        size: spacing(4),
+      },
+      stroke: {
+        width: spacing(2),
+        color: Palette.Black,
+      },
+    },
+  ]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -53,81 +98,103 @@ export function Blackjack() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    const loadFont = async () => {
+      const font = new FontFace(
+        "Jacquard",
+        `url("${isDevelopment ? "/src" : ""}/assets/fonts/Jacquard24-Regular.ttf")`
+      );
+      await font.load();
+      document.fonts.add(font);
+    };
+
     const drawBackground = () => {
       ctx.fillStyle = rgb(Palette.DarkGreen);
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     };
 
     const drawText = () => {
-      const maxWidth = canvas.width * 0.8;
-      let titleFontSize = canvas.width * 0.15;
-      ctx.font = font(titleFontSize);
-      let titleWidth = ctx.measureText(TITLE_TEXT).width;
+      const baseMaxWidth = canvas.width * 0.8;
+      const baseFontSize = canvas.width * 0.15;
+      const baseCenterX = canvas.width / 2;
+      const baseCenterY = canvas.height / 3;
 
-      if (titleWidth > maxWidth) {
-        titleFontSize *= maxWidth / titleWidth;
-      }
+      ctx.textAlign = "center";
+      ctx.fillStyle = rgb(Palette.White);
 
-      ctx.font = font(titleFontSize);
-      titleWidth = ctx.measureText(TITLE_TEXT).width;
+      const widthMap: Map<string, number> = new Map();
 
-      let subtitleFontSize = titleFontSize;
-      ctx.font = font(subtitleFontSize);
-      const subtitleWidth = ctx.measureText(SUBTITLE_TEXT).width;
+      animationsRef.current.forEach((anim, index) => {
+        let fontSize = baseFontSize;
+        ctx.font = font(fontSize);
 
-      if (subtitleWidth !== titleWidth) {
-        subtitleFontSize *= titleWidth / subtitleWidth;
-      }
+        const textWidth = ctx.measureText(anim.text).width;
+        let maxWidth = baseMaxWidth;
 
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 3;
+        if (anim.maxWidth !== "full" || anim.maxWidth !== undefined) {
+          maxWidth = widthMap.get(anim.maxWidth) || maxWidth;
+        }
 
-      if (fadeTitle.current > 0) {
-        // shadow
-        ctx.strokeStyle = rgba(Palette.DarkestGreen, fadeTitle.current);
-        ctx.textAlign = "center";
-        ctx.lineWidth = titleFontSize / spacing(4);
-        ctx.strokeText(TITLE_TEXT, centerX + spacing(2), centerY + spacing(2));
+        if (textWidth > maxWidth) {
+          fontSize *= maxWidth / textWidth;
+          ctx.font = font(fontSize);
+        }
+        const opacity = easeOutCubic(anim.progress.fade);
 
-        // stroke
-        ctx.strokeStyle = rgba(Palette.Black, fadeTitle.current);
-        ctx.textAlign = "center";
-        ctx.lineWidth = titleFontSize / spacing(4);
-        ctx.strokeText(TITLE_TEXT, centerX, centerY);
+        let offsetX = anim.offsetX.end;
+        let offsetY = anim.offsetY.end;
+        let kerning = anim.kerning.end;
 
-        // title
-        ctx.font = font(titleFontSize);
-        ctx.fillStyle = rgba(Palette.Yellow, fadeTitle.current);
-        ctx.textAlign = "center";
-        ctx.fillText(TITLE_TEXT, centerX, centerY);
-      }
+        if (anim.offsetX.start !== anim.offsetX.end) {
+          offsetX =
+            anim.offsetX.start +
+            (anim.offsetX.end - anim.offsetX.start) *
+              easeOutCubic(anim.progress.slide);
+        }
 
-      if (fadeSubtitle.current > 0) {
-        const lineHeight = subtitleFontSize * 1.2;
-        ctx.font = font(subtitleFontSize);
+        if (anim.offsetY.start !== anim.offsetY.end) {
+          offsetY =
+            anim.offsetY.start +
+            (anim.offsetY.end - anim.offsetY.start) *
+              easeOutCubic(anim.progress.slide);
+        }
 
-        // shadow
-        ctx.strokeStyle = rgba(Palette.DarkestGreen, fadeSubtitle.current);
-        ctx.textAlign = "center";
-        ctx.lineWidth = subtitleFontSize / spacing(4);
-        ctx.strokeText(
-          SUBTITLE_TEXT,
-          centerX + spacing(),
-          centerY + spacing() + lineHeight
-        );
+        if (anim.kerning.start !== anim.kerning.end) {
+          kerning =
+            anim.kerning.start +
+            (anim.kerning.end - anim.kerning.start) *
+              easeOutCubic(anim.progress.kerning);
+        }
 
-        // stroke
-        ctx.strokeStyle = rgba(Palette.Black, fadeSubtitle.current);
-        ctx.textAlign = "center";
-        ctx.lineWidth = subtitleFontSize / spacing(2);
-        ctx.strokeText(SUBTITLE_TEXT, centerX, centerY + lineHeight);
+        offsetY += Math.sin(timeRef.current * FLOAT_SPEED) * FLOAT_AMPLITUDE;
 
-        // subtitle
-        ctx.font = font(subtitleFontSize);
-        ctx.fillStyle = rgba(Palette.Yellow, fadeSubtitle.current);
-        ctx.textAlign = "center";
-        ctx.fillText(SUBTITLE_TEXT, centerX, centerY + lineHeight);
-      }
+        const lineHeight = fontSize * 1.2;
+        const centerX = baseCenterX + offsetX;
+        const centerY = baseCenterY + offsetY + index * lineHeight;
+        ctx.letterSpacing = `${kerning}px`;
+
+        widthMap.set(anim.id, ctx.measureText(anim.text).width);
+
+        const shadowOffset = anim.progress.fade >= 1 ? offsetY : 0;
+
+        if (Object.hasOwnProperty.call(anim, "shadow")) {
+          ctx.strokeStyle = rgba(anim.shadow.color, opacity);
+          ctx.lineWidth = fontSize / anim.shadow.size;
+          ctx.strokeText(
+            anim.text,
+            centerX + anim.shadow.x,
+            centerY + anim.shadow.y - shadowOffset
+          );
+        }
+
+        if (Object.hasOwnProperty.call(anim, "stroke")) {
+          ctx.strokeStyle = rgba(anim.stroke.color, opacity);
+          ctx.lineWidth = fontSize / anim.stroke.width;
+          ctx.strokeText(anim.text, centerX, centerY);
+        }
+
+        ctx.fillStyle = rgba(anim.color, opacity);
+        ctx.fillText(anim.text, centerX, centerY);
+      });
     };
 
     const drawCanvas = () => {
@@ -143,31 +210,43 @@ export function Blackjack() {
     };
 
     const gameLoop = (timestamp: number) => {
-      if (timestamp - lastTick.current >= TICK_RATE) {
-        lastTick.current = timestamp;
+      if (timestamp - lastTickRef.current >= TICK_RATE) {
+        lastTickRef.current = timestamp;
+        timeRef.current += 1;
 
-        if (fadeTitle.current < 1) {
-          fadeTitle.current += FADE_SPEED;
-          fadeTitle.current = Math.min(fadeTitle.current, 1);
-        }
+        animationsRef.current.forEach((anim) => {
+          if (anim.fadeInDelay > 0) {
+            anim.fadeInDelay -= 1; // Wait for delay before fading
+          } else {
+            if (anim.progress.fade < 1) {
+              anim.progress.fade += ANIMATION_SPEED;
+              if (anim.progress.fade > 1) anim.progress.fade = 1;
+            }
 
-        if (frameCount.current >= SUBTITLE_DELAY_FRAMES) {
-          if (fadeSubtitle.current < 1) {
-            fadeSubtitle.current += FADE_SPEED;
-            fadeSubtitle.current = Math.min(fadeSubtitle.current, 1);
+            if (anim.progress.slide < 1) {
+              anim.progress.slide += ANIMATION_SPEED;
+              if (anim.progress.slide > 1) anim.progress.slide = 1;
+            }
+
+            if (anim.progress.kerning < 1) {
+              anim.progress.kerning += ANIMATION_SPEED;
+              if (anim.progress.kerning > 1) anim.progress.kerning = 1;
+            }
           }
-        } else {
-          frameCount.current += 1;
-        }
+        });
 
         drawCanvas();
       }
       requestAnimationFrame(gameLoop);
     };
 
-    resizeCanvas();
+    const init = async () => {
+      await loadFont();
+      resizeCanvas();
+      requestAnimationFrame(gameLoop);
+    };
 
-    requestAnimationFrame(gameLoop);
+    init();
 
     window.addEventListener("resize", resizeCanvas);
 
