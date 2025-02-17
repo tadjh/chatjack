@@ -12,7 +12,7 @@ export class Player {
     public readonly name = "Player",
     public readonly role = Role.Player
   ) {
-    this.#hands = [new Hand()];
+    this.#hands = [new Hand(this.name)];
   }
 
   get hand(): Hand {
@@ -54,9 +54,11 @@ export class Player {
 
   hit(card: Card, id = 0) {
     if (!this.#isSplit) {
+      card.owner = this.name;
       this.#hands[0].add(card);
       return this;
     }
+    card.owner = this.name;
     this.#hands[id].add(card);
     return this;
   }
@@ -93,7 +95,7 @@ export class Player {
 
   reset() {
     this.#hands.forEach((hand) => hand.reset());
-    this.#hands = [new Hand()];
+    this.#hands = [new Hand(this.name)];
     this.#isSplit = false;
     return this;
   }

@@ -1,14 +1,17 @@
-import { animations as anims } from "./animations";
+import { titleAnimation } from "./animations";
+import { Card } from "./card";
 import {
   ANIMATION_SPEED,
-  FONT_FAMILY,
   Palette,
   SPRITE_FRAME_HEIGHT,
   SPRITE_FRAME_WIDTH,
   SPRITE_SCALE,
+  State,
   TICK_RATE,
 } from "./constants";
-import { TextAnim } from "./types";
+import { Dealer } from "./dealer";
+import { Player } from "./player";
+import { Anim, SpriteAnim, TextAnim } from "./types";
 import { easeOutCubic, font, rgb, rgba } from "./utils";
 
 export class Renderer {
@@ -20,10 +23,13 @@ export class Renderer {
   private widthMap: Map<string, number> = new Map();
   private centerX = Math.floor(window.innerWidth / 2);
   private centerY = Math.floor(window.innerHeight / 2);
+  private dealer = new Dealer();
+  private players: Player[] = [];
+  private state: State = State.ReadyToDeal;
 
   constructor(
     canvas: HTMLCanvasElement,
-    private animations = anims,
+    private animations = titleAnimation,
     private tickRate = TICK_RATE,
     private animSpeed = ANIMATION_SPEED,
     private floatSpeed = ANIMATION_SPEED * 4,
@@ -85,17 +91,17 @@ export class Renderer {
     this.ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
   }
 
-  private drawText() {
+  private drawTitleText() {
     const baseMaxWidth = window.innerWidth * 0.8;
-    const baseFontSize = window.innerWidth * 0.15;
+    const baseFontSize = window.innerWidth * 0.025;
 
     this.ctx.textAlign = "center";
     this.ctx.fillStyle = rgb(Palette.White);
 
     this.animations.forEach((anim, index) => {
       if (anim.type !== "text") return;
-      let fontSize = baseFontSize;
-      this.ctx.font = font(fontSize, FONT_FAMILY);
+      let fontSize = baseFontSize * anim.fontSize;
+      this.ctx.font = font(fontSize, anim.fontFamily);
       const textWidth = this.ctx.measureText(anim.text).width;
       let maxWidth = baseMaxWidth;
       if (anim.maxWidth !== "full") {
@@ -103,22 +109,29 @@ export class Renderer {
       }
       if (textWidth > maxWidth) {
         fontSize *= maxWidth / textWidth;
-        this.ctx.font = font(fontSize, FONT_FAMILY);
+        this.ctx.font = font(fontSize, anim.fontFamily);
       }
       const easing = easeOutCubic(anim.progress);
-      const offsetX = this.lerp(anim.offsetX.start, anim.offsetX.end, easing);
+      const slideX = this.lerp(anim.slideX.start, anim.slideX.end, easing);
       const kerning = this.lerp(anim.kerning.start, anim.kerning.end, easing);
-      let offsetY = this.lerp(anim.offsetY.start, anim.offsetY.end, easing);
+      let slideY = this.lerp(anim.slideY.start, anim.slideY.end, easing);
+      slideY += Math.sin(this.time * this.floatSpeed) * this.floatAmplitude;
+      const lineHeight = fontSize * anim.lineHeight;
+      const centerX = this.centerX + slideX;
 
-      offsetY += Math.sin(this.time * this.floatSpeed) * this.floatAmplitude;
-      const lineHeight = fontSize * 1.2;
-      const centerX = this.centerX + offsetX;
-      const centerY = (this.centerY * 2) / 3 + offsetY + index * lineHeight;
+      let centerY = this.centerY;
+      if (anim.position === "bottom") {
+        centerY = window.innerHeight - 40 - lineHeight * 0.5;
+      } else {
+        centerY =
+          Math.floor(window.innerHeight / 3) + slideY + index * lineHeight;
+      }
+
       this.ctx.letterSpacing = `${kerning}px`;
 
       this.widthMap.set(anim.id, this.ctx.measureText(anim.text).width);
 
-      this.drawTextShadow(anim, easing, fontSize, centerX, centerY, offsetY);
+      this.drawTextShadow(anim, easing, fontSize, centerX, centerY, slideY);
 
       this.drawTextStroke(anim, easing, fontSize, centerX, centerY);
 
@@ -168,9 +181,9 @@ export class Renderer {
     }
   }
 
-  private drawSprite() {
+  private drawCardLoop() {
     this.animations.forEach((anim) => {
-      if (anim.type !== "sprite") return;
+      if (anim.type !== "loop") return;
       if (!this.spriteSheet) return;
 
       const spriteWidth = SPRITE_FRAME_WIDTH * SPRITE_SCALE;
@@ -221,11 +234,68 @@ export class Renderer {
     });
   }
 
+  drawCard(anim: Anim, x: number, y: number) {
+    if (anim.type !== "sprite") return;
+    if (!this.spriteSheet) return;
+    const sourceX = anim.sprite.x;
+    const sourceY = anim.sprite.y;
+    const spriteWidth = SPRITE_FRAME_WIDTH * SPRITE_SCALE;
+    const spriteHeight = SPRITE_FRAME_HEIGHT * SPRITE_SCALE;
+
+    const easing = easeOutCubic(anim.progress);
+    const offsetY = this.lerp(anim.offsetY.start, anim.offsetY.end, easing);
+    const scale = (window.innerWidth * 0.2 * anim.scale) / spriteWidth;
+    const destWidth = spriteWidth * scale;
+    const destHeight = spriteHeight * scale;
+    const destX = x - destWidth / 2;
+    const destY = offsetY + y - destHeight / 2;
+    this.ctx.save();
+    this.ctx.translate(0, 0);
+    this.ctx.rotate(anim.angle);
+    this.ctx.globalAlpha = anim.opacity.end;
+    this.ctx.drawImage(
+      this.spriteSheet,
+      sourceX,
+      sourceY,
+      spriteWidth,
+      spriteHeight,
+      destX,
+      destY,
+      destWidth,
+      destHeight
+    );
+    this.ctx.restore();
+  }
+
+  drawCards() {
+    this.animations.forEach((card, index) => {
+      const isDealer = card.id.includes("Dealer");
+      const x = this.centerX - 80 + index * (isDealer ? -64 : 82);
+      const y = isDealer
+        ? 0 - index * 5
+        : window.innerHeight - window.innerHeight * 0.2 + index * 5;
+      this.drawCard(card, x, y);
+    });
+  }
+
   private drawCanvas() {
     this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
     this.drawBackground();
-    this.drawSprite();
-    this.drawText();
+
+    switch (this.state) {
+      case State.Init:
+        this.drawCardLoop();
+        this.drawTitleText();
+        break;
+      case State.ReadyToDeal:
+        this.drawCards();
+        break;
+      case State.PlayerTurn:
+        this.drawCards();
+        break;
+      default:
+        break;
+    }
   }
 
   public resizeCanvas() {
@@ -254,7 +324,7 @@ export class Renderer {
             if (anim.progress > 1) anim.progress = 1;
           }
 
-          if (anim.type === "sprite") {
+          if (anim.type === "loop") {
             anim.frame += 1;
             if (anim.frame >= anim.speed) {
               anim.frame = 0;
@@ -277,6 +347,160 @@ export class Renderer {
 
   public stop() {
     window.removeEventListener("resize", this.resizeCanvas.bind(this));
+  }
+
+  reset() {
+    this.animations = titleAnimation;
+    this.dealer = new Dealer();
+    this.players = [];
+    this.state = State.Init;
+    this.drawCanvas();
+  }
+
+  public update({
+    dealer,
+    players,
+    state,
+  }: {
+    dealer: Dealer;
+    players: Player[];
+    state: State;
+  }) {
+    this.dealer = dealer;
+    this.players = players;
+    this.state = state;
+
+    switch (this.state) {
+      case State.Init:
+        this.reset();
+        break;
+      case State.ReadyToDeal:
+        {
+          // TODO support split hands
+          let maxLength = this.dealer.hand.length;
+
+          this.players.forEach((player) => {
+            // TODO Support split hands
+            maxLength = Math.max(maxLength, player.hand.length);
+          });
+
+          const cards: Card[] = [];
+
+          for (let i = 0; i < maxLength; i++) {
+            cards.push(
+              ...this.players
+                .map((player) => {
+                  if (player.hand.length <= i) return undefined;
+                  return player.hand[i];
+                })
+                .filter((card) => card !== undefined)
+            );
+            if (this.dealer.hand.length > i) {
+              cards.push(this.dealer.hand[i]);
+            }
+          }
+
+          const spriteWidth = SPRITE_FRAME_WIDTH * SPRITE_SCALE;
+          const spriteHeight = SPRITE_FRAME_HEIGHT * SPRITE_SCALE;
+          this.animations = cards.map((card, index) => ({
+            id: `${card.owner}'s ${card.name} ${index}`,
+            type: "sprite",
+            progress: 0,
+            sprite: {
+              x: card.isHidden ? 0 : spriteWidth * 2,
+              y: card.isHidden
+                ? spriteHeight * 52
+                : spriteHeight * card.valueOf(),
+            },
+            fadeInDelay: index * 12,
+            maxWidth: "full",
+            scale: card.owner === "Dealer" ? 0.75 : 1,
+            angle: ((Math.random() * 16 - 8) * Math.PI) / 180,
+            opacity: { start: 0, end: card.isBusted ? 0.5 : 1 },
+            offsetX: { start: 0, end: 0 },
+            offsetY: {
+              start:
+                card.owner === "Dealer" ? -spriteHeight * 0.75 : spriteHeight,
+              end: 0,
+            },
+          }));
+        }
+        break;
+      case State.PlayerTurn:
+        {
+          // TODO support split hands
+          let maxLength = this.dealer.hand.length;
+
+          this.players.forEach((player) => {
+            // TODO Support split hands
+            maxLength = Math.max(maxLength, player.hand.length);
+          });
+
+          const cards: Card[] = [];
+
+          for (let i = 0; i < maxLength; i++) {
+            cards.push(
+              ...this.players
+                .map((player) => {
+                  if (player.hand.length <= i) return undefined;
+                  return player.hand[i];
+                })
+                .filter((card) => card !== undefined)
+            );
+            if (this.dealer.hand.length > i) {
+              cards.push(this.dealer.hand[i]);
+            }
+          }
+
+          for (let i = 0; i < cards.length; i++) {
+            const cardId = `${cards[i].owner}'s ${cards[i].name} ${i}`;
+            if (this.animations[i] && this.animations[i].id === cardId) {
+              (this.animations[i] as SpriteAnim).opacity.end = cards[i].isBusted
+                ? 0.5
+                : 1;
+              continue;
+            }
+
+            const spriteWidth = SPRITE_FRAME_WIDTH * SPRITE_SCALE;
+            const spriteHeight = SPRITE_FRAME_HEIGHT * SPRITE_SCALE;
+            const newAnimation: SpriteAnim = {
+              id: cardId,
+              type: "sprite",
+              progress: 0,
+              sprite: {
+                x: cards[i].isHidden ? 0 : spriteWidth * 2,
+                y: cards[i].isHidden
+                  ? spriteHeight * 52
+                  : spriteHeight * cards[i].valueOf(),
+              },
+              fadeInDelay: 0,
+              scale: cards[i].owner === "Dealer" ? 0.75 : 1,
+              angle: ((Math.random() * 16 - 8) * Math.PI) / 180,
+              opacity: { start: 0, end: cards[i].isBusted ? 0.5 : 1 },
+              offsetX: { start: 0, end: 0 },
+              offsetY: {
+                start:
+                  cards[i].owner === "Dealer"
+                    ? -spriteHeight * 0.75
+                    : spriteHeight,
+
+                end: 0,
+              },
+            };
+
+            if (this.animations[i]) {
+              this.animations.splice(i, 0, newAnimation);
+            } else {
+              this.animations.push(newAnimation);
+            }
+          }
+        }
+        break;
+      default:
+        break;
+    }
+
+    this.drawCanvas();
   }
 
   private lerp(start: number, end: number, easing: number) {

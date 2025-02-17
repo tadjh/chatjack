@@ -1,26 +1,60 @@
 import { Button } from "@/components/ui/button";
 import { useBlackjack } from "@/hooks/use-blackjack";
-import { Game } from "./components/game";
+import { useRef, useEffect } from "react";
+import { fonts, spriteSheet } from "./lib/constants";
+import { Renderer } from "./lib/renderer";
 
 function App() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rendererRef = useRef<Renderer>(null);
   const {
     dealer,
     players,
     isDealt,
     playerTurn,
     isDealerTurn,
+    state,
     deal,
     reset,
     hit,
     stand,
-    play,
+    dealerTurn,
   } = useBlackjack();
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+
+    rendererRef.current = new Renderer(canvasRef.current);
+
+    const loadAssets = async () => {
+      [...fonts.entries()].forEach(async ([name, url]) => {
+        await rendererRef.current!.loadFont(name, url);
+      });
+      await rendererRef.current!.createSpriteSheet(spriteSheet);
+    };
+
+    loadAssets().then(() => {
+      rendererRef.current!.start();
+    });
+
+    return () => {
+      rendererRef.current!.stop();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!rendererRef.current) return;
+
+    rendererRef.current.update({ dealer, players, state });
+
+    rendererRef.current.resizeCanvas();
+  }, [dealer, players, state]);
 
   return (
     <>
-      <Game />
+      <canvas id="canvas" ref={canvasRef}></canvas>
+      {/* Debug */}
       <div className="p-4 grid gap-2 absolute top-0 right-0 z-10">
-        <div>ChatJack</div>
         <div className="flex gap-2">
           <Button onClick={deal} disabled={isDealt}>
             Deal
@@ -30,7 +64,7 @@ function App() {
           </Button>
         </div>
         <div className="flex gap-2 border p-2 items-center">
-          <Button onClick={play} disabled={!isDealerTurn}>
+          <Button onClick={dealerTurn} disabled={!isDealerTurn}>
             Play
           </Button>
           <div>
@@ -54,7 +88,9 @@ function App() {
                   <div className="flex gap-2">
                     <Button
                       onClick={() => hit(player, h)}
-                      disabled={playerTurn !== p || hand.isBust || hand.isStand}
+                      disabled={
+                        playerTurn !== p || hand.isBusted || hand.isStand
+                      }
                     >
                       Hit
                     </Button>
@@ -65,7 +101,9 @@ function App() {
                     Split
                   </Button> */}
                     <Button
-                      disabled={playerTurn !== p || hand.isBust || hand.isStand}
+                      disabled={
+                        playerTurn !== p || hand.isBusted || hand.isStand
+                      }
                       onClick={() => stand(player, h)}
                     >
                       Stand
@@ -77,6 +115,7 @@ function App() {
           </div>
         ))}
       </div>
+      {/* Debug */}
     </>
   );
 }

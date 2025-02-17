@@ -6,9 +6,11 @@ type Status = "playing" | "bust" | "blackjack" | "stand" | "split";
 export class Hand extends Deck {
   #score: number = 0;
   #status: Status = "playing";
+  #owner: string;
 
-  constructor() {
+  constructor(owner: string) {
     super(0);
+    this.#owner = owner;
   }
 
   get score() {
@@ -23,7 +25,7 @@ export class Hand extends Deck {
     return this.status === "playing";
   }
 
-  get isBust() {
+  get isBusted() {
     return this.#status === "bust";
   }
 
@@ -64,6 +66,9 @@ export class Hand extends Deck {
       this.#status = "blackjack";
     } else if (this.#score > 21) {
       this.#status = "bust";
+      this.forEach((card) => {
+        card.isBusted = true;
+      });
     }
     return this;
   }
@@ -82,8 +87,8 @@ export class Hand extends Deck {
     }
 
     const [first, second] = this;
-    const hand1 = new Hand().add(first);
-    const hand2 = new Hand().add(second);
+    const hand1 = new Hand(this.#owner).add(first);
+    const hand2 = new Hand(this.#owner).add(second);
 
     hand1.accumulate(first);
     hand2.accumulate(second);

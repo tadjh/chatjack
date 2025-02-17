@@ -10,7 +10,8 @@ export const FLOAT_AMPLITUDE = 3;
 export const SPRITE_FRAME_WIDTH = 64;
 export const SPRITE_FRAME_HEIGHT = 96;
 export const SPRITE_SCALE = 4;
-export const FONT_FAMILY = "Jacquard";
+export const DISPLAY_FONT = "Jacquard";
+export const SANS_SERIF_FONT = "PressStart2P";
 const isDevelopment = import.meta.env.MODE === "development";
 
 export const Palette: Record<string, Vector3> = {
@@ -38,10 +39,23 @@ export const Palette: Record<string, Vector3> = {
 
 export const fonts: Map<string, string> = new Map([
   [
-    FONT_FAMILY,
+    DISPLAY_FONT,
     `${isDevelopment ? "/src" : ""}/assets/fonts/Jacquard24-Regular.ttf`,
+  ],
+  [
+    SANS_SERIF_FONT,
+    `${isDevelopment ? "/src" : ""}/assets/fonts/PressStart2P-Regular.ttf`,
   ],
 ]);
 
 export const spriteSheet = `${isDevelopment ? "/src" : ""}/assets/sprites/cards.png`;
+
+export enum State {
+  Init,
+  ReadyToDeal,
+  PlayerTurn,
+  DealerTurn,
+  Score,
+  GameOver,
+}
 

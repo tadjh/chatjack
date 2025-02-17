@@ -8,8 +8,12 @@ export type TextAnim = {
   progress: number;
   fadeInDelay: number;
   maxWidth: string;
-  offsetX: { start: number; end: number };
-  offsetY: { start: number; end: number };
+  fontSize: number;
+  fontFamily: string;
+  lineHeight: number;
+  position: "center" | "left" | "right" | "top" | "bottom";
+  slideX: { start: number; end: number };
+  slideY: { start: number; end: number };
   kerning: { start: number; end: number };
   shadow?: {
     color: [number, number, number];
@@ -20,9 +24,9 @@ export type TextAnim = {
   stroke?: { width: number; color: [number, number, number] };
 };
 
-export type SpriteAnim = {
+export type LoopAnim = {
   id: string;
-  type: "sprite";
+  type: "loop";
   progress: number;
   frame: number;
   currentFrame: number;
@@ -35,5 +39,18 @@ export type SpriteAnim = {
   offsetY: { start: number; end: number };
 };
 
-export type Anim = TextAnim | SpriteAnim;
+export type SpriteAnim = {
+  id: string;
+  type: "sprite";
+  progress: number;
+  sprite: { x: number; y: number };
+  fadeInDelay: number;
+  scale: number;
+  angle: number;
+  opacity: { start: number; end: number };
+  offsetX: { start: number; end: number };
+  offsetY: { start: number; end: number };
+};
+
+export type Anim = TextAnim | LoopAnim | SpriteAnim;
 

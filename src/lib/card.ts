@@ -52,6 +52,8 @@ export class Card extends Number {
   #points: number = 0;
   #isAce: boolean;
   #isHidden: boolean;
+  isBusted: boolean = false;
+  owner: string = "";
 
   constructor(card: number, hidden = false) {
     if (card < 0 || card > 52) {
