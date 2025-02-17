@@ -27,6 +27,7 @@ export class Renderer {
   private players: Player[] = [];
   private state: State = State.ReadyToDeal;
   private baseFontSize = window.innerWidth * 0.00125;
+  private isGameover = false;
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -337,7 +338,7 @@ export class Renderer {
           ? this.spriteHeight * 52
           : this.spriteHeight * card.valueOf(),
       },
-      delay: delay || index * 12,
+      delay: delay !== undefined ? delay : index * 12,
       scale: isDealer ? 0.75 : 1,
       angle: ((Math.random() * angle * 2 - angle) * Math.PI) / 180,
       opacity: { start: 0, end: card.isBusted ? 0.5 : 1 },
@@ -355,7 +356,6 @@ export class Renderer {
     this.drawBackground();
 
     switch (this.state) {
-      case State.PlayerBust:
       case State.Init:
         this.loopSprite();
         this.drawText();
@@ -364,6 +364,18 @@ export class Renderer {
       case State.PlayerTurn:
       case State.DealerTurn:
         this.drawCards();
+        break;
+      case State.PlayerBust:
+        if (this.isGameover) {
+          this.loopSprite();
+          this.drawText();
+        } else {
+          this.drawCards();
+          if (this.animations.every((anim) => anim.progress === 1)) {
+            this.animations = bustedAnimation;
+            this.isGameover = true;
+          }
+        }
         break;
       default:
         break;
@@ -481,60 +493,60 @@ export class Renderer {
         }
         break;
       case State.PlayerTurn:
-        {
-          // TODO support split hands
-          let maxLength = this.dealer.hand.length;
-
-          this.players.forEach((player) => {
-            // TODO Support split hands
-            maxLength = Math.max(maxLength, player.hand.length);
-          });
-
-          const cards: Card[] = [];
-
-          for (let i = 0; i < maxLength; i++) {
-            cards.push(
-              ...this.players
-                .map((player) => {
-                  if (player.hand.length <= i) return undefined;
-                  return player.hand[i];
-                })
-                .filter((card) => card !== undefined)
-            );
-            if (this.dealer.hand.length > i) {
-              cards.push(this.dealer.hand[i]);
-            }
-          }
-
-          for (let i = 0; i < cards.length; i++) {
-            const cardId = `${cards[i].owner}'s ${cards[i].name} ${i}`;
-            if (this.animations[i] && this.animations[i].id === cardId) {
-              (this.animations[i] as SpriteAnim).opacity.end = cards[i].isBusted
-                ? 0.5
-                : 1;
-              continue;
-            }
-
-            const cardAnim = this.createCardAnim(cards[i], i, 0);
-
-            if (this.animations[i]) {
-              this.animations.splice(i, 0, cardAnim);
-            } else {
-              this.animations.push(cardAnim);
-            }
-          }
-        }
+      case State.PlayerBust:
+        this.createPlayerTurnAnimations();
         break;
       case State.DealerTurn:
         break;
-      case State.PlayerBust:
-        this.animations = bustedAnimation;
         break;
       default:
         break;
     }
 
     this.drawCanvas();
+  }
+
+  private createPlayerTurnAnimations() {
+    let maxLength = this.dealer.hand.length;
+
+    this.players.forEach((player) => {
+      // TODO Support split hands
+      maxLength = Math.max(maxLength, player.hand.length);
+    });
+
+    const cards: Card[] = [];
+
+    for (let i = 0; i < maxLength; i++) {
+      cards.push(
+        ...this.players
+          .map((player) => {
+            if (player.hand.length <= i) return undefined;
+            return player.hand[i];
+          })
+          .filter((card) => card !== undefined)
+      );
+      if (this.dealer.hand.length > i) {
+        cards.push(this.dealer.hand[i]);
+      }
+    }
+
+    for (let i = 0; i < cards.length; i++) {
+      const cardId = `${cards[i].owner}'s ${cards[i].name} ${i}`;
+      if (this.animations[i] && this.animations[i].id === cardId) {
+        (this.animations[i] as SpriteAnim).opacity.end = cards[i].isBusted
+          ? 0.5
+          : 1;
+        continue;
+      }
+
+      const cardAnim = this.createCardAnim(cards[i], i, 0);
+
+      if (this.animations[i]) {
+        this.animations.splice(i, 0, cardAnim);
+      } else {
+        this.animations.push(cardAnim);
+      }
+    }
   }
 
   private lerp(start: number, end: number, easing: number) {
