@@ -115,6 +115,7 @@ export class Blackjack {
     if (this.#playerTurn === this.players.length) {
       this.#state = State.DealerTurn;
       this.#isDealerTurn = true;
+      this.dealer.hand[1].show();
     }
     return this;
   }

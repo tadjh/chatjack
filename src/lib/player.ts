@@ -58,16 +58,18 @@ export class Player {
   }
 
   hit(card: Card, id = 0) {
-    if (!this.#isSplit) {
-      card.owner = this.name;
+    card.owner = this.name;
+    if (this.#isSplit) {
+      this.#hands[id].add(card);
+      if (this.#hands[id].isBusted) {
+        this.#isBusted[id] = true;
+      }
+    } else {
       this.hand.add(card);
       if (this.hand.isBusted) {
         this.#isBusted = [true];
       }
-      return this;
     }
-    card.owner = this.name;
-    this.#hands[id].add(card);
     return this;
   }
 

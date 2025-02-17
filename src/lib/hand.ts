@@ -35,6 +35,7 @@ export class Hand extends Deck {
 
   add(card: Card) {
     this.protect();
+    card.index = this.length;
     super.push(card);
     return this.accumulate(card);
   }

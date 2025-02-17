@@ -89,7 +89,10 @@ function App() {
                     <Button
                       onClick={() => hit(player, h)}
                       disabled={
-                        playerTurn !== p || hand.isBusted || hand.isStand
+                        playerTurn !== p ||
+                        hand.isBusted ||
+                        hand.isStand ||
+                        hand.isBlackjack
                       }
                     >
                       Hit
@@ -102,7 +105,10 @@ function App() {
                   </Button> */}
                     <Button
                       disabled={
-                        playerTurn !== p || hand.isBusted || hand.isStand
+                        playerTurn !== p ||
+                        hand.isBusted ||
+                        hand.isStand ||
+                        hand.isBlackjack
                       }
                       onClick={() => stand(player, h)}
                     >

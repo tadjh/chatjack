@@ -54,6 +54,7 @@ export class Card extends Number {
   #isHidden: boolean;
   isBusted: boolean = false;
   owner: string = "";
+  index: number = 0;
 
   constructor(card: number, hidden = false) {
     if (card < 0 || card > 52) {
