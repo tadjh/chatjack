@@ -1,56 +1,56 @@
 export type Vector3 = [number, number, number];
 
-export type TextAnim = {
+interface BaseAnim {
   id: string;
-  type: "text";
-  text: string;
-  color: [number, number, number];
+  type: "text" | "loop" | "sprite";
   progress: number;
-  fadeInDelay: number;
-  maxWidth: string;
-  fontSize: number;
-  fontFamily: string;
-  lineHeight: number;
-  position: "center" | "left" | "right" | "top" | "bottom";
-  slideX: { start: number; end: number };
-  slideY: { start: number; end: number };
-  kerning: { start: number; end: number };
-  shadow?: {
-    color: [number, number, number];
+  delay?: number;
+  translateX?: { start: number; end: number };
+  translateY?: { start: number; end: number };
+  float?: {
     x: number;
     y: number;
-    size: number;
+    speed: number;
   };
-  stroke?: { width: number; color: [number, number, number] };
-};
+}
 
-export type LoopAnim = {
-  id: string;
+export interface TextAnim extends BaseAnim {
+  type: "text";
+  text: string;
+  style: {
+    color: [number, number, number];
+    maxWidth: string;
+    fontSize: number;
+    fontFamily: string;
+    lineHeight: number;
+    position: "center" | "left" | "right" | "top" | "bottom";
+    shadow?: {
+      color: [number, number, number];
+      x: number;
+      y: number;
+      size: number;
+    };
+    stroke?: { color: [number, number, number]; width: number };
+  };
+  kerning?: { start: number; end: number };
+}
+
+export interface LoopAnim extends BaseAnim {
   type: "loop";
-  progress: number;
-  frame: number;
-  currentFrame: number;
-  speed: number;
-  frames: { x: number; y: number; flipX?: boolean; flipY?: boolean }[];
-  fadeInDelay: number;
-  maxWidth: string;
+  stepProgress: number;
+  stepDuration: number;
+  currentStep: number;
+  steps: { x: number; y: number; flipX?: boolean; flipY?: boolean }[];
   opacity: { start: number; end: number };
-  offsetX: { start: number; end: number };
-  offsetY: { start: number; end: number };
-};
+}
 
-export type SpriteAnim = {
-  id: string;
+export interface SpriteAnim extends BaseAnim {
   type: "sprite";
-  progress: number;
   sprite: { x: number; y: number };
-  fadeInDelay: number;
   scale: number;
   angle: number;
   opacity: { start: number; end: number };
-  offsetX: { start: number; end: number };
-  offsetY: { start: number; end: number };
-};
+}
 
 export type Anim = TextAnim | LoopAnim | SpriteAnim;
 

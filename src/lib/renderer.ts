@@ -3,15 +3,15 @@ import { Card } from "./card";
 import {
   ANIMATION_SPEED,
   Palette,
-  SPRITE_FRAME_HEIGHT,
-  SPRITE_FRAME_WIDTH,
+  SPRITE_HEIGHT,
   SPRITE_SCALE,
+  SPRITE_WIDTH,
   State,
   TICK_RATE,
 } from "./constants";
 import { Dealer } from "./dealer";
 import { Player } from "./player";
-import { Anim, SpriteAnim, TextAnim } from "./types";
+import { Anim, SpriteAnim } from "./types";
 import { easeOutCubic, font, rgb, rgba } from "./utils";
 
 export class Renderer {
@@ -26,14 +26,16 @@ export class Renderer {
   private dealer = new Dealer();
   private players: Player[] = [];
   private state: State = State.ReadyToDeal;
+  private baseFontSize = window.innerWidth * 0.00125;
 
   constructor(
     canvas: HTMLCanvasElement,
     private animations = titleAnimation,
     private tickRate = TICK_RATE,
     private animSpeed = ANIMATION_SPEED,
-    private floatSpeed = ANIMATION_SPEED * 4,
-    private floatAmplitude = 3
+    private spriteScale = SPRITE_SCALE,
+    private spriteWidth = SPRITE_WIDTH,
+    private spriteHeight = SPRITE_HEIGHT
   ) {
     this.canvas = canvas;
     const ctx = canvas.getContext("2d");
@@ -91,37 +93,72 @@ export class Renderer {
     this.ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
   }
 
-  private drawTitleText() {
+  private drawText() {
     const baseMaxWidth = window.innerWidth * 0.8;
-    const baseFontSize = window.innerWidth * 0.025;
 
     this.ctx.textAlign = "center";
     this.ctx.fillStyle = rgb(Palette.White);
 
     this.animations.forEach((anim, index) => {
       if (anim.type !== "text") return;
-      let fontSize = baseFontSize * anim.fontSize;
-      this.ctx.font = font(fontSize, anim.fontFamily);
+      let fontSize = this.baseFontSize * anim.style.fontSize;
+      this.ctx.font = font(fontSize, anim.style.fontFamily);
       const textWidth = this.ctx.measureText(anim.text).width;
       let maxWidth = baseMaxWidth;
-      if (anim.maxWidth !== "full") {
-        maxWidth = this.widthMap.get(anim.maxWidth) || maxWidth;
+      if (anim.style.maxWidth !== "full") {
+        maxWidth = this.widthMap.get(anim.style.maxWidth) || maxWidth;
       }
       if (textWidth > maxWidth) {
         fontSize *= maxWidth / textWidth;
-        this.ctx.font = font(fontSize, anim.fontFamily);
+        this.ctx.font = font(fontSize, anim.style.fontFamily);
       }
-      const easing = easeOutCubic(anim.progress);
-      const slideX = this.lerp(anim.slideX.start, anim.slideX.end, easing);
-      const kerning = this.lerp(anim.kerning.start, anim.kerning.end, easing);
-      let slideY = this.lerp(anim.slideY.start, anim.slideY.end, easing);
-      slideY += Math.sin(this.time * this.floatSpeed) * this.floatAmplitude;
-      const lineHeight = fontSize * anim.lineHeight;
-      const centerX = this.centerX + slideX;
 
+      let easing = 1;
+      let slideX = anim.translateX?.end || 0;
+      let slideY = anim.translateY?.end || 0;
+      let kerning = anim.kerning?.end || 0;
+
+      if (anim.progress < 1) {
+        easing = easeOutCubic(anim.progress);
+
+        if (anim.translateX) {
+          slideX = this.lerp(
+            anim.translateX.start,
+            anim.translateX.end,
+            easing
+          );
+        }
+
+        if (anim.translateY) {
+          slideY = this.lerp(
+            anim.translateY.start,
+            anim.translateY.end,
+            easing
+          );
+        }
+
+        if (anim.kerning) {
+          kerning = this.lerp(anim.kerning.start, anim.kerning.end, easing);
+        }
+      }
+
+      if (anim.float && anim.float.x !== 0) {
+        slideX += Math.sin(this.time * anim.float.speed) * anim.float.x;
+      }
+
+      if (anim.float && anim.float.y !== 0) {
+        slideY += Math.sin(this.time * anim.float.speed) * anim.float.y;
+      }
+
+      const lineHeight = fontSize * anim.style.lineHeight;
+      const centerX = this.centerX + slideX;
       let centerY = this.centerY;
-      if (anim.position === "bottom") {
-        centerY = window.innerHeight - 40 - lineHeight * 0.5;
+
+      if (anim.style.position === "bottom") {
+        centerY =
+          slideY +
+          Math.floor(window.innerHeight - window.innerHeight * 0.025) -
+          lineHeight;
       } else {
         centerY =
           Math.floor(window.innerHeight / 3) + slideY + index * lineHeight;
@@ -131,123 +168,132 @@ export class Renderer {
 
       this.widthMap.set(anim.id, this.ctx.measureText(anim.text).width);
 
-      this.drawTextShadow(anim, easing, fontSize, centerX, centerY, slideY);
+      if (anim.style.shadow) {
+        const shadowOffset = anim.progress >= 1 ? slideY : 0;
 
-      this.drawTextStroke(anim, easing, fontSize, centerX, centerY);
+        this.ctx.strokeStyle = rgba(anim.style.shadow.color, easing);
+        this.ctx.lineWidth = fontSize / anim.style.shadow.size;
+        this.ctx.fillStyle = rgba(anim.style.shadow.color, easing);
+        this.ctx.fillText(
+          anim.text,
+          centerX + anim.style.shadow.x,
+          centerY + anim.style.shadow.y - shadowOffset
+        );
+        this.ctx.strokeText(
+          anim.text,
+          centerX + anim.style.shadow.x,
+          centerY + anim.style.shadow.y - shadowOffset
+        );
+      }
 
-      this.ctx.fillStyle = rgba(anim.color, easing);
+      if (anim.style.stroke) {
+        this.ctx.strokeStyle = rgba(anim.style.stroke.color, easing);
+        this.ctx.lineWidth = fontSize / anim.style.stroke.width;
+        this.ctx.strokeText(anim.text, centerX, centerY);
+      }
+
+      this.ctx.fillStyle = rgba(anim.style.color, easing);
       this.ctx.fillText(anim.text, centerX, centerY);
     });
   }
 
-  private drawTextShadow(
-    anim: TextAnim,
-    easing: number,
-    fontSize: number,
-    centerX: number,
-    centerY: number,
-    offsetY: number
-  ) {
-    if (anim.shadow) {
-      const shadowOffset = anim.progress >= 1 ? offsetY : 0;
-
-      this.ctx.strokeStyle = rgba(anim.shadow.color, easing);
-      this.ctx.lineWidth = fontSize / anim.shadow.size;
-      this.ctx.fillStyle = rgba(anim.shadow.color, easing);
-      this.ctx.fillText(
-        anim.text,
-        centerX + anim.shadow.x,
-        centerY + anim.shadow.y - shadowOffset
-      );
-      this.ctx.strokeText(
-        anim.text,
-        centerX + anim.shadow.x,
-        centerY + anim.shadow.y - shadowOffset
-      );
-    }
-  }
-
-  private drawTextStroke(
-    anim: TextAnim,
-    easing: number,
-    fontSize: number,
-    centerX: number,
-    centerY: number
-  ) {
-    if (anim.stroke) {
-      this.ctx.strokeStyle = rgba(anim.stroke.color, easing);
-      this.ctx.lineWidth = fontSize / anim.stroke.width;
-      this.ctx.strokeText(anim.text, centerX, centerY);
-    }
-  }
-
-  private drawCardLoop() {
+  private loopSprite() {
     this.animations.forEach((anim) => {
       if (anim.type !== "loop") return;
       if (!this.spriteSheet) return;
 
-      const spriteWidth = SPRITE_FRAME_WIDTH * SPRITE_SCALE;
-      const spriteHeight = SPRITE_FRAME_HEIGHT * SPRITE_SCALE;
+      const scale = (window.innerWidth * 0.2) / this.spriteWidth;
 
-      const scale = (window.innerWidth * 0.2) / spriteWidth;
+      const destWidth = this.spriteWidth * scale;
+      const destHeight = this.spriteHeight * scale;
 
-      const destWidth = spriteWidth * scale;
-      const destHeight = spriteHeight * scale;
+      const sourceX = anim.steps[anim.currentStep].x * this.spriteScale;
+      const sourceY = anim.steps[anim.currentStep].y * this.spriteScale;
 
-      const sourceX = anim.frames[anim.currentFrame].x;
-      const sourceY = anim.frames[anim.currentFrame].y;
+      let easing = 1;
+      let offsetY = anim.translateY?.end || 0;
+      let offsetX = anim.translateX?.end || 0;
 
-      const easing = easeOutCubic(anim.progress);
-      let offsetY = this.lerp(anim.offsetY.start, anim.offsetY.end, easing);
-      offsetY +=
-        Math.sin(this.time * this.floatSpeed) * this.floatAmplitude * 2;
+      if (anim.progress < 1) {
+        easing = easeOutCubic(anim.progress);
+
+        if (anim.translateX) {
+          offsetX = this.lerp(
+            anim.translateX.start,
+            anim.translateX.end,
+            easing
+          );
+        }
+
+        if (anim.translateY) {
+          offsetY = this.lerp(
+            anim.translateY.start,
+            anim.translateY.end,
+            easing
+          );
+        }
+      }
+
+      if (anim.float && anim.float.y !== 0) {
+        offsetX += Math.sin(this.time * anim.float.speed) * anim.float.x * 2;
+        offsetY += Math.sin(this.time * anim.float.speed) * anim.float.y * 2;
+      }
+
+      let centerX = offsetX + this.centerX - destWidth / 2;
+      let centerY = offsetY + this.centerY - destHeight / 2;
+
       this.ctx.save();
       this.ctx.globalAlpha = easing;
 
-      if (anim.frames[anim.currentFrame].flipX) {
+      if (anim.steps[anim.currentStep].flipX) {
         this.ctx.scale(-1, 1);
-        this.ctx.drawImage(
-          this.spriteSheet,
-          sourceX * SPRITE_SCALE,
-          sourceY * SPRITE_SCALE,
-          spriteWidth,
-          spriteHeight,
-          -this.centerX - destWidth / 2,
-          offsetY + this.centerY - destHeight / 2,
-          destWidth,
-          destHeight
-        );
-      } else {
-        this.ctx.drawImage(
-          this.spriteSheet,
-          sourceX * SPRITE_SCALE,
-          sourceY * SPRITE_SCALE,
-          spriteWidth,
-          spriteHeight,
-          this.centerX - destWidth / 2,
-          offsetY + this.centerY - destHeight / 2,
-          destWidth,
-          destHeight
-        );
+        centerX = offsetX - this.centerX - destWidth / 2;
+      } else if (anim.steps[anim.currentStep].flipY) {
+        this.ctx.scale(1, -1);
+        centerY = offsetY - this.centerY - destHeight / 2;
       }
+
+      this.ctx.drawImage(
+        this.spriteSheet,
+        sourceX,
+        sourceY,
+        this.spriteWidth,
+        this.spriteHeight,
+        centerX,
+        centerY,
+        destWidth,
+        destHeight
+      );
       this.ctx.restore();
     });
   }
 
-  drawCard(anim: Anim, x: number, y: number) {
+  drawSprite(anim: Anim, x: number, y: number) {
     if (anim.type !== "sprite") return;
     if (!this.spriteSheet) return;
     const sourceX = anim.sprite.x;
     const sourceY = anim.sprite.y;
-    const spriteWidth = SPRITE_FRAME_WIDTH * SPRITE_SCALE;
-    const spriteHeight = SPRITE_FRAME_HEIGHT * SPRITE_SCALE;
 
-    const easing = easeOutCubic(anim.progress);
-    const offsetY = this.lerp(anim.offsetY.start, anim.offsetY.end, easing);
-    const scale = (window.innerWidth * 0.2 * anim.scale) / spriteWidth;
-    const destWidth = spriteWidth * scale;
-    const destHeight = spriteHeight * scale;
-    const destX = x - destWidth / 2;
+    let easing = 1;
+    let offsetX = anim.translateX?.end || 0;
+    let offsetY = anim.translateY?.end || 0;
+
+    if (anim.progress < 1) {
+      easing = easeOutCubic(anim.progress);
+
+      if (anim.translateX) {
+        offsetX = this.lerp(anim.translateX.start, anim.translateX.end, easing);
+      }
+
+      if (anim.translateY) {
+        offsetY = this.lerp(anim.translateY.start, anim.translateY.end, easing);
+      }
+    }
+
+    const scale = (window.innerWidth * 0.2 * anim.scale) / this.spriteWidth;
+    const destWidth = this.spriteWidth * scale;
+    const destHeight = this.spriteHeight * scale;
+    const destX = offsetX + x - destWidth / 2;
     const destY = offsetY + y - destHeight / 2;
     this.ctx.save();
     this.ctx.translate(0, 0);
@@ -257,8 +303,8 @@ export class Renderer {
       this.spriteSheet,
       sourceX,
       sourceY,
-      spriteWidth,
-      spriteHeight,
+      this.spriteWidth,
+      this.spriteHeight,
       destX,
       destY,
       destWidth,
@@ -274,9 +320,35 @@ export class Renderer {
       const y = isDealer
         ? 0 - index * 5
         : window.innerHeight - window.innerHeight * 0.2 + index * 5;
-      this.drawCard(card, x, y);
+      this.drawSprite(card, x, y);
     });
   }
+
+  createCardAnim = (card: Card, index: number, delay?: number): SpriteAnim => {
+    const isDealer = card.owner === "Dealer";
+    const angle = 8;
+    const anim: SpriteAnim = {
+      id: `${card.owner}'s ${card.name} ${index}`,
+      type: "sprite",
+      progress: 0,
+      sprite: {
+        x: card.isHidden ? 0 : this.spriteWidth * 2,
+        y: card.isHidden
+          ? this.spriteHeight * 52
+          : this.spriteHeight * card.valueOf(),
+      },
+      delay: delay || index * 12,
+      scale: isDealer ? 0.75 : 1,
+      angle: ((Math.random() * angle * 2 - angle) * Math.PI) / 180,
+      opacity: { start: 0, end: card.isBusted ? 0.5 : 1 },
+      translateY: {
+        start: isDealer ? -this.spriteHeight * 0.75 : this.spriteHeight,
+        end: 0,
+      },
+    };
+
+    return anim;
+  };
 
   private drawCanvas() {
     this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
@@ -285,8 +357,8 @@ export class Renderer {
     switch (this.state) {
       case State.PlayerBust:
       case State.Init:
-        this.drawCardLoop();
-        this.drawTitleText();
+        this.loopSprite();
+        this.drawText();
         break;
       case State.ReadyToDeal:
       case State.PlayerTurn:
@@ -306,6 +378,7 @@ export class Renderer {
     this.canvas.style.height = `${window.innerHeight}px`;
     this.centerX = Math.floor(window.innerWidth / 2);
     this.centerY = Math.floor(window.innerHeight / 2);
+    this.baseFontSize = window.innerWidth * 0.00125;
     this.ctx.scale(dpr, dpr);
     this.drawCanvas();
   }
@@ -316,8 +389,8 @@ export class Renderer {
       this.lastTick = timestamp;
       this.time += 1;
       this.animations.forEach((anim) => {
-        if (anim.fadeInDelay > 0) {
-          anim.fadeInDelay -= 1;
+        if (anim.delay && anim.delay > 0) {
+          anim.delay -= 1;
         } else {
           if (anim.progress < 1) {
             anim.progress += this.animSpeed;
@@ -325,10 +398,10 @@ export class Renderer {
           }
 
           if (anim.type === "loop") {
-            anim.frame += 1;
-            if (anim.frame >= anim.speed) {
-              anim.frame = 0;
-              anim.currentFrame = (anim.currentFrame + 1) % anim.frames.length;
+            anim.stepProgress += 1;
+            if (anim.stepProgress >= anim.stepDuration) {
+              anim.stepProgress = 0;
+              anim.currentStep = (anim.currentStep + 1) % anim.steps.length;
             }
           }
         }
@@ -402,30 +475,9 @@ export class Renderer {
             }
           }
 
-          const spriteWidth = SPRITE_FRAME_WIDTH * SPRITE_SCALE;
-          const spriteHeight = SPRITE_FRAME_HEIGHT * SPRITE_SCALE;
-          this.animations = cards.map((card, index) => ({
-            id: `${card.owner}'s ${card.name} ${index}`,
-            type: "sprite",
-            progress: 0,
-            sprite: {
-              x: card.isHidden ? 0 : spriteWidth * 2,
-              y: card.isHidden
-                ? spriteHeight * 52
-                : spriteHeight * card.valueOf(),
-            },
-            fadeInDelay: index * 12,
-            maxWidth: "full",
-            scale: card.owner === "Dealer" ? 0.75 : 1,
-            angle: ((Math.random() * 16 - 8) * Math.PI) / 180,
-            opacity: { start: 0, end: card.isBusted ? 0.5 : 1 },
-            offsetX: { start: 0, end: 0 },
-            offsetY: {
-              start:
-                card.owner === "Dealer" ? -spriteHeight * 0.75 : spriteHeight,
-              end: 0,
-            },
-          }));
+          this.animations = cards.map((card, index) =>
+            this.createCardAnim(card, index)
+          );
         }
         break;
       case State.PlayerTurn:
@@ -463,37 +515,12 @@ export class Renderer {
               continue;
             }
 
-            const spriteWidth = SPRITE_FRAME_WIDTH * SPRITE_SCALE;
-            const spriteHeight = SPRITE_FRAME_HEIGHT * SPRITE_SCALE;
-            const newAnimation: SpriteAnim = {
-              id: cardId,
-              type: "sprite",
-              progress: 0,
-              sprite: {
-                x: cards[i].isHidden ? 0 : spriteWidth * 2,
-                y: cards[i].isHidden
-                  ? spriteHeight * 52
-                  : spriteHeight * cards[i].valueOf(),
-              },
-              fadeInDelay: 0,
-              scale: cards[i].owner === "Dealer" ? 0.75 : 1,
-              angle: ((Math.random() * 16 - 8) * Math.PI) / 180,
-              opacity: { start: 0, end: cards[i].isBusted ? 0.5 : 1 },
-              offsetX: { start: 0, end: 0 },
-              offsetY: {
-                start:
-                  cards[i].owner === "Dealer"
-                    ? -spriteHeight * 0.75
-                    : spriteHeight,
-
-                end: 0,
-              },
-            };
+            const cardAnim = this.createCardAnim(cards[i], i, 0);
 
             if (this.animations[i]) {
-              this.animations.splice(i, 0, newAnimation);
+              this.animations.splice(i, 0, cardAnim);
             } else {
-              this.animations.push(newAnimation);
+              this.animations.push(cardAnim);
             }
           }
         }
