@@ -287,6 +287,13 @@ export class Renderer {
       destY = translateY - anchorY - destHeight / 2;
     }
 
+    if (anim.shadow) {
+      this.ctx.shadowColor = rgba(anim.shadow.color, anim.shadow.opacity);
+      this.ctx.shadowBlur = anim.shadow.blur;
+      this.ctx.shadowOffsetX = anim.shadow.offsetX;
+      this.ctx.shadowOffsetY = anim.shadow.offsetY;
+    }
+
     this.ctx.drawImage(
       this.spriteSheet,
       sourceX,
@@ -319,7 +326,7 @@ export class Renderer {
   createCardAnim = (card: Card, delay = 0): SpriteAnim => {
     const isDealer = card.owner === "Dealer";
     const anim: SpriteAnim = {
-      id: `${card.owner}'s ${card.name} ${card.index}`,
+      id: this.getCardId(card),
       type: "sprite",
       progress: 0,
       easing: "easeOutQuint",
@@ -344,8 +351,16 @@ export class Renderer {
         start: isDealer ? -this.spriteHeight * 0.75 : this.spriteHeight,
         end: 0,
       },
+      shadow: {
+        color: Palette.DarkestGreen,
+        opacity: 1,
+        offsetX: 4,
+        offsetY: 4,
+        blur: 0,
+      },
     };
 
+    console.log("Card animation created:", anim.id);
     return anim;
   };
 
@@ -364,7 +379,6 @@ export class Renderer {
         break;
       case State.PlayerBust:
         if (this.isGameover) {
-          this.drawCards();
           this.drawTitle();
         } else {
           this.drawCards();
@@ -548,12 +562,17 @@ export class Renderer {
     }
 
     for (let i = 0; i < cards.length; i++) {
-      const cardId = `${cards[i].owner}'s ${cards[i].name} ${cards[i].index}`;
+      const cardId = this.getCardId(cards[i]);
+
+      console.log(this.animations[i], cardId);
+
       if (this.animations[i] && this.animations[i].id === cardId) {
         (this.animations[i] as SpriteAnim).opacity = {
           start: 1,
           end: cards[i].isBusted ? 0.5 : 1,
         };
+        console.log("skipping", cardId);
+
         continue;
       }
 
@@ -568,14 +587,30 @@ export class Renderer {
   }
 
   private createDealerTurnAnimations() {
-    // const dealerCard = this.dealer.hand[1];
-    // const cardId = `${dealerCard.owner}'s ${dealerCard.name} ${dealerCard.index}`;
-    // const index = this.animations.findIndex((anim) => anim.id === cardId);
-    // if (index !== -1) {
-    //   this.animations[index] = cardAnim;
-    // } else {
-    //   this.animations.push(cardAnim);
-    // }
+    const dealerCard = this.dealer.hand[1];
+    const cardId = this.getCardId(dealerCard, "Hidden");
+    const index = this.animations.findIndex((anim) => anim.id === cardId);
+    if (index !== -1) {
+      const cardAnim = this.animations[index] as SpriteAnim;
+      const cardY = this.spriteHeight * dealerCard.valueOf();
+      cardAnim.sprites = [
+        { x: 0, y: 19968 },
+        { x: 256, y: 19968 },
+        { x: 512, y: 19968 },
+        { x: 0, y: cardY },
+        { x: 256, y: cardY },
+        { x: 512, y: cardY },
+      ];
+      cardAnim.playback = "once";
+      cardAnim.spriteDuration = 1;
+      this.animations[index] = cardAnim;
+    } else {
+      throw new Error("Cannot create animation. Dealer card not found");
+    }
+  }
+
+  private getCardId(card: Card, name = card.name) {
+    return `[${card.index}] ${card.owner}'s ${name}`;
   }
 
   private lerp(start: number, end: number, easing: number) {

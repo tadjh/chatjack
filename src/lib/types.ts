@@ -50,6 +50,13 @@ export interface SpriteAnim extends BaseAnim {
   scale?: number;
   angle?: number;
   opacity?: { start: number; end: number };
+  shadow?: {
+    color: [number, number, number];
+    opacity: number;
+    offsetX: number;
+    offsetY: number;
+    blur: number;
+  };
 }
 
 export type Anim = TextAnim | SpriteAnim;

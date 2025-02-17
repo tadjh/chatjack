@@ -41,6 +41,13 @@ export const titleAnimation: Anim[] = [
     opacity: { start: 0, end: 1 },
     translateY: { start: 200, end: 0 },
     float: { x: 0, y: 5, speed: 1 / 2 },
+    shadow: {
+      color: Palette.DarkestGreen,
+      opacity: 1,
+      offsetX: 48,
+      offsetY: 48,
+      blur: 0,
+    },
   },
   {
     id: "title",
