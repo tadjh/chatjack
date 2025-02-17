@@ -105,7 +105,14 @@
 
   html,
   body {
-    @apply m-0 p-0 overflow-hidden;
+    @apply m-0 p-0 overflow-hidden bg-[#193c3e];
+  }
+
+  canvas {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    image-rendering: -moz-crisp-edges;
+    /* image-rendering: -webkit-optimize-contrast; */
   }
 }
 

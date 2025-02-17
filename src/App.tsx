@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useBlackjack } from "@/hooks/use-blackjack";
-import { Blackjack } from "./components/blackjack";
+import { Game } from "./components/game";
 
 function App() {
   const {
@@ -18,7 +18,7 @@ function App() {
 
   return (
     <>
-      <Blackjack />
+      <Game />
       <div className="p-4 grid gap-2 absolute top-0 right-0 z-10">
         <div>ChatJack</div>
         <div className="flex gap-2">

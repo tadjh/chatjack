@@ -1,33 +1,17 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { Vector3 } from "./types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function hexToRgb(hex: string, alpha?: number): string {
-  // Remove the leading '#' if present
-  hex = hex.replace(/^#/, "");
+export const font = (size: number, font: string) => `${size}px ${font}`;
 
-  let r: number, g: number, b: number;
+export const rgba = (color: Vector3, alpha: number) =>
+  `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${alpha})`;
 
-  // Support shorthand form (e.g. "03F")
-  if (hex.length === 3) {
-    r = parseInt(hex[0] + hex[0], 16);
-    g = parseInt(hex[1] + hex[1], 16);
-    b = parseInt(hex[2] + hex[2], 16);
-  } else if (hex.length === 6) {
-    r = parseInt(hex.slice(0, 2), 16);
-    g = parseInt(hex.slice(2, 4), 16);
-    b = parseInt(hex.slice(4, 6), 16);
-  } else {
-    throw new Error("Invalid hex color");
-  }
+export const rgb = (color: Vector3) => rgba(color, 1);
 
-  if (alpha !== undefined) {
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  }
-
-  return `rgb(${r}, ${g}, ${b})`;
-}
+export const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 
