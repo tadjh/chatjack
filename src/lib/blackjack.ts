@@ -100,7 +100,22 @@ export class Blackjack {
       throw new Error("Player cannot hit");
     }
     player.hit(this.draw());
-    this.#state = State.PlayerTurn;
+    // TODO Support splitting
+    if (player.hand.isBusted) {
+      this.#state = State.PlayerBust;
+    } else {
+      this.#state = State.PlayerTurn;
+    }
+    return this;
+  }
+
+  stand(player: Player, index = 0) {
+    player.stand(index);
+    this.#playerTurn++;
+    if (this.#playerTurn === this.players.length) {
+      this.#state = State.DealerTurn;
+      this.#isDealerTurn = true;
+    }
     return this;
   }
 
@@ -125,7 +140,25 @@ export class Blackjack {
       throw new Error("Dealer cannot play");
     }
 
-    this.dealer.play(this.#deck);
+    this.dealer.dealerHit(this.#deck);
+
+    this.players.forEach((player) => {
+      if (
+        player.hand.status === "blackjack" &&
+        this.dealer.hand.status === "blackjack"
+      ) {
+        this.#state = State.Push;
+      } else if (player.hand.status === "blackjack") {
+        this.#state = State.PlayerWin;
+      } else if (player.hand.status === "busted") {
+        this.#state = State.PlayerBust;
+      } else if (player.hand.score > this.dealer.hand.score) {
+        this.#state = State.PlayerWin;
+      } else if (player.hand.score < this.dealer.hand.score) {
+        this.#state = State.DealerWin;
+      }
+    });
+
     return this;
   }
 

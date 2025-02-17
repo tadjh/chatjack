@@ -56,6 +56,9 @@ export enum State {
   PlayerTurn,
   DealerTurn,
   Score,
-  GameOver,
+  PlayerBust,
+  PlayerWin,
+  DealerWin,
+  Push,
 }
 

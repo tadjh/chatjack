@@ -65,7 +65,7 @@ function App() {
         </div>
         <div className="flex gap-2 border p-2 items-center">
           <Button onClick={dealerTurn} disabled={!isDealerTurn}>
-            Play
+            Hit
           </Button>
           <div>
             <div>Dealer</div>

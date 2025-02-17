@@ -27,7 +27,7 @@ export function useBlackjack(deckCount = 1, playerCount = 1) {
   }
 
   function stand(player: Player, i = 0) {
-    player.stand(i);
+    blackjack.current.stand(player, i);
     updateSnapshot();
   }
 

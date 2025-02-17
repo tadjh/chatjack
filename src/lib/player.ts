@@ -7,6 +7,7 @@ export class Player {
   public readonly id = id++;
   #isSplit = false;
   #hands: Hand[];
+  #isBusted = [false];
 
   constructor(
     public readonly name = "Player",
@@ -52,10 +53,17 @@ export class Player {
     return this.#isSplit;
   }
 
+  get isBusted() {
+    return this.#isBusted;
+  }
+
   hit(card: Card, id = 0) {
     if (!this.#isSplit) {
       card.owner = this.name;
-      this.#hands[0].add(card);
+      this.hand.add(card);
+      if (this.hand.isBusted) {
+        this.#isBusted = [true];
+      }
       return this;
     }
     card.owner = this.name;

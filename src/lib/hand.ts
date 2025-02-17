@@ -1,11 +1,11 @@
 import { Card, Rank } from "./card";
 import { Deck } from "./deck";
 
-type Status = "playing" | "bust" | "blackjack" | "stand" | "split";
+type Status = "playing" | "busted" | "blackjack" | "stand" | "split";
 
 export class Hand extends Deck {
   #score: number = 0;
-  #status: Status = "playing";
+  status: Status = "playing";
   #owner: string;
 
   constructor(owner: string) {
@@ -17,24 +17,20 @@ export class Hand extends Deck {
     return this.#score;
   }
 
-  get status() {
-    return this.#status;
-  }
-
   get isPlaying() {
     return this.status === "playing";
   }
 
   get isBusted() {
-    return this.#status === "bust";
+    return this.status === "busted";
   }
 
   get isStand() {
-    return this.#status === "stand";
+    return this.status === "stand";
   }
 
   get isBlackjack() {
-    return this.#status === "blackjack";
+    return this.status === "blackjack";
   }
 
   add(card: Card) {
@@ -63,9 +59,9 @@ export class Hand extends Deck {
   updateStatus() {
     this.protect();
     if (this.#score === 21) {
-      this.#status = "blackjack";
+      this.status = "blackjack";
     } else if (this.#score > 21) {
-      this.#status = "bust";
+      this.status = "busted";
       this.forEach((card) => {
         card.isBusted = true;
       });
@@ -75,7 +71,7 @@ export class Hand extends Deck {
 
   stand() {
     this.protect();
-    this.#status = "stand";
+    this.status = "stand";
     return this;
   }
 
@@ -95,7 +91,7 @@ export class Hand extends Deck {
 
     super.empty();
     this.#score = 0;
-    this.#status = "split";
+    this.status = "split";
 
     return [hand1, hand2];
   }
@@ -103,7 +99,7 @@ export class Hand extends Deck {
   reset() {
     super.empty();
     this.#score = 0;
-    this.#status = "playing";
+    this.status = "playing";
     return this;
   }
 

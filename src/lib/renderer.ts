@@ -1,4 +1,4 @@
-import { titleAnimation } from "./animations";
+import { bustedAnimation, titleAnimation } from "./animations";
 import { Card } from "./card";
 import {
   ANIMATION_SPEED,
@@ -283,14 +283,14 @@ export class Renderer {
     this.drawBackground();
 
     switch (this.state) {
+      case State.PlayerBust:
       case State.Init:
         this.drawCardLoop();
         this.drawTitleText();
         break;
       case State.ReadyToDeal:
-        this.drawCards();
-        break;
       case State.PlayerTurn:
+      case State.DealerTurn:
         this.drawCards();
         break;
       default:
@@ -369,6 +369,8 @@ export class Renderer {
     this.dealer = dealer;
     this.players = players;
     this.state = state;
+
+    console.log("State:", State[state]);
 
     switch (this.state) {
       case State.Init:
@@ -495,6 +497,11 @@ export class Renderer {
             }
           }
         }
+        break;
+      case State.DealerTurn:
+        break;
+      case State.PlayerBust:
+        this.animations = bustedAnimation;
         break;
       default:
         break;

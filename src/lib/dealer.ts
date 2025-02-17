@@ -6,11 +6,16 @@ export class Dealer extends Player {
     super("Dealer", Role.Dealer);
   }
 
-  play(deck: Card[]) {
+  dealerHit(deck: Card[]) {
     while (true) {
       const decision = this.decide(deck);
 
       if (decision === "stand") {
+        if (this.hand.score === 21) {
+          this.hand.status = "blackjack";
+        } else {
+          this.hand.status = "stand";
+        }
         break;
       }
 
@@ -23,7 +28,7 @@ export class Dealer extends Player {
       this.hit(card);
       console.log(`Dealer hits and draws: ${card.name}`);
 
-      if (this.hand.status === "bust") {
+      if (this.hand.status === "busted") {
         console.log("Dealer busts");
         break;
       }
