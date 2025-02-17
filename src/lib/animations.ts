@@ -13,6 +13,7 @@ export const titleAnimation: Anim[] = [
     type: "text",
     text: TITLE_TEXT,
     progress: 0,
+    easing: "easeOutCubic",
     style: {
       color: Palette.Yellow,
       maxWidth: "full",
@@ -32,6 +33,7 @@ export const titleAnimation: Anim[] = [
     type: "text",
     text: SUBTITLE_TEXT,
     progress: 0,
+    easing: "easeOutCubic",
     delay: 12,
     style: {
       color: Palette.Yellow,
@@ -51,6 +53,7 @@ export const titleAnimation: Anim[] = [
     type: "text",
     text: "!start",
     progress: 0,
+    easing: "easeOutCubic",
     delay: 32,
     style: {
       color: Palette.Yellow,
@@ -69,6 +72,7 @@ export const titleAnimation: Anim[] = [
     id: "card",
     type: "loop",
     progress: 0,
+    easing: "easeOutCubic",
     stepProgress: 0,
     currentStep: 0,
     stepDuration: 6,
@@ -107,6 +111,7 @@ export const bustedAnimation: Anim[] = [
     type: "text",
     text: "Busted!",
     progress: 0,
+    easing: "easeOutCubic",
     style: {
       color: Palette.Yellow,
       maxWidth: "full",
@@ -126,6 +131,7 @@ export const bustedAnimation: Anim[] = [
     type: "text",
     text: "Better luck next time!",
     progress: 0,
+    easing: "easeOutCubic",
     delay: 12,
     style: {
       color: Palette.Yellow,
@@ -145,6 +151,7 @@ export const bustedAnimation: Anim[] = [
     type: "text",
     text: "!restart",
     progress: 0,
+    easing: "easeOutCubic",
     delay: 32,
     style: {
       color: Palette.Yellow,

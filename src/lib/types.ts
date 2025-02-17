@@ -4,6 +4,8 @@ interface BaseAnim {
   id: string;
   type: "text" | "loop" | "sprite";
   progress: number;
+  easing: "linear" | "easeOutCubic" | "easeOutQuint";
+  speed?: number;
   delay?: number;
   translateX?: { start: number; end: number };
   translateY?: { start: number; end: number };

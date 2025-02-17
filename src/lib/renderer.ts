@@ -12,7 +12,7 @@ import {
 import { Dealer } from "./dealer";
 import { Player } from "./player";
 import { Anim, SpriteAnim } from "./types";
-import { easeOutCubic, font, rgb, rgba } from "./utils";
+import { easeOut, font, rgb, rgba } from "./utils";
 
 export class Renderer {
   private canvas: HTMLCanvasElement;
@@ -33,7 +33,7 @@ export class Renderer {
     canvas: HTMLCanvasElement,
     private animations = titleAnimation,
     private tickRate = TICK_RATE,
-    private animSpeed = ANIMATION_SPEED,
+    private baseAnimSpeed = ANIMATION_SPEED,
     private spriteScale = SPRITE_SCALE,
     private spriteWidth = SPRITE_WIDTH,
     private spriteHeight = SPRITE_HEIGHT
@@ -115,15 +115,21 @@ export class Renderer {
       }
 
       let easing = 1;
-      let slideX = anim.translateX?.end || 0;
-      let slideY = anim.translateY?.end || 0;
+      let translateX = anim.translateX?.end || 0;
+      let translateY = anim.translateY?.end || 0;
       let kerning = anim.kerning?.end || 0;
 
       if (anim.progress < 1) {
-        easing = easeOutCubic(anim.progress);
+        if (anim.easing === "linear") {
+          easing = anim.progress;
+        } else if (anim.easing === "easeOutCubic") {
+          easing = easeOut(anim.progress, 3);
+        } else if (anim.easing === "easeOutQuint") {
+          easing = easeOut(anim.progress, 5);
+        }
 
         if (anim.translateX) {
-          slideX = this.lerp(
+          translateX = this.lerp(
             anim.translateX.start,
             anim.translateX.end,
             easing
@@ -131,7 +137,7 @@ export class Renderer {
         }
 
         if (anim.translateY) {
-          slideY = this.lerp(
+          translateY = this.lerp(
             anim.translateY.start,
             anim.translateY.end,
             easing
@@ -144,25 +150,25 @@ export class Renderer {
       }
 
       if (anim.float && anim.float.x !== 0) {
-        slideX += Math.sin(this.time * anim.float.speed) * anim.float.x;
+        translateX += Math.sin(this.time * anim.float.speed) * anim.float.x;
       }
 
       if (anim.float && anim.float.y !== 0) {
-        slideY += Math.sin(this.time * anim.float.speed) * anim.float.y;
+        translateY += Math.sin(this.time * anim.float.speed) * anim.float.y;
       }
 
       const lineHeight = fontSize * anim.style.lineHeight;
-      const centerX = this.centerX + slideX;
+      const centerX = this.centerX + translateX;
       let centerY = this.centerY;
 
       if (anim.style.position === "bottom") {
         centerY =
-          slideY +
+          translateY +
           Math.floor(window.innerHeight - window.innerHeight * 0.025) -
           lineHeight;
       } else {
         centerY =
-          Math.floor(window.innerHeight / 3) + slideY + index * lineHeight;
+          Math.floor(window.innerHeight / 3) + translateY + index * lineHeight;
       }
 
       this.ctx.letterSpacing = `${kerning}px`;
@@ -170,7 +176,7 @@ export class Renderer {
       this.widthMap.set(anim.id, this.ctx.measureText(anim.text).width);
 
       if (anim.style.shadow) {
-        const shadowOffset = anim.progress >= 1 ? slideY : 0;
+        const shadowOffset = anim.progress >= 1 ? translateY : 0;
 
         this.ctx.strokeStyle = rgba(anim.style.shadow.color, easing);
         this.ctx.lineWidth = fontSize / anim.style.shadow.size;
@@ -216,7 +222,13 @@ export class Renderer {
       let offsetX = anim.translateX?.end || 0;
 
       if (anim.progress < 1) {
-        easing = easeOutCubic(anim.progress);
+        if (anim.easing === "linear") {
+          easing = anim.progress;
+        } else if (anim.easing === "easeOutCubic") {
+          easing = easeOut(anim.progress, 3);
+        } else if (anim.easing === "easeOutQuint") {
+          easing = easeOut(anim.progress, 5);
+        }
 
         if (anim.translateX) {
           offsetX = this.lerp(
@@ -272,15 +284,19 @@ export class Renderer {
   drawSprite(anim: Anim, x: number, y: number) {
     if (anim.type !== "sprite") return;
     if (!this.spriteSheet) return;
-    const sourceX = anim.sprite.x;
-    const sourceY = anim.sprite.y;
 
     let easing = 1;
     let offsetX = anim.translateX?.end || 0;
     let offsetY = anim.translateY?.end || 0;
 
     if (anim.progress < 1) {
-      easing = easeOutCubic(anim.progress);
+      if (anim.easing === "linear") {
+        easing = anim.progress;
+      } else if (anim.easing === "easeOutCubic") {
+        easing = easeOut(anim.progress, 3);
+      } else if (anim.easing === "easeOutQuint") {
+        easing = easeOut(anim.progress, 5);
+      }
 
       if (anim.translateX) {
         offsetX = this.lerp(anim.translateX.start, anim.translateX.end, easing);
@@ -302,8 +318,8 @@ export class Renderer {
     this.ctx.globalAlpha = anim.opacity.end;
     this.ctx.drawImage(
       this.spriteSheet,
-      sourceX,
-      sourceY,
+      anim.sprite.x,
+      anim.sprite.y,
       this.spriteWidth,
       this.spriteHeight,
       destX,
@@ -332,13 +348,15 @@ export class Renderer {
       id: `${card.owner}'s ${card.name} ${index}`,
       type: "sprite",
       progress: 0,
+      easing: "easeOutQuint",
+      speed: 1 / 16,
       sprite: {
         x: card.isHidden ? 0 : this.spriteWidth * 2,
         y: card.isHidden
           ? this.spriteHeight * 52
           : this.spriteHeight * card.valueOf(),
       },
-      delay: delay !== undefined ? delay : index * 12,
+      delay: delay !== undefined ? delay : index * 10,
       scale: isDealer ? 0.75 : 1,
       angle: ((Math.random() * angle * 2 - angle) * Math.PI) / 180,
       opacity: { start: 0, end: card.isBusted ? 0.5 : 1 },
@@ -405,7 +423,8 @@ export class Renderer {
           anim.delay -= 1;
         } else {
           if (anim.progress < 1) {
-            anim.progress += this.animSpeed;
+            anim.progress +=
+              anim.speed !== undefined ? anim.speed : this.baseAnimSpeed;
             if (anim.progress > 1) anim.progress = 1;
           }
 
