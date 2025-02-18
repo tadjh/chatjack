@@ -94,5 +94,41 @@ describe("Player", () => {
       "Hand must have exactly two cards to split"
     );
   });
+
+  it("should update the player's hand status correctly", () => {
+    const player = new Player("Bob");
+    const card1 = new Card(Suit.Diamonds + Rank.Ten);
+    const card2 = new Card(Suit.Hearts + Rank.Seven);
+    player.hand.add(card1).add(card2);
+    // Before standing, status should be "playing"
+    expect(player.status).toBe("playing");
+    player.stand();
+    expect(player.status).toBe("stand");
+  });
+
+  it("should throw an error when attempting to hit a non-playing hand", () => {
+    const player = new Player("Alice");
+    player.stand();
+    const card = new Card(Suit.Clubs + Rank.Five);
+    expect(() => player.hit(card)).toThrow(
+      "Hand is not allowed to perform this action"
+    );
+  });
+
+  it("should throw an error when attempting to stand a non-playing hand", () => {
+    const player = new Player("Alice");
+    player.stand();
+    expect(() => player.stand()).toThrow(
+      "Hand is not allowed to perform this action"
+    );
+  });
+
+  it("should throw an error when attempting to split a non-playing hand", () => {
+    const player = new Player("Alice");
+    player.stand();
+    expect(() => player.split()).toThrow(
+      "Hand is not allowed to perform this action"
+    );
+  });
 });
 

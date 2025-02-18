@@ -65,5 +65,35 @@ describe("Blackjack", () => {
     game.deal();
     expect(() => game.deal()).toThrow("Game has already started");
   });
+
+  it("should throw an error if a player hits out of turn", () => {
+    const game = new Blackjack();
+    game.deal();
+    const player = game.players[0];
+    game.stand(player); // Move to next player's turn
+    expect(() => game.hit(player)).toThrow(
+      `It is not this ${player.name} turn`
+    );
+  });
+
+  it("should throw an error if a player stands out of turn", () => {
+    const game = new Blackjack();
+    game.deal();
+    const player = game.players[0];
+    game.stand(player); // Move to next player's turn
+    expect(() => game.stand(player)).toThrow(
+      `It is not this ${player.name} turn`
+    );
+  });
+
+  it("should throw an error if a player splits out of turn", () => {
+    const game = new Blackjack();
+    game.deal();
+    const player = game.players[0];
+    game.stand(player); // Move to next player's turn
+    expect(() => game.split(player)).toThrow(
+      `It is not this ${player.name} turn`
+    );
+  });
 });
 

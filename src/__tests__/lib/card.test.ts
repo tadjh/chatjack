@@ -47,6 +47,11 @@ describe("Card", () => {
     expect(tenCard.points).toBe(10);
   });
 
+  it("should throw an error when setting Ace points on a non-Ace card", () => {
+    const card = new Card(Suit.Clubs + Rank.Ten);
+    expect(() => card.setAce("low")).toThrow("Card is not an Ace");
+  });
+
   it("should correctly identify an Ace", () => {
     const aceCard = new Card(Suit.Clubs + Rank.Ace);
     const tenCard = new Card(Suit.Clubs + Rank.Ten);

@@ -53,6 +53,12 @@ describe("Deck", () => {
     expect(() => deck.draw()).toThrow("Card drawn: none");
   });
 
+  test("should throw an error when peeking a card from an empty deck", () => {
+    const deck = new Deck(1);
+    deck.empty();
+    expect(() => deck.peek()).toThrow("No cards left");
+  });
+
   test("should add a card to the deck at the correct position", () => {
     const deck = new Deck(1);
     const initialLength = deck.length;

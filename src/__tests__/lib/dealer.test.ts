@@ -32,6 +32,28 @@ describe("Dealer", () => {
     expect(() => dealer.split()).toThrow("Dealer cannot split");
   });
 
+  it("should throw an error when attempting to hit a non-playing hand", () => {
+    dealer.stand();
+    const card = new Card(Suit.Clubs + Rank.Five);
+    expect(() => dealer.hit(card)).toThrow(
+      "Hand is not allowed to perform this action"
+    );
+  });
+
+  it("should throw an error when attempting to stand a non-playing hand", () => {
+    dealer.stand();
+    expect(() => dealer.stand()).toThrow(
+      "Hand is not allowed to perform this action"
+    );
+  });
+
+  it("should throw an error when attempting to split a non-playing hand", () => {
+    dealer.stand();
+    expect(() => dealer.split()).toThrow(
+      "Hand is not allowed to perform this action"
+    );
+  });
+
   it("should decide to hit if score is less than 17", () => {
     // Manually set dealer hand score through cards that total less than 17.
     dealer.hand.reset?.();
