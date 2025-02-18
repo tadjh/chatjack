@@ -1,6 +1,7 @@
 import { Blackjack } from "@/lib/blackjack";
 import { Card } from "@/lib/card";
 import { Role } from "@/lib/player";
+import { describe, expect, test, vi, beforeEach } from "vitest";
 
 describe("Blackjack", () => {
   let blackjack: Blackjack;
@@ -22,15 +23,15 @@ describe("Blackjack", () => {
     expect(game.remaining).toBe(51);
   });
 
-  it("should draw a card and log the correct message", () => {
-    console.log = jest.fn(); // Mock console.log
+  test("should draw a card and log the correct message", () => {
+    console.log = vi.fn(); // Mock console.log
     const card = blackjack.draw();
     expect(console.log).toHaveBeenCalledWith("Card drawn:", expect.anything());
     expect(card).toBeInstanceOf(Card);
   });
 
-  it("should log 'none' if no card is drawn", () => {
-    console.log = jest.fn(); // Mock console.log
+  test("should log 'none' if no card is drawn", () => {
+    console.log = vi.fn(); // Mock console.log
     blackjack.empty(); // Empty the deck
     expect(() => blackjack.draw()).toThrow("Card drawn: none");
   });
@@ -53,14 +54,14 @@ describe("Blackjack", () => {
   test("should throw an error if cards are dealt more than once", () => {
     const game = new Blackjack();
     game.deal();
-    expect(() => game.deal()).toThrow("Cards have already been dealt");
+    expect(() => game.deal()).toThrow("Game has already started");
   });
 
-  test.skip("should deal a second face down card to each player except the dealer", () => {
+  test.skip("should deal a second face down card to the dealer", () => {
     const game = new Blackjack(1, 2); // One deck, two players
     game.deal();
     game.table.forEach((player) => {
-      if (player.role !== Role.Dealer) {
+      if (player.role === Role.Dealer) {
         expect(player.hand[1].isHidden).toBe(true);
       }
     });

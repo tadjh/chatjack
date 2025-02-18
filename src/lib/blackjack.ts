@@ -4,12 +4,10 @@ import { Deck } from "./deck";
 import { Player } from "./player";
 
 export class Blackjack {
-  #table: [Dealer, ...Player[]] = [new Dealer()];
-  #isDealt = false;
-  #isDealerTurn = false;
-  #playerTurn = -1;
-  #deck: Deck = new Deck();
   #state = State.Init;
+  #table: [Dealer, ...Player[]] = [new Dealer()];
+  #deck: Deck = new Deck();
+  #playerTurn = -1;
 
   constructor(deckCount = 1, playerCount = 1) {
     this.init(deckCount, playerCount);
@@ -29,11 +27,13 @@ export class Blackjack {
   }
 
   get isDealt() {
-    return this.#isDealt;
+    console.log(this.#state);
+
+    return this.#state > State.Init;
   }
 
   get isDealerTurn() {
-    return this.#isDealerTurn;
+    return this.#state === State.DealerTurn;
   }
 
   get playerTurn() {
@@ -67,10 +67,6 @@ export class Blackjack {
   }
 
   public deal() {
-    if (this.#isDealt) {
-      throw new Error("Cards have already been dealt");
-    }
-
     if (this.#state !== State.Init) {
       throw new Error("Game has already started");
     }
@@ -89,7 +85,6 @@ export class Blackjack {
 
     this.dealer.hit(this.draw(true));
 
-    this.#isDealt = true;
     this.#state = State.ReadyToDeal;
     this.#playerTurn++;
     return this;
@@ -114,7 +109,6 @@ export class Blackjack {
     this.#playerTurn++;
     if (this.#playerTurn === this.players.length) {
       this.#state = State.DealerTurn;
-      this.#isDealerTurn = true;
       this.dealer.hand[1].show();
     }
     return this;
@@ -166,9 +160,7 @@ export class Blackjack {
   reset(deckCount = 1, playerCount = 1) {
     this.#table.forEach((player) => player.reset());
     this.#table = [this.dealer];
-    this.#isDealerTurn = false;
     this.#playerTurn = -1;
-    this.#isDealt = false;
     this.#deck.empty();
     this.init(deckCount, playerCount);
     return this;
