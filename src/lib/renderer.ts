@@ -1,4 +1,8 @@
-import { bustedAnimation, titleAnimation } from "./animations";
+import {
+  bustedAnimation,
+  dealerWinAnimation,
+  titleAnimation,
+} from "./animations";
 import { Card } from "./card";
 import {
   ANIMATION_SPEED,
@@ -11,7 +15,7 @@ import {
 } from "./constants";
 import { Dealer } from "./dealer";
 import { Player } from "./player";
-import { SpriteAnim, TextAnim } from "./types";
+import { Anim, SpriteAnim, TextAnim } from "./types";
 import { easeOut, font, rgb, rgba } from "./utils";
 
 export class Renderer {
@@ -28,10 +32,12 @@ export class Renderer {
   private state: State = State.ReadyToDeal;
   private baseFontSize = window.innerWidth * 0.00125;
   private isGameover = false;
+  private isHole = true;
+  private isComplete = true;
+  private animations: Map<string, Anim>;
 
   constructor(
     canvas: HTMLCanvasElement,
-    private animations = titleAnimation,
     private tickRate = TICK_RATE,
     private baseAnimSpeed = ANIMATION_SPEED,
     private spriteWidth = SPRITE_WIDTH,
@@ -44,6 +50,9 @@ export class Renderer {
     }
     ctx.imageSmoothingEnabled = false;
     this.ctx = ctx;
+    this.animations = new Map<string, Anim>(
+      titleAnimation.map((anim) => [anim.id, anim])
+    );
     this.resizeCanvas();
   }
 
@@ -382,8 +391,25 @@ export class Renderer {
           this.drawTitle();
         } else {
           this.drawCards();
-          if (this.animations.every((anim) => anim.progress === 1)) {
-            this.animations.push(...bustedAnimation);
+          if (this.isComplete) {
+            for (let i = 0; i < bustedAnimation.length; i++) {
+              const anim = bustedAnimation[i];
+              this.animations.set(anim.id, anim);
+            }
+            this.isGameover = true;
+          }
+        }
+        break;
+      case State.DealerWin:
+        if (this.isGameover) {
+          this.drawTitle();
+        } else {
+          this.drawCards();
+          if (this.isComplete) {
+            for (let i = 0; i < dealerWinAnimation.length; i++) {
+              const anim = dealerWinAnimation[i];
+              this.animations.set(anim.id, anim);
+            }
             this.isGameover = true;
           }
         }
@@ -411,12 +437,14 @@ export class Renderer {
     if (timestamp - this.lastTick >= this.tickRate) {
       this.lastTick = timestamp;
       this.time += 1;
+      this.isComplete = true;
       this.animations.forEach((anim) => {
         if (anim.delay && anim.delay > 0) {
           anim.delay -= 1;
         } else {
           anim.progress = anim.progress ?? 0;
           if (anim.progress < 1) {
+            this.isComplete = false;
             anim.progress +=
               anim.speed !== undefined ? anim.speed : this.baseAnimSpeed;
             if (anim.progress > 1) anim.progress = 1;
@@ -464,11 +492,14 @@ export class Renderer {
   }
 
   reset() {
-    this.animations = titleAnimation;
+    this.animations = new Map<string, Anim>(
+      titleAnimation.map((anim) => [anim.id, anim])
+    );
     this.dealer = new Dealer();
     this.players = [];
     this.state = State.Init;
     this.isGameover = false;
+    this.isHole = true;
     this.drawCanvas();
   }
 
@@ -492,42 +523,15 @@ export class Renderer {
         this.reset();
         break;
       case State.ReadyToDeal:
-        {
-          // TODO support split hands
-          let maxLength = this.dealer.hand.length;
-
-          this.players.forEach((player) => {
-            // TODO Support split hands
-            maxLength = Math.max(maxLength, player.hand.length);
-          });
-
-          const cards: Card[] = [];
-
-          for (let i = 0; i < maxLength; i++) {
-            cards.push(
-              ...this.players
-                .map((player) => {
-                  if (player.hand.length <= i) return undefined;
-                  return player.hand[i];
-                })
-                .filter((card) => card !== undefined)
-            );
-            if (this.dealer.hand.length > i) {
-              cards.push(this.dealer.hand[i]);
-            }
-          }
-
-          const delay = 10;
-          this.animations = cards.map((card, index) =>
-            this.createCardAnim(card, index * delay)
-          );
-        }
+        this.animations.clear();
+        this.createReadyToDealAnimations();
         break;
       case State.PlayerTurn:
       case State.PlayerBust:
         this.createPlayerTurnAnimations();
         break;
       case State.DealerTurn:
+      case State.DealerWin:
         this.createDealerTurnAnimations();
         break;
       default:
@@ -537,7 +541,8 @@ export class Renderer {
     this.drawCanvas();
   }
 
-  private createPlayerTurnAnimations() {
+  private createReadyToDealAnimations() {
+    // TODO support split hands
     let maxLength = this.dealer.hand.length;
 
     this.players.forEach((player) => {
@@ -561,51 +566,70 @@ export class Renderer {
       }
     }
 
+    const delay = 10;
+
     for (let i = 0; i < cards.length; i++) {
-      const cardId = this.getCardId(cards[i]);
-
-      console.log(this.animations[i], cardId);
-
-      if (this.animations[i] && this.animations[i].id === cardId) {
-        (this.animations[i] as SpriteAnim).opacity = {
-          start: 1,
-          end: cards[i].isBusted ? 0.5 : 1,
-        };
-        console.log("skipping", cardId);
-
-        continue;
-      }
-
-      const cardAnim = this.createCardAnim(cards[i]);
-
-      if (this.animations[i]) {
-        this.animations.splice(i, 0, cardAnim);
-      } else {
-        this.animations.push(cardAnim);
-      }
+      const cardAnim = this.createCardAnim(cards[i], i * delay);
+      this.animations.set(cardAnim.id, cardAnim);
     }
   }
 
+  private createPlayerTurnAnimations() {
+    this.players.forEach((player) => {
+      player.hand.forEach((card) => {
+        const cardId = this.getCardId(card);
+
+        if (this.animations.has(cardId)) {
+          const anim = this.animations.get(cardId) as SpriteAnim;
+          anim.opacity = { start: 1, end: card.isBusted ? 0.5 : 1 };
+          this.animations.set(cardId, anim);
+          return;
+        }
+
+        const cardAnim = this.createCardAnim(card, 0);
+
+        this.animations.set(cardAnim.id, cardAnim);
+      });
+    });
+  }
+
   private createDealerTurnAnimations() {
-    const dealerCard = this.dealer.hand[1];
-    const cardId = this.getCardId(dealerCard, "Hidden");
-    const index = this.animations.findIndex((anim) => anim.id === cardId);
-    if (index !== -1) {
-      const cardAnim = this.animations[index] as SpriteAnim;
-      const cardY = this.spriteHeight * dealerCard.valueOf();
-      cardAnim.sprites = [
-        { x: 0, y: 19968 },
-        { x: 256, y: 19968 },
-        { x: 512, y: 19968 },
-        { x: 0, y: cardY },
-        { x: 256, y: cardY },
-        { x: 512, y: cardY },
-      ];
-      cardAnim.playback = "once";
-      cardAnim.spriteDuration = 1;
-      this.animations[index] = cardAnim;
+    if (this.isHole) {
+      this.isHole = false;
+      const dealerCard = this.dealer.hand[1];
+      const cardId = this.getCardId(dealerCard, "Hidden");
+      if (this.animations.has(cardId)) {
+        const cardAnim = this.animations.get(cardId) as SpriteAnim;
+        const cardY = this.spriteHeight * dealerCard.valueOf();
+        cardAnim.sprites = [
+          { x: 0, y: 19968 },
+          { x: 256, y: 19968 },
+          { x: 512, y: 19968 },
+          { x: 0, y: cardY },
+          { x: 256, y: cardY },
+          { x: 512, y: cardY },
+        ];
+        cardAnim.playback = "once";
+        cardAnim.spriteDuration = 1;
+        this.animations.set(cardId, cardAnim);
+      } else {
+        throw new Error("Cannot create animation. Dealer card not found");
+      }
     } else {
-      throw new Error("Cannot create animation. Dealer card not found");
+      this.dealer.hand.forEach((card) => {
+        const cardId = this.getCardId(card);
+
+        if (this.animations.has(cardId)) {
+          const anim = this.animations.get(cardId) as SpriteAnim;
+          anim.opacity = { start: 1, end: card.isBusted ? 0.5 : 1 };
+          this.animations.set(cardId, anim);
+          return;
+        }
+
+        const cardAnim = this.createCardAnim(card, 0);
+
+        this.animations.set(cardAnim.id, cardAnim);
+      });
     }
   }
 
