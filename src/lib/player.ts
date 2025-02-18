@@ -91,8 +91,9 @@ export class Player {
     }
 
     const hands = this.hand.split();
+
     this.#isSplit = true;
-    this.#hands = hands;
+    this.#hands = [...hands];
     return this;
   }
 

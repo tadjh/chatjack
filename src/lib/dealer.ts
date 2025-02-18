@@ -44,19 +44,18 @@ export class Dealer extends Player {
         busts++;
       }
     }
+
     return busts / deck.length;
   }
 
   decide(deck: Card[], countCards = false) {
-    if (this.score < 17) {
-      return "hit";
-    }
-
     if (countCards) {
       const busts = this.probability(deck);
       if (busts < 0.5 && this.score < 21) {
         return "hit";
       }
+    } else if (this.score < 17) {
+      return "hit";
     }
 
     return "stand";

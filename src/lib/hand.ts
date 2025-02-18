@@ -84,16 +84,13 @@ export class Hand extends Deck {
     }
 
     const [first, second] = this;
+
     const hand1 = new Hand(this.#owner).add(first);
     const hand2 = new Hand(this.#owner).add(second);
 
-    hand1.accumulate(first);
-    hand2.accumulate(second);
-
-    super.empty();
-    this.#score = 0;
     this.status = "split";
-
+    this.#score = 0;
+    super.empty();
     return [hand1, hand2];
   }
 

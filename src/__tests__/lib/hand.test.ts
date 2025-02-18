@@ -1,9 +1,10 @@
 import { Hand } from "@/lib/hand";
 import { Card, Suit, Rank } from "@/lib/card";
+import { describe, test, expect } from "vitest";
 
 describe("Hand", () => {
   test("should create a hand with default values", () => {
-    const hand = new Hand();
+    const hand = new Hand("Test");
     expect(hand.length).toBe(0);
     expect(hand.score).toBe(0);
     expect(hand.status).toBe("playing");
@@ -11,9 +12,9 @@ describe("Hand", () => {
   });
 
   test("should add cards to the hand and calculate score correctly", () => {
-    const hand = new Hand();
-    const card1 = new Card(Suit.Clubs + Rank.Ace); // Ace of Clubs
-    const card2 = new Card(Suit.Clubs + Rank.Jack); // Jack of Clubs
+    const hand = new Hand("Test");
+    const card1 = new Card(Suit.Clubs + Rank.Ace); // Ace of Clubs (normally 11)
+    const card2 = new Card(Suit.Clubs + Rank.Jack); // Jack of Clubs (10)
     hand.add(card1).add(card2);
     expect(hand.length).toBe(2);
     expect(hand.score).toBe(21);
@@ -21,39 +22,101 @@ describe("Hand", () => {
   });
 
   test("should calculate score correctly with multiple Aces", () => {
-    const hand = new Hand();
-    const card1 = new Card(Suit.Clubs + Rank.Ace); // Ace of Clubs
-    const card2 = new Card(Suit.Diamonds + Rank.Ace); // Ace of Diamonds
-    hand.add(card1).add(card2);
-    expect(hand.score).toBe(12); // One Ace counts as 11, the other as 1
+    const hand = new Hand("Test");
+    const ace1 = new Card(Suit.Clubs + Rank.Ace); // Ace of Clubs (11 initially)
+    const ace2 = new Card(Suit.Diamonds + Rank.Ace); // Ace of Diamonds (should be 1 if needed)
+    hand.add(ace1).add(ace2);
+    expect(hand.score).toBe(12); // 11 + 1 = 12
   });
 
   test("should update status to busted if score exceeds 21", () => {
-    const hand = new Hand();
-    const card1 = new Card(Suit.Clubs + Rank.Ten); // Ten of Clubs
-    const card2 = new Card(Suit.Diamonds + Rank.Ten); // Ten of Diamonds
-    const card3 = new Card(Suit.Hearts + Rank.Two); // Two of Hearts
+    const hand = new Hand("Test");
+    const card1 = new Card(Suit.Clubs + Rank.Ten); // 10
+    const card2 = new Card(Suit.Diamonds + Rank.Ten); // 10
+    const card3 = new Card(Suit.Hearts + Rank.Two); // 2 -> total 22
     hand.add(card1).add(card2).add(card3);
     expect(hand.score).toBe(22);
-    expect(hand.status).toBe("bust");
+    expect(hand.status).toBe("busted");
     expect(hand.isPlaying).toBe(false);
   });
 
   test("should update status to stand", () => {
-    const hand = new Hand().stand();
+    const hand = new Hand("Test");
+    hand.stand();
     expect(hand.status).toBe("stand");
     expect(hand.isPlaying).toBe(false);
   });
 
   test("should reset the hand", () => {
-    const hand = new Hand();
-    const card1 = new Card(Suit.Clubs + Rank.Ace); // Ace of Clubs
-    hand.add(card1);
+    const hand = new Hand("Test");
+    const card = new Card(Suit.Clubs + Rank.Ace);
+    hand.add(card);
     hand.reset();
     expect(hand.length).toBe(0);
     expect(hand.score).toBe(0);
     expect(hand.status).toBe("playing");
     expect(hand.isPlaying).toBe(true);
+  });
+
+  test("should throw an error when trying to add a card to a non-playing hand", () => {
+    const hand = new Hand("Test");
+    hand.stand(); // Ends play so further actions are disallowed.
+    const card = new Card(Suit.Clubs + Rank.Ace);
+    expect(() => hand.add(card)).toThrow(
+      "Hand is not allowed to perform this action"
+    );
+  });
+
+  test("should assign proper index to added cards", () => {
+    const hand = new Hand("Test");
+    const card1 = new Card(Suit.Hearts + Rank.Seven);
+    const card2 = new Card(Suit.Spades + Rank.Eight);
+    hand.add(card1);
+    hand.add(card2);
+    expect(card1.index).toBe(0);
+    expect(card2.index).toBe(1);
+  });
+
+  test("should correctly calculate score with three Aces", () => {
+    const hand = new Hand("Test");
+    // First Ace counts as 11; subsequent Aces count as 1 if needed.
+    // Expected score: 11 + 1 + 1 = 13.
+    const ace1 = new Card(Suit.Clubs + Rank.Ace);
+    const ace2 = new Card(Suit.Diamonds + Rank.Ace);
+    const ace3 = new Card(Suit.Hearts + Rank.Ace);
+    hand.add(ace1).add(ace2).add(ace3);
+    expect(hand.score).toBe(13);
+  });
+
+  test("should throw an error when calling stand on a non-playing (busted) hand", () => {
+    const hand = new Hand("Test");
+    const card1 = new Card(Suit.Clubs + Rank.Ten);
+    const card2 = new Card(Suit.Diamonds + Rank.Ten);
+    const card3 = new Card(Suit.Hearts + Rank.Two); // Total becomes 22 -> busted.
+    hand.add(card1).add(card2).add(card3);
+    expect(hand.status).toBe("busted");
+    expect(() => hand.stand()).toThrow(
+      "Hand is not allowed to perform this action"
+    );
+  });
+
+  test("should throw an error when calling accumulate on a non-playing hand", () => {
+    const hand = new Hand("Test");
+    // End play by calling stand.
+    hand.stand();
+    const card = new Card(Suit.Clubs + Rank.Ace);
+    expect(() => hand.accumulate(card)).toThrow(
+      "Hand is not allowed to perform this action"
+    );
+  });
+
+  test("should throw an error when splitting a hand with not exactly two cards", () => {
+    const hand = new Hand("Test");
+    const card = new Card(Suit.Clubs + Rank.Eight);
+    hand.add(card);
+    expect(() => hand.split()).toThrow(
+      "Hand must have exactly two cards to split"
+    );
   });
 });
 
