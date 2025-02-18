@@ -29,7 +29,7 @@ export class Renderer {
   private centerY = Math.floor(window.innerHeight / 2);
   private dealer = new Dealer();
   private players: Player[] = [];
-  private state: State = State.ReadyToDeal;
+  private state: State = State.Dealing;
   private baseFontSize = window.innerWidth * 0.00125;
   private isGameover = false;
   private isHole = true;
@@ -381,7 +381,7 @@ export class Renderer {
       case State.Init:
         this.drawTitle();
         break;
-      case State.ReadyToDeal:
+      case State.Dealing:
       case State.PlayerTurn:
       case State.DealerTurn:
         this.drawCards();
@@ -522,7 +522,7 @@ export class Renderer {
       case State.Init:
         this.reset();
         break;
-      case State.ReadyToDeal:
+      case State.Dealing:
         this.animations.clear();
         this.createReadyToDealAnimations();
         break;

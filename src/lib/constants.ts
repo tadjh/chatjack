@@ -54,13 +54,16 @@ export const spriteSheet = `${isDevelopment ? "/src" : ""}/assets/sprites/cards.
 
 export enum State {
   Init,
-  ReadyToDeal,
+  Dealing,
   PlayerTurn,
   DealerTurn,
   Score,
-  PlayerBust,
+  PlayerBlackJack,
+  DealerBlackJack,
   PlayerWin,
   DealerWin,
+  PlayerBust,
+  DealerBust,
   Push,
 }
 

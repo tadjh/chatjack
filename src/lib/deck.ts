@@ -13,23 +13,11 @@ export class Deck extends Array<Card> {
     }
 
     for (let i = 0; i < count; i++) {
-      const deck = this.createDeck();
+      const deck = Deck.create();
       this.push(...deck);
     }
     this.shuffle();
     return this;
-  }
-
-  createDeck() {
-    const deck: Card[] = [];
-    const suits = Object.values(Suit).filter((s) => typeof s === "number");
-    const faces = Object.values(Rank).filter((f) => typeof f === "number");
-    for (const suit of suits) {
-      for (const face of faces) {
-        deck.push(new Card(suit + face));
-      }
-    }
-    return deck;
   }
 
   // Fisher–Yates shuffle
@@ -58,9 +46,10 @@ export class Deck extends Array<Card> {
 
     if (isHidden) {
       card.hide();
+    } else {
+      console.log("Card drawn:", card.name);
     }
 
-    console.log("Card drawn:", card.name);
     return card;
   }
 
@@ -76,6 +65,18 @@ export class Deck extends Array<Card> {
     }
 
     console.log(output);
+  }
+
+  public static create() {
+    const deck: Card[] = [];
+    const suits = Object.values(Suit).filter((s) => typeof s === "number");
+    const faces = Object.values(Rank).filter((f) => typeof f === "number");
+    for (const suit of suits) {
+      for (const face of faces) {
+        deck.push(new Card(suit + face));
+      }
+    }
+    return deck;
   }
 }
 

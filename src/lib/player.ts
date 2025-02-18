@@ -5,9 +5,8 @@ let id = 0;
 
 export class Player {
   public readonly id = id++;
-  #isSplit = false;
+  #hasSplit = false;
   #hands: Hand[];
-  #isBusted = [false];
 
   constructor(
     public readonly name = "Player",
@@ -21,60 +20,40 @@ export class Player {
   }
 
   get hands(): readonly Hand[] {
-    if (!this.#isSplit) {
-      return [this.hand];
-    }
     return this.#hands;
   }
 
   get score() {
-    return this.hand.score;
+    return this.#hands[0].score;
   }
 
   get scores() {
-    if (!this.#isSplit) {
-      return [this.hand.score];
-    }
     return this.#hands.map((hand) => hand.score);
   }
 
   get status() {
-    return this.hand.status;
+    return this.#hands[0].status;
   }
 
   get statuses() {
-    if (!this.#isSplit) {
-      return [this.hand.status];
-    }
     return this.#hands.map((hand) => hand.status);
   }
 
-  get isSplit() {
-    return this.#isSplit;
+  get hasSplit() {
+    return this.#hasSplit;
   }
 
-  get isBusted() {
-    return this.#isBusted;
-  }
-
-  hit(card: Card, id = 0) {
-    card.owner = this.name;
-    if (this.#isSplit) {
-      this.#hands[id].add(card);
-      if (this.#hands[id].isBusted) {
-        this.#isBusted[id] = true;
-      }
-    } else {
-      this.hand.add(card);
-      if (this.hand.isBusted) {
-        this.#isBusted = [true];
-      }
+  hit(card: Card, index = 0) {
+    if (this.#hands.length <= index || index < 0) {
+      throw new Error("Hand does not exist");
     }
+    card.owner = this.name;
+    this.#hands[index].add(card);
     return this;
   }
 
   stand(index = 0) {
-    if (index >= this.#hands.length) {
+    if (this.#hands.length <= index || index < 0) {
       throw new Error("Hand does not exist");
     }
     this.#hands[index].stand();
@@ -82,18 +61,16 @@ export class Player {
   }
 
   split() {
-    if (this.#isSplit) {
+    if (this.#hasSplit) {
       throw new Error("Player has already split");
     }
 
-    if (this.hand.length !== 2) {
+    if (this.#hands[0].length !== 2) {
       throw new Error("Hand must have exactly two cards to split");
     }
 
-    const hands = this.hand.split();
-
-    this.#isSplit = true;
-    this.#hands = [...hands];
+    this.#hands = this.#hands[0].split();
+    this.#hasSplit = true;
     return this;
   }
 
@@ -107,7 +84,7 @@ export class Player {
   reset() {
     this.#hands.forEach((hand) => hand.reset());
     this.#hands = [new Hand(this.name)];
-    this.#isSplit = false;
+    this.#hasSplit = false;
     return this;
   }
 }

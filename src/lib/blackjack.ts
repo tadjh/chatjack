@@ -21,14 +21,17 @@ export class Blackjack {
     return this.#table[0];
   }
 
+  get player() {
+    const [, player] = this.#table;
+    return player;
+  }
+
   get players() {
     const [, ...players] = this.#table;
     return players;
   }
 
-  get isDealt() {
-    console.log(this.#state);
-
+  get hasDealt() {
     return this.#state > State.Init;
   }
 
@@ -85,19 +88,22 @@ export class Blackjack {
 
     this.dealer.hit(this.draw(true));
 
-    this.#state = State.ReadyToDeal;
+    this.#state = State.Dealing;
     this.#playerTurn++;
     return this;
   }
 
   hit(player: Player, index = 0) {
-    if (player.getScore(index) >= 21) {
-      throw new Error("Player cannot hit");
+    if (player.id !== this.#playerTurn) {
+      throw new Error(`It is not this ${player.name} turn`);
     }
-    player.hit(this.draw());
-    // TODO Support splitting
+
+    player.hit(this.draw(), index);
+    // TODO Support hitting a split hand
     if (player.hand.isBusted) {
       this.#state = State.PlayerBust;
+    } else if (player.hand.isBlackjack) {
+      this.#state = State.DealerTurn;
     } else {
       this.#state = State.PlayerTurn;
     }
@@ -105,6 +111,10 @@ export class Blackjack {
   }
 
   stand(player: Player, index = 0) {
+    if (player.id !== this.#playerTurn) {
+      throw new Error(`It is not this ${player.name} turn`);
+    }
+
     player.stand(index);
     this.#playerTurn++;
     if (this.#playerTurn === this.players.length) {
@@ -115,18 +125,11 @@ export class Blackjack {
   }
 
   split(player: Player) {
-    if (player.isSplit) {
-      throw new Error("Player has already split");
+    if (player.id !== this.#playerTurn) {
+      throw new Error(`It is not this ${player.name} turn`);
     }
 
-    const hand = player.hand;
-    if (hand.length !== 2) {
-      throw new Error("Player cannot split");
-    }
-
-    console.log(player.split());
-    // player.hit(this.draw());
-    // player.hit(this.draw(), 1);
+    player.split();
     return this;
   }
 
@@ -135,24 +138,51 @@ export class Blackjack {
       throw new Error("Dealer cannot play");
     }
 
-    this.dealer.dealerHit(this.#deck);
-
-    this.players.forEach((player) => {
-      if (
-        player.hand.status === "blackjack" &&
-        this.dealer.hand.status === "blackjack"
-      ) {
-        this.#state = State.Push;
-      } else if (player.hand.status === "blackjack") {
-        this.#state = State.PlayerWin;
-      } else if (player.hand.status === "busted") {
-        this.#state = State.PlayerBust;
-      } else if (player.hand.score > this.dealer.hand.score) {
-        this.#state = State.PlayerWin;
-      } else if (player.hand.score < this.dealer.hand.score) {
-        this.#state = State.DealerWin;
+    while (true) {
+      if (!this.#deck.length) {
+        console.log("No more cards in the deck");
+        break;
       }
-    });
+
+      const decision = this.dealer.decide(this.#deck);
+
+      if (decision === "stand") break;
+
+      const card = this.#deck.shift()!;
+
+      this.dealer.hit(card);
+      console.log(`Dealer hits and draws: ${card.name}`);
+
+      if (this.dealer.isBusted) {
+        console.log("Dealer busts");
+        break;
+      }
+    }
+
+    this.judge();
+  }
+
+  judge() {
+    // TODO Support multiple players
+    // TODO Support player with a split hand
+    if (
+      this.player.hand.status === "blackjack" &&
+      this.dealer.hand.status === "blackjack"
+    ) {
+      this.#state = State.Push;
+    } else if (this.player.hand.status === "blackjack") {
+      this.#state = State.PlayerBlackJack;
+    } else if (this.dealer.hand.status === "blackjack") {
+      this.#state = State.DealerBlackJack;
+    } else if (this.player.hand.status === "busted") {
+      this.#state = State.PlayerBust;
+    } else if (this.dealer.hand.status === "busted") {
+      this.#state = State.DealerBust;
+    } else if (this.player.hand.score > this.dealer.hand.score) {
+      this.#state = State.PlayerWin;
+    } else if (this.dealer.hand.score > this.player.hand.score) {
+      this.#state = State.DealerWin;
+    }
 
     return this;
   }

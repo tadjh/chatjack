@@ -71,7 +71,7 @@ function App() {
             <div>Dealer</div>
             <div>
               {`Score: ${dealer.hand.score} `}
-              {dealer.hand.map((card) => card.abbr).join(" ")}
+              {dealer.hand.map((card) => card.icon).join(" ")}
             </div>
           </div>
         </div>
@@ -82,12 +82,12 @@ function App() {
               {player.hands.map((hand, h) => (
                 <div key={h} className="grid gap-2">
                   <p className="h-5 text-center">
-                    {hand.map((card) => card.abbr).join(" ")}
+                    {hand.map((card) => card.icon).join(" ")}
                   </p>
                   <p className="text-center min-w-18">{`Score: ${hand.score}`}</p>
                   <div className="flex gap-2">
                     <Button
-                      onClick={() => hit(player, h)}
+                      onClick={() => hit(player)}
                       disabled={
                         playerTurn !== p ||
                         hand.isBusted ||

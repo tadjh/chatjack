@@ -29,6 +29,15 @@ describe("Hand", () => {
     expect(hand.score).toBe(12); // 11 + 1 = 12
   });
 
+  test("should reccalculate score correctly with multiple Aces and other cards", () => {
+    const hand = new Hand("Test");
+    const ace1 = new Card(Suit.Clubs + Rank.Ace); // Ace of Clubs (11 initially and then should become 1)
+    const ace2 = new Card(Suit.Diamonds + Rank.Ace); // Ace of Diamonds (should be 1 if needed)
+    const card1 = new Card(Suit.Clubs + Rank.Ten); // Ten of Clubs (10)
+    hand.add(ace1).add(ace2).add(card1);
+    expect(hand.score).toBe(12); // 1 + 1 + 10 = 12
+  });
+
   test("should update status to busted if score exceeds 21", () => {
     const hand = new Hand("Test");
     const card1 = new Card(Suit.Clubs + Rank.Ten); // 10
@@ -104,8 +113,7 @@ describe("Hand", () => {
     const hand = new Hand("Test");
     // End play by calling stand.
     hand.stand();
-    const card = new Card(Suit.Clubs + Rank.Ace);
-    expect(() => hand.accumulate(card)).toThrow(
+    expect(() => hand.accumulate()).toThrow(
       "Hand is not allowed to perform this action"
     );
   });

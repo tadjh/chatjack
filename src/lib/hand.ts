@@ -1,7 +1,7 @@
-import { Card, Rank } from "./card";
+import { Card } from "./card";
 import { Deck } from "./deck";
 
-type Status = "playing" | "busted" | "blackjack" | "stand" | "split";
+export type Status = "playing" | "busted" | "blackjack" | "stand" | "split";
 
 export class Hand extends Deck {
   #score: number = 0;
@@ -37,21 +37,28 @@ export class Hand extends Deck {
     this.protect();
     card.index = this.length;
     super.push(card);
-    return this.accumulate(card);
+    return this.accumulate();
   }
 
-  accumulate(card: Card) {
+  accumulate() {
     this.protect();
-
-    if (card.rank === Rank.Ace) {
-      if (this.#score + 11 > 21) {
-        card.updatePoints(true);
-        this.#score += card.points;
-      } else {
-        this.#score += card.points;
+    let aces = 0;
+    this.#score = this.reduce((score, card) => {
+      if (card.isAce) {
+        aces++;
       }
-    } else {
-      this.#score += card.points;
+      score += card.points;
+      return score;
+    }, 0);
+
+    if (this.#score > 21 && aces > 0) {
+      this.#score = this.reduce((total, card) => {
+        if (total > 21 && card.isAce) {
+          card.setAce("low");
+          total -= 10;
+        }
+        return total;
+      }, this.#score);
     }
 
     return this.updateStatus();
@@ -76,7 +83,7 @@ export class Hand extends Deck {
     return this;
   }
 
-  split() {
+  split(): [Hand, Hand] {
     this.protect();
 
     if (this.length !== 2) {
@@ -87,10 +94,7 @@ export class Hand extends Deck {
 
     const hand1 = new Hand(this.#owner).add(first);
     const hand2 = new Hand(this.#owner).add(second);
-
-    this.status = "split";
-    this.#score = 0;
-    super.empty();
+    this.reset().status = "split";
     return [hand1, hand2];
   }
 

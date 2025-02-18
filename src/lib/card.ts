@@ -47,7 +47,7 @@ const Letter: Map<number, string> = new Map([
 export class Card extends Number {
   readonly suit: number;
   readonly rank: number;
-  readonly #abbr: string;
+  #icon: string;
   #name: string;
   #points: number = 0;
   #isAce: boolean;
@@ -61,12 +61,12 @@ export class Card extends Number {
       throw new Error("Invalid card");
     }
     super(card);
-    this.suit = this.toSuit(card);
+    this.suit = Card.toSuit(card);
     this.rank = card - this.suit;
     this.#isHidden = hidden;
     this.#isAce = this.rank === Rank.Ace;
     this.#name = `${Rank[this.rank]} of ${Suit[this.suit]}`;
-    this.#abbr = `${Letter.get(this.rank)} ${Icon.get(this.suit)}`;
+    this.#icon = `${Letter.get(this.rank)} ${Icon.get(this.suit)}`;
     this.setPoints();
   }
 
@@ -89,11 +89,11 @@ export class Card extends Number {
     return this.#name;
   }
 
-  get abbr() {
+  get icon() {
     if (this.#isHidden) {
       return "🂠";
     }
-    return this.#abbr;
+    return this.#icon;
   }
 
   show() {
@@ -154,26 +154,28 @@ export class Card extends Number {
     return this;
   }
 
-  updatePoints(lowAce: boolean) {
-    if (this.#isAce) {
-      if (lowAce) {
-        this.#points = 1;
-      } else {
-        this.#points = 11;
-      }
+  setAce(type: "high" | "low") {
+    if (!this.#isAce) {
+      throw new Error("Card is not an Ace");
+    }
+
+    if (type === "low") {
+      this.#points = 1;
+    } else {
+      this.#points = 11;
     }
 
     return this;
   }
 
-  toFace(card: number) {
+  public static toFace(card: number) {
     if (card < 0 || card > 52) {
       throw new Error("Invalid card");
     }
     return (card % 13) as number;
   }
 
-  toSuit(card: number) {
+  public static toSuit(card: number) {
     if (card < 0 || card > 52) {
       throw new Error("Invalid card");
     }

@@ -14,7 +14,7 @@ describe("Blackjack", () => {
     // we expect one dealer and one player.
     const game = new Blackjack();
     expect(game.table.length).toBe(2); // Dealer + one player
-    expect(game.isDealt).toBe(false);
+    expect(game.hasDealt).toBe(false);
   });
 
   it("should draw a card from the deck", () => {
@@ -49,7 +49,7 @@ describe("Blackjack", () => {
     const game = new Blackjack(1, 2);
     game.deal();
 
-    expect(game.isDealt).toBe(true);
+    expect(game.hasDealt).toBe(true);
     // Each player should have 2 cards.
     game.players.forEach((player) => {
       expect(player.hand.length).toBe(2);

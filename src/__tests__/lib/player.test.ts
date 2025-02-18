@@ -72,7 +72,7 @@ describe("Player", () => {
     expect(player.hand.length).toBe(2);
 
     player.split();
-    expect(player.isSplit).toBe(true);
+    expect(player.hasSplit).toBe(true);
     // After splitting, player.hands should contain two hands
     expect(player.hands.length).toBe(2);
     // Each split hand should have one card

@@ -21,8 +21,8 @@ export function useBlackjack(deckCount = 1, playerCount = 1) {
     updateSnapshot();
   }
 
-  function hit(player: Player, i = 0) {
-    blackjack.current.hit(player, i);
+  function hit(player: Player) {
+    blackjack.current.hit(player);
     updateSnapshot();
   }
 
@@ -49,7 +49,7 @@ export function useBlackjack(deckCount = 1, playerCount = 1) {
   return {
     dealer: gameState.dealer,
     players: gameState.players,
-    isDealt: blackjack.current.isDealt,
+    isDealt: blackjack.current.hasDealt,
     isDealerTurn: blackjack.current.isDealerTurn,
     playerTurn: blackjack.current.playerTurn,
     state: blackjack.current.state,

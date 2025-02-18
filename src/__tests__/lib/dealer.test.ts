@@ -1,6 +1,6 @@
 import { Dealer } from "@/lib/dealer";
 import { Card, Suit, Rank } from "@/lib/card";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 
 describe("Dealer", () => {
   let dealer: Dealer;
@@ -69,35 +69,6 @@ describe("Dealer", () => {
     expect(decision).toBe("stand");
   });
 
-  it("should hit until standing or busting in dealerHit", () => {
-    // Spy on console.log to check output.
-    console.log = vi.fn();
-
-    dealer.hand.reset?.();
-    // Set up dealer hand so that score is below 17.
-    dealer.hand.add(new Card(Suit.Clubs + Rank.Four)); // 4
-    dealer.hand.add(new Card(Suit.Diamonds + Rank.Five)); // 5 -> total 9
-    // Prepare a deck that will eventually give the dealer a score >= 17.
-    const playDeck = [
-      new Card(Suit.Hearts + Rank.Four), // 4 -> total becomes 13
-      new Card(Suit.Spades + Rank.Five), // 5 -> total becomes 18 (stand)
-    ];
-    dealer.dealerHit(playDeck);
-    // Check that dealerHit logged at least one hit message.
-    expect(console.log).toHaveBeenCalledWith(
-      expect.stringContaining("Dealer hits and draws:")
-    );
-    // Dealer's hand now should be stand or blackjack (not "playing").
-    expect(["stand", "blackjack"]).toContain(dealer.hand.status);
-  });
-
-  it("should throw error in dealerHit if deck runs out of cards", () => {
-    dealer.hand.reset?.();
-    dealer.hand.add(new Card(Suit.Clubs + Rank.Two));
-    // Pass an empty deck.
-    expect(() => dealer.dealerHit([])).toThrow("No more cards in the deck");
-  });
-
   it("should calculate the bust probability correctly", () => {
     // Assuming dealer score is 15 and deck consists of various cards.
     dealer.hand.reset?.();
@@ -116,3 +87,4 @@ describe("Dealer", () => {
     expect(prob).toBeCloseTo(0.5, 2);
   });
 });
+

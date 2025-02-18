@@ -6,35 +6,8 @@ export class Dealer extends Player {
     super("Dealer", Role.Dealer);
   }
 
-  dealerHit(deck: Card[]) {
-    while (true) {
-      const decision = this.decide(deck);
-
-      if (decision === "stand") {
-        if (this.hand.score === 21) {
-          this.hand.status = "blackjack";
-        } else {
-          this.hand.status = "stand";
-        }
-        break;
-      }
-
-      const card = deck.shift();
-
-      if (!card) {
-        throw new Error("No more cards in the deck");
-      }
-
-      this.hit(card);
-      console.log(`Dealer hits and draws: ${card.name}`);
-
-      if (this.hand.status === "busted") {
-        console.log("Dealer busts");
-        break;
-      }
-    }
-
-    return this;
+  get isBusted() {
+    return this.hand.isBusted;
   }
 
   probability(deck: Card[]) {
@@ -48,7 +21,7 @@ export class Dealer extends Player {
     return busts / deck.length;
   }
 
-  decide(deck: Card[], countCards = false) {
+  decide(deck: Card[], countCards = false): "hit" | "stand" {
     if (countCards) {
       const busts = this.probability(deck);
       if (busts < 0.5 && this.score < 21) {
@@ -58,6 +31,7 @@ export class Dealer extends Player {
       return "hit";
     }
 
+    this.hand.status = "stand";
     return "stand";
   }
 

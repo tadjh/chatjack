@@ -23,10 +23,10 @@ describe("Card", () => {
 
   it("should return the correct abbreviation", () => {
     const card = new Card(Suit.Clubs + Rank.Ace);
-    expect(card.abbr).toBe("A ♣");
+    expect(card.icon).toBe("A ♣");
     // When hidden, abbreviation returns a back-face symbol
     card.hide();
-    expect(card.abbr).toBe("🂠");
+    expect(card.icon).toBe("🂠");
   });
 
   it("should toggle the hidden state correctly", () => {
@@ -42,7 +42,7 @@ describe("Card", () => {
     const tenCard = new Card(Suit.Clubs + Rank.Ten);
     expect(aceCard.points).toBe(11);
     // For Ace, when updating with lowAce, value should become 1
-    aceCard.updatePoints(true);
+    aceCard.setAce("low");
     expect(aceCard.points).toBe(1);
     expect(tenCard.points).toBe(10);
   });
