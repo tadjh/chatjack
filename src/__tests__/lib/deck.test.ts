@@ -1,20 +1,20 @@
 import { Deck } from "@/lib/deck";
 import { Card, Rank, Suit } from "@/lib/card";
-import { describe, test, expect, vi } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 
 describe("Deck", () => {
-  test("should create a deck with a valid count", () => {
+  it("should create a deck with a valid count", () => {
     const deck = new Deck(1);
     // A single deck should have 52 cards.
     expect(deck.length).toBe(52);
   });
 
-  test("should throw an error when creating a deck with an invalid count", () => {
+  it("should throw an error when creating a deck with an invalid count", () => {
     expect(() => new Deck(-1)).toThrow("Invalid deck count");
     expect(() => new Deck(9)).toThrow("Invalid deck count");
   });
 
-  test("should shuffle the deck", () => {
+  it("should shuffle the deck", () => {
     const deck = new Deck(1);
     const originalOrder = [...deck];
     deck.shuffle();
@@ -23,7 +23,7 @@ describe("Deck", () => {
     expect(deck).not.toEqual(originalOrder);
   });
 
-  test("should draw a card from the deck", () => {
+  it("should draw a card from the deck", () => {
     const deck = new Deck(1);
     const initialRemaining = deck.length;
     const card = deck.draw();
@@ -32,7 +32,7 @@ describe("Deck", () => {
     expect(deck.length).toBe(initialRemaining - 1);
   });
 
-  test("should peek the top card of the deck without removing it", () => {
+  it("should peek the top card of the deck without removing it", () => {
     const deck = new Deck(1);
     const topCard = deck.peek();
     expect(topCard).toBeInstanceOf(Card);
@@ -40,26 +40,26 @@ describe("Deck", () => {
     expect(deck.length).toBe(52);
   });
 
-  test("should empty the deck", () => {
+  it("should empty the deck", () => {
     const deck = new Deck(1);
     expect(deck.length).toBe(52);
     deck.empty();
     expect(deck.length).toBe(0);
   });
 
-  test("should throw an error when drawing a card from an empty deck", () => {
+  it("should throw an error when drawing a card from an empty deck", () => {
     const deck = new Deck(1);
     deck.empty();
     expect(() => deck.draw()).toThrow("Card drawn: none");
   });
 
-  test("should throw an error when peeking a card from an empty deck", () => {
+  it("should throw an error when peeking a card from an empty deck", () => {
     const deck = new Deck(1);
     deck.empty();
     expect(() => deck.peek()).toThrow("No cards left");
   });
 
-  test("should add a card to the deck at the correct position", () => {
+  it("should add a card to the deck at the correct position", () => {
     const deck = new Deck(1);
     const initialLength = deck.length;
     const card = new Card(Suit.Clubs + Rank.Ace);
@@ -69,11 +69,23 @@ describe("Deck", () => {
     expect(deck[0]).toBe(card);
   });
 
-  test.skip("should print the deck", () => {
+  it.skip("should print the deck", () => {
     const deck = new Deck(1);
     console.log = vi.fn();
     deck.print();
     expect(console.log).toHaveBeenCalled();
+  });
+
+  it("should reshuffle the deck when it is empty", () => {
+    const deck = new Deck(1);
+    deck.empty();
+    deck.reshuffle(1);
+    expect(deck.length).toBe(52);
+  });
+
+  it("should throw an error when reshuffling a non-empty deck", () => {
+    const deck = new Deck(1);
+    expect(() => deck.reshuffle(1)).toThrow("Deck is not empty");
   });
 });
 

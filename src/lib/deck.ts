@@ -30,6 +30,14 @@ export class Deck extends Array<Card> {
     return this;
   }
 
+  reshuffle(count: number) {
+    if (this.length > 0) {
+      throw new Error("Deck is not empty");
+    }
+    this.init(count);
+    return this;
+  }
+
   peek() {
     if (!this.length) {
       throw new Error("No cards left");
