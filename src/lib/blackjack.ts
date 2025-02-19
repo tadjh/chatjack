@@ -35,6 +35,10 @@ export class Blackjack {
     return this.#state > State.Init;
   }
 
+  get allPlayersDone() {
+    return this.players.every((player) => player.isDone);
+  }
+
   get isDealerTurn() {
     return this.#state === State.DealerTurn;
   }
@@ -123,9 +127,15 @@ export class Blackjack {
     return this;
   }
 
+  reveal() {
+    this.dealer.reveal();
+    this.#state = State.DealerTurn;
+    return this;
+  }
+
   dealerTurn() {
-    if (this.#state !== State.DealerTurn) {
-      throw new Error("Dealer cannot play");
+    if (this.dealer.isDone) {
+      throw new Error("Dealer has already played");
     }
 
     while (true) {
@@ -149,7 +159,9 @@ export class Blackjack {
       }
     }
 
+    this.dealer.isDone = true;
     this.judge();
+    return this;
   }
 
   judge() {

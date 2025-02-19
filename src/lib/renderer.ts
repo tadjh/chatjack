@@ -680,14 +680,15 @@ export class Renderer {
 
       if (layer.has(cardId)) {
         const cardAnim = layer.get(cardId) as SpriteAnim;
-        const cardY = this.spriteHeight * holeCard.valueOf();
+        const cardX = (holeCard.suit % 12) * 1024;
+        const cardY = holeCard.rank * this.spriteHeight;
         cardAnim.sprites = [
-          { x: 0, y: 19968 },
-          { x: 256, y: 19968 },
-          { x: 512, y: 19968 },
-          { x: 0, y: cardY },
-          { x: 256, y: cardY },
-          { x: 512, y: cardY },
+          { x: 0, y: 4992 },
+          { x: 256, y: 4992 },
+          { x: 512, y: 4992 },
+          { x: cardX, y: cardY },
+          { x: cardX + 256, y: cardY },
+          { x: cardX + 512, y: cardY },
         ];
         cardAnim.playback = "once";
         cardAnim.spriteDuration = 1;

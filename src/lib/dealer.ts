@@ -10,6 +10,10 @@ export class Dealer extends Player {
     return this.hand.isBusted;
   }
 
+  reveal() {
+    this.hand[1].show();
+  }
+
   probability(deck: Card[]) {
     let busts = 0;
     for (const card of deck) {

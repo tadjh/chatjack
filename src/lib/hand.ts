@@ -79,6 +79,7 @@ export class Hand extends Deck {
 
   stand() {
     this.protect();
+
     this.status = "stand";
     this.forEach((card) => {
       card.isStand = true;
@@ -109,7 +110,7 @@ export class Hand extends Deck {
   }
 
   protect() {
-    if (!this.isPlaying) {
+    if (!this.isPlaying && !this.isBlackjack) {
       throw new Error("Hand is not allowed to perform this action");
     }
   }

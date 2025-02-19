@@ -11,13 +11,15 @@ function App() {
     dealer,
     players,
     isDealt,
-    playerTurn,
     isDealerTurn,
+    playerTurn,
+    allPlayersDone,
     state,
     deal,
     reset,
     hit,
     stand,
+    reveal,
     dealerTurn,
   } = useBlackjack();
 
@@ -64,9 +66,15 @@ function App() {
           </Button>
         </div>
         <div className="flex gap-2 border p-2 items-center">
-          <Button onClick={dealerTurn} disabled={!isDealerTurn}>
-            Resolve
-          </Button>
+          {isDealerTurn ? (
+            <Button onClick={dealerTurn} disabled={!allPlayersDone}>
+              Resolve
+            </Button>
+          ) : (
+            <Button onClick={reveal} disabled={!allPlayersDone}>
+              Reveal
+            </Button>
+          )}
           <div>
             <div>Dealer</div>
             <div>
@@ -91,8 +99,7 @@ function App() {
                       disabled={
                         playerTurn !== player.seat ||
                         hand.isBusted ||
-                        hand.isStand ||
-                        hand.isBlackjack
+                        hand.isStand
                       }
                     >
                       Hit
@@ -107,8 +114,7 @@ function App() {
                       disabled={
                         playerTurn !== player.seat ||
                         hand.isBusted ||
-                        hand.isStand ||
-                        hand.isBlackjack
+                        hand.isStand
                       }
                       onClick={() => stand(player, h)}
                     >
