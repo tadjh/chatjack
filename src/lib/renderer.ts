@@ -580,9 +580,11 @@ export class Renderer {
         const cardId = this.getCardId(card);
 
         if (this.animations.has(cardId)) {
-          const anim = this.animations.get(cardId) as SpriteAnim;
-          anim.opacity = { start: 1, end: card.isBusted ? 0.5 : 1 };
-          this.animations.set(cardId, anim);
+          if (card.isBusted) {
+            const anim = this.animations.get(cardId) as SpriteAnim;
+            anim.opacity = { start: 1, end: card.isBusted ? 0.5 : 1 };
+            this.animations.set(cardId, anim);
+          }
           return;
         }
 
