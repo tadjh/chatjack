@@ -41,8 +41,12 @@ export function useBlackjack(deckCount = 1, playerCount = 1) {
     updateSnapshot();
   }
 
-  function dealerTurn() {
-    blackjack.current.dealerTurn();
+  function decide() {
+    if (blackjack.current.dealer.isDone) {
+      blackjack.current.judge();
+    } else {
+      blackjack.current.decide();
+    }
     updateSnapshot();
   }
 
@@ -61,7 +65,7 @@ export function useBlackjack(deckCount = 1, playerCount = 1) {
     dealer: gameState.dealer,
     players: gameState.players,
     isDealt: blackjack.current.hasDealt,
-    isDealerTurn: blackjack.current.isDealerTurn,
+    isRevealed: blackjack.current.isRevealed,
     isGameover: blackjack.current.isGameover,
     allPlayersDone: blackjack.current.allPlayersDone,
     playerTurn: blackjack.current.playerTurn,
@@ -71,7 +75,7 @@ export function useBlackjack(deckCount = 1, playerCount = 1) {
     stand,
     split,
     reveal,
-    dealerTurn,
+    decide,
     exit,
     restart,
   };

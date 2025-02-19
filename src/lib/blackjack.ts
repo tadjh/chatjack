@@ -9,6 +9,7 @@ export class Blackjack {
   #deck: Deck = new Deck();
   #playerTurn = 0;
   isGameover = false;
+  isRevealed = false;
 
   constructor(deckCount = 1, playerCount = 1) {
     this.init(deckCount, playerCount);
@@ -54,6 +55,10 @@ export class Blackjack {
 
   get state() {
     return this.#state;
+  }
+
+  set state(state: State) {
+    this.#state = state;
   }
 
   init(deckCount: number, playerCount: number) {
@@ -130,42 +135,47 @@ export class Blackjack {
 
   reveal() {
     this.dealer.reveal();
+    this.isRevealed = true;
     this.#state = State.DealerTurn;
     return this;
   }
 
-  dealerTurn() {
+  decide() {
     if (this.dealer.isDone) {
       throw new Error("Dealer has already played");
     }
 
-    while (true) {
-      if (!this.#deck.length) {
-        console.log("No more cards in the deck");
-        break;
-      }
-
-      const decision = this.dealer.decide(this.#deck);
-
-      if (decision === "stand") break;
-
-      const card = this.#deck.shift()!;
-
-      this.dealer.hit(card);
-      console.log(`Dealer hits and draws: ${card.name}`);
-
-      if (this.dealer.isBusted) {
-        console.log("Dealer busts");
-        break;
-      }
+    if (!this.#deck.length) {
+      console.log("No more cards in the deck");
     }
 
-    this.dealer.isDone = true;
-    this.judge();
-    return this;
+    const decision = this.dealer.decide(this.#deck);
+
+    if (decision === "stand") {
+      if (this.dealer.hand.isBlackjack) {
+        this.#state = State.DealerBlackJack;
+      } else {
+        this.#state = State.DealerStand;
+      }
+      this.dealer.isDone = true;
+      return this;
+    }
+
+    const card = this.#deck.shift()!;
+
+    this.dealer.hit(card);
+
+    if (this.dealer.isBusted) {
+      this.#state = State.DealerBust;
+      this.dealer.isDone = true;
+      return this;
+    }
+
+    this.#state = State.DealerHit;
+    return this.#state;
   }
 
-  judge() {
+  public judge() {
     console.log("Judging the game", this.dealer.hand, this.player.hand);
 
     // TODO Support multiple players
@@ -204,6 +214,7 @@ export class Blackjack {
     this.#table = [this.dealer];
     this.#playerTurn = 0;
     this.isGameover = false;
+    this.isRevealed = false;
     this.#deck.empty();
     this.init(deckCount, playerCount);
     return this;

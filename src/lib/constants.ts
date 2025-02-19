@@ -57,6 +57,8 @@ export enum State {
   PlayerBust,
   PlayerSplit,
   DealerTurn,
+  DealerHit,
+  DealerStand,
   Score,
   PlayerBlackJack,
   DealerBlackJack,

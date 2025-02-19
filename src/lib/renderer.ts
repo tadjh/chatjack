@@ -477,8 +477,8 @@ export class Renderer {
           this.createPlayerCardsAnimations();
           this.createActionText(Role.Player);
           break;
+        case State.DealerHit:
         case State.DealerTurn:
-        case State.DealerWin:
           this.createDealerTurnAnimations();
           this.createActionText(Role.Dealer);
           break;
@@ -583,13 +583,22 @@ export class Renderer {
       anim.style.color = Palette.White;
     }
 
-    if (this.state === State.PlayerHit) {
+    if (this.state === State.PlayerHit || this.state === State.DealerHit) {
       anim.text = "Hit!";
-    } else if (this.state === State.PlayerStand) {
+    } else if (
+      this.state === State.PlayerStand ||
+      this.state === State.DealerStand
+    ) {
       anim.text = "Stand!";
-    } else if (this.state === State.PlayerBust) {
+    } else if (
+      this.state === State.PlayerBust ||
+      this.state === State.DealerBust
+    ) {
       anim.text = "Bust!";
-    } else if (this.state === State.PlayerBlackJack) {
+    } else if (
+      this.state === State.PlayerBlackJack ||
+      this.state === State.DealerBlackJack
+    ) {
       anim.text = "Blackjack!";
     } else if (this.state === State.DealerTurn) {
       anim.text = Rank[this.dealer.hand[1].rank];

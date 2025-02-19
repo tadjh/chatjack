@@ -11,18 +11,18 @@ function App() {
     dealer,
     players,
     isDealt,
-    isDealerTurn,
+    isRevealed,
     isGameover,
     playerTurn,
     allPlayersDone,
     state,
     deal,
-    exit,
-    restart,
     hit,
     stand,
     reveal,
-    dealerTurn,
+    decide,
+    restart,
+    exit,
   } = useBlackjack();
 
   useEffect(() => {
@@ -76,9 +76,9 @@ function App() {
           </Button>
         </div>
         <div className="flex gap-2 border p-2 items-center">
-          {isDealerTurn ? (
-            <Button onClick={dealerTurn} disabled={!allPlayersDone}>
-              Resolve
+          {isRevealed ? (
+            <Button onClick={decide} disabled={isGameover}>
+              Next
             </Button>
           ) : (
             <Button onClick={reveal} disabled={!allPlayersDone}>
