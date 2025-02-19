@@ -9,7 +9,6 @@ import {
   ANIMATION_SPEED,
   Palette,
   SPRITE_HEIGHT,
-  SPRITE_SCALE,
   SPRITE_WIDTH,
   State,
   TICK_RATE,
@@ -24,7 +23,7 @@ export class Renderer {
   private ctx: CanvasRenderingContext2D;
   private lastTick = 0;
   private time = 0;
-  private spriteSheet: OffscreenCanvas | null = null;
+  private spriteSheet: OffscreenCanvas | HTMLImageElement | null = null;
   private widthMap: Map<string, number> = new Map();
   private centerX = Math.floor(window.innerWidth / 2);
   private centerY = Math.floor(window.innerHeight / 2);
@@ -77,26 +76,7 @@ export class Renderer {
 
   public async createSpriteSheet(url: string): Promise<void> {
     const spriteSheet = await this.loadSpriteSheet(url);
-    const scaledWidth = spriteSheet.width * SPRITE_SCALE;
-    const scaledHeight = spriteSheet.height * SPRITE_SCALE;
-    const offscreen = new OffscreenCanvas(scaledWidth, scaledHeight);
-    const ctx = offscreen.getContext("2d");
-    if (!ctx) {
-      throw new Error("Unable to get offscreen canvas context");
-    }
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(
-      spriteSheet,
-      0,
-      0,
-      spriteSheet.width,
-      spriteSheet.height,
-      0,
-      0,
-      scaledWidth,
-      scaledHeight
-    );
-    this.spriteSheet = offscreen;
+    this.spriteSheet = spriteSheet;
   }
 
   private setAnimLayer = (anim: Anim | Anim[]) => {
@@ -347,11 +327,12 @@ export class Renderer {
       destWidth,
       destHeight
     );
+
     this.ctx.restore();
   }
 
   private drawCanvas() {
-    this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    // this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
     this.drawBackground();
 
     switch (this.state) {
@@ -550,10 +531,8 @@ export class Renderer {
         : window.innerHeight - window.innerHeight * 0.2 + card.index * 5,
       sprites: [
         {
-          x: card.isHidden ? 0 : this.spriteWidth * 2,
-          y: card.isHidden
-            ? this.spriteHeight * 52
-            : this.spriteHeight * card.valueOf(),
+          x: card.isHidden ? 0 : (card.suit % 12) * 1024 + this.spriteWidth * 2,
+          y: card.isHidden ? 4992 : card.rank * this.spriteHeight,
         },
       ],
       delay,
@@ -674,6 +653,13 @@ export class Renderer {
         if (card.isBusted) {
           const anim = layer.get(cardId) as SpriteAnim;
           anim.opacity = { start: 1, end: card.isBusted ? 0.5 : 1 };
+          layer.set(cardId, anim);
+        } else if (card.isStand) {
+          const anim = layer.get(cardId) as SpriteAnim;
+          anim.sprites[0] = {
+            x: anim.sprites[0].x + this.spriteWidth,
+            y: anim.sprites[0].y,
+          };
           layer.set(cardId, anim);
         }
         return;

@@ -113,7 +113,8 @@ export class Blackjack {
     player.stand(index);
     this.#state = State.PlayerStand;
 
-    this.#playerTurn++;
+    // TODO Handle multiple players
+    // this.#playerTurn++;
     return this;
   }
 
