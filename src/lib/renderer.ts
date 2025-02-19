@@ -728,6 +728,14 @@ export class Renderer {
     let title = "";
     let subtitle = "";
     switch (this.state) {
+      case State.PlayerBust:
+        title = "Player Bust!";
+        subtitle = "Better luck next time!";
+        break;
+      case State.DealerBust:
+        title = "Dealer Bust!";
+        subtitle = "How unfortunate...";
+        break;
       case State.Push:
         title = "Push!";
         subtitle = "No winner this time...";
@@ -739,14 +747,6 @@ export class Renderer {
       case State.DealerBlackJack:
         title = "Dealer hit 21!";
         subtitle = "Better luck next time!";
-        break;
-      case State.PlayerBust:
-        title = "Player Bust!";
-        subtitle = "Better luck next time!";
-        break;
-      case State.DealerBust:
-        title = "Dealer Bust!";
-        subtitle = "How unfortunate...";
         break;
       case State.PlayerWin:
         title = "Player Wins!";
