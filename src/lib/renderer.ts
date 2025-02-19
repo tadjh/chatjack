@@ -458,6 +458,7 @@ export class Renderer {
 
   reset() {
     this.setAnimLayer(titleAnimation);
+    this.clearAnimLayer("both");
     this.#foreground = new Map<string, Anim>(
       titleAnimation.map((anim) => [anim.id, anim])
     );
