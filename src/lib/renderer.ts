@@ -498,7 +498,7 @@ export class Renderer {
       progress: 0,
       easing: "easeOutQuint",
       layer: "background",
-      speed: 1 / 16,
+      speed: 1 / 12,
       x: this.centerX - 80 + card.index * (isDealer ? -64 : 82),
       y: isDealer
         ? 0 - card.index * 5
@@ -556,7 +556,7 @@ export class Renderer {
       }
     }
 
-    const delay = 10;
+    const delay = 8;
 
     for (let i = 0; i < cards.length; i++) {
       const cardAnim = this.createCardAnim(cards[i], i * delay);

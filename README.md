@@ -12,5 +12,3 @@
 
 ## Quality of life
 
-- TODO Cards deal too slow
-
