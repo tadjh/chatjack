@@ -37,7 +37,8 @@ export class Renderer {
   private showActionText: "in" | "out" | "done" = "done";
   private isHole = true;
   private isComplete = true;
-  private animations: Map<string, Anim>;
+  #foreground: Map<string, Anim> = new Map();
+  #background: Map<string, Anim> = new Map();
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -53,9 +54,7 @@ export class Renderer {
     }
     ctx.imageSmoothingEnabled = false;
     this.ctx = ctx;
-    this.animations = new Map<string, Anim>(
-      titleAnimation.map((anim) => [anim.id, anim])
-    );
+    titleAnimation.forEach(this.setAnimLayer);
     this.resizeCanvas();
   }
 
@@ -99,6 +98,32 @@ export class Renderer {
     );
     this.spriteSheet = offscreen;
   }
+
+  private setAnimLayer = (anim: Anim | Anim[]) => {
+    if (Array.isArray(anim)) {
+      anim.forEach(this.setAnimLayer);
+      return;
+    }
+
+    if (anim.layer === "foreground") {
+      this.#foreground.set(anim.id, anim);
+    } else if (anim.layer === "background") {
+      this.#background.set(anim.id, anim);
+    }
+  };
+
+  private getAnimLayer = (layer: "foreground" | "background") => {
+    return layer === "foreground" ? this.#foreground : this.#background;
+  };
+
+  private clearAnimLayer = (layer: "foreground" | "background" | "both") => {
+    if (layer === "foreground" || layer === "both") {
+      this.#foreground.clear();
+    }
+    if (layer === "background" || layer === "both") {
+      this.#background.clear();
+    }
+  };
 
   private drawBackground() {
     this.ctx.fillStyle = rgb(Palette.DarkGreen);
@@ -348,10 +373,9 @@ export class Renderer {
         break;
       case State.DealerWin:
         if (this.isComplete && !this.isGameover) {
-          this.animations.clear();
           for (let i = 0; i < dealerWinAnimation.length; i++) {
             const anim = dealerWinAnimation[i];
-            this.animations.set(anim.id, anim);
+            this.setAnimLayer(anim);
           }
           this.isGameover = true;
         }
@@ -359,16 +383,20 @@ export class Renderer {
       default:
         break;
     }
+    this.#background.forEach((anim) => {
+      if (anim.type === "text") this.drawText(anim);
+      if (anim.type === "sprite") this.drawSprite(anim);
+    });
 
     if (
       this.showActionText !== "done" &&
-      this.animations.has(actionAnimation.id) &&
-      this.animations.get(actionAnimation.id)!.progress === 1
+      this.#foreground.has(actionAnimation.id) &&
+      this.#foreground.get(actionAnimation.id)!.progress === 1
     ) {
       this.updateActionText();
     }
 
-    this.animations.forEach((anim) => {
+    this.#foreground.forEach((anim) => {
       if (anim.type === "text") this.drawText(anim);
       if (anim.type === "sprite") this.drawSprite(anim);
     });
@@ -387,50 +415,51 @@ export class Renderer {
     this.drawCanvas();
   }
 
+  private advance = (anim: Anim) => {
+    if (anim.delay && anim.delay > 0) {
+      anim.delay -= 1;
+      this.isComplete = false;
+    } else {
+      anim.progress = anim.progress ?? 0;
+      if (anim.progress < 1) {
+        this.isComplete = false;
+        anim.progress +=
+          anim.speed !== undefined ? anim.speed : this.baseAnimSpeed;
+        if (anim.progress > 1) anim.progress = 1;
+      }
+
+      if (anim.type === "sprite" && anim.playback) {
+        anim.currentSprite = anim.currentSprite ?? 0;
+        anim.spriteDuration = anim.spriteDuration ?? 6;
+        anim.spriteProgress = anim.spriteProgress ?? 0;
+        if (anim.playback === "loop") {
+          anim.spriteProgress += 1;
+          if (anim.spriteProgress >= anim.spriteDuration) {
+            anim.spriteProgress = 0;
+            anim.currentSprite = (anim.currentSprite + 1) % anim.sprites.length;
+          }
+        } else if (
+          anim.playback === "once" &&
+          anim.currentSprite < anim.sprites.length - 1
+        ) {
+          anim.spriteProgress += 1;
+          if (anim.spriteProgress >= anim.spriteDuration) {
+            anim.spriteProgress = 0;
+            anim.currentSprite = (anim.currentSprite + 1) % anim.sprites.length;
+          }
+        }
+      }
+    }
+  };
+
   // The game loop updates animation progress and redraws the canvas.
   private gameLoop = (timestamp: number) => {
     if (timestamp - this.lastTick >= this.tickRate) {
       this.lastTick = timestamp;
       this.time += 1;
       this.isComplete = true;
-      this.animations.forEach((anim) => {
-        if (anim.delay && anim.delay > 0) {
-          anim.delay -= 1;
-        } else {
-          anim.progress = anim.progress ?? 0;
-          if (anim.progress < 1) {
-            this.isComplete = false;
-            anim.progress +=
-              anim.speed !== undefined ? anim.speed : this.baseAnimSpeed;
-            if (anim.progress > 1) anim.progress = 1;
-          }
-
-          if (anim.type === "sprite" && anim.playback) {
-            anim.currentSprite = anim.currentSprite ?? 0;
-            anim.spriteDuration = anim.spriteDuration ?? 6;
-            anim.spriteProgress = anim.spriteProgress ?? 0;
-            if (anim.playback === "loop") {
-              anim.spriteProgress += 1;
-              if (anim.spriteProgress >= anim.spriteDuration) {
-                anim.spriteProgress = 0;
-                anim.currentSprite =
-                  (anim.currentSprite + 1) % anim.sprites.length;
-              }
-            } else if (
-              anim.playback === "once" &&
-              anim.currentSprite < anim.sprites.length - 1
-            ) {
-              anim.spriteProgress += 1;
-              if (anim.spriteProgress >= anim.spriteDuration) {
-                anim.spriteProgress = 0;
-                anim.currentSprite =
-                  (anim.currentSprite + 1) % anim.sprites.length;
-              }
-            }
-          }
-        }
-      });
-
+      this.#background.forEach(this.advance);
+      this.#foreground.forEach(this.advance);
       this.drawCanvas();
     }
     requestAnimationFrame(this.gameLoop);
@@ -447,7 +476,8 @@ export class Renderer {
   }
 
   reset() {
-    this.animations = new Map<string, Anim>(
+    this.setAnimLayer(titleAnimation);
+    this.#foreground = new Map<string, Anim>(
       titleAnimation.map((anim) => [anim.id, anim])
     );
     this.dealer = new Dealer();
@@ -512,6 +542,7 @@ export class Renderer {
       type: "sprite",
       progress: 0,
       easing: "easeOutQuint",
+      layer: "background",
       speed: 1 / 16,
       x: this.centerX - 80 + card.index * (isDealer ? -64 : 82),
       y: isDealer
@@ -547,8 +578,7 @@ export class Renderer {
   };
 
   private createDealingAnimations() {
-    this.animations.clear();
-
+    this.clearAnimLayer("both");
     // TODO support split hands
     let maxLength = this.dealer.hand.length;
 
@@ -577,7 +607,7 @@ export class Renderer {
 
     for (let i = 0; i < cards.length; i++) {
       const cardAnim = this.createCardAnim(cards[i], i * delay);
-      this.animations.set(cardAnim.id, cardAnim);
+      this.setAnimLayer(cardAnim);
     }
   }
 
@@ -608,20 +638,21 @@ export class Renderer {
       anim.text = "Bust!";
     }
 
-    this.animations.set(anim.id, anim);
+    this.setAnimLayer(anim);
   }
 
   updateActionText() {
     switch (this.showActionText) {
       case "in": {
-        const anim = this.animations.get(actionAnimation.id)! as TextAnim;
+        const layer = this.getAnimLayer(actionAnimation.layer);
+        const anim = layer.get(actionAnimation.id) as TextAnim;
+        if (!anim) return;
         this.showActionText = "out";
         anim.progress = 0;
         anim.opacity = { start: 1, end: 0 };
         anim.translateY = { start: 0, end: 50 };
         anim.kerning = { start: 0, end: 40 };
-        this.animations.delete(anim.id);
-        this.animations.set(anim.id, anim);
+        this.setAnimLayer(anim);
         break;
       }
       case "out":
@@ -634,34 +665,36 @@ export class Renderer {
   }
 
   private createPlayerCardsAnimations() {
-    if (this.playerTurn > this.players.length) return;
-
     this.players[this.playerTurn - 1].hand.forEach((card) => {
       const cardId = this.getCardId(card);
+      // TODO if createCardAnim layer is background, then this should be too
+      const layer = this.getAnimLayer("background");
 
-      if (this.animations.has(cardId)) {
+      if (layer.has(cardId)) {
         if (card.isBusted) {
-          const anim = this.animations.get(cardId) as SpriteAnim;
+          const anim = layer.get(cardId) as SpriteAnim;
           anim.opacity = { start: 1, end: card.isBusted ? 0.5 : 1 };
-          this.animations.set(cardId, anim);
+          layer.set(cardId, anim);
         }
         return;
       }
-
       const cardAnim = this.createCardAnim(card, 0);
 
-      this.animations.set(cardAnim.id, cardAnim);
+      this.setAnimLayer(cardAnim);
     });
   }
 
   private createDealerTurnAnimations() {
     if (this.isHole) {
       this.isHole = false;
-      const dealerCard = this.dealer.hand[1];
-      const cardId = this.getCardId(dealerCard, "Hidden");
-      if (this.animations.has(cardId)) {
-        const cardAnim = this.animations.get(cardId) as SpriteAnim;
-        const cardY = this.spriteHeight * dealerCard.valueOf();
+      const holeCard = this.dealer.hand[1];
+      const cardId = this.getCardId(holeCard, "Hidden");
+      // TODO if createCardAnim layer is background, then this should be too
+      const layer = this.getAnimLayer("background");
+
+      if (layer.has(cardId)) {
+        const cardAnim = layer.get(cardId) as SpriteAnim;
+        const cardY = this.spriteHeight * holeCard.valueOf();
         cardAnim.sprites = [
           { x: 0, y: 19968 },
           { x: 256, y: 19968 },
@@ -672,26 +705,28 @@ export class Renderer {
         ];
         cardAnim.playback = "once";
         cardAnim.spriteDuration = 1;
-        this.animations.set(cardId, cardAnim);
+        layer.set(cardId, cardAnim);
       } else {
         throw new Error("Cannot create animation. Dealer card not found");
       }
     } else {
       this.dealer.hand.forEach((card) => {
         const cardId = this.getCardId(card);
+        // TODO if createCardAnim layer is background, then this should be too
+        const layer = this.getAnimLayer("background");
 
-        if (this.animations.has(cardId)) {
+        if (layer.has(cardId)) {
           if (card.isBusted) {
-            const anim = this.animations.get(cardId) as SpriteAnim;
+            const anim = layer.get(cardId) as SpriteAnim;
             anim.opacity = { start: 1, end: card.isBusted ? 0.5 : 1 };
-            this.animations.set(cardId, anim);
+            layer.set(cardId, anim);
           }
           return;
         }
 
         const cardAnim = this.createCardAnim(card, 0);
 
-        this.animations.set(cardAnim.id, cardAnim);
+        this.setAnimLayer(cardAnim);
       });
     }
   }

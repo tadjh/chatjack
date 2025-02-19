@@ -5,6 +5,7 @@ interface BaseAnim {
   type: "text" | "loop" | "sprite";
   progress?: number;
   easing: "linear" | "easeOutCubic" | "easeOutQuint";
+  layer: "background" | "foreground";
   speed?: number;
   delay?: number;
   translateX?: { start: number; end: number };

@@ -12,6 +12,7 @@ export const titleAnimation: Anim[] = [
     id: "card",
     type: "sprite",
     playback: "loop",
+    layer: "background",
     easing: "easeOutQuint",
     spriteProgress: 0,
     spriteDuration: 6,
@@ -54,6 +55,7 @@ export const titleAnimation: Anim[] = [
     type: "text",
     text: TITLE_TEXT,
     easing: "easeOutCubic",
+    layer: "foreground",
     style: {
       color: Palette.Yellow,
       maxWidth: "full",
@@ -75,6 +77,7 @@ export const titleAnimation: Anim[] = [
     type: "text",
     text: SUBTITLE_TEXT,
     easing: "easeOutCubic",
+    layer: "foreground",
     delay: 12,
     style: {
       color: Palette.Yellow,
@@ -96,6 +99,7 @@ export const titleAnimation: Anim[] = [
     type: "text",
     text: "!start",
     easing: "easeOutCubic",
+    layer: "foreground",
     delay: 32,
     style: {
       color: Palette.Yellow,
@@ -120,6 +124,7 @@ export const bustedAnimation: Anim[] = [
     type: "text",
     text: "Busted!",
     easing: "easeOutCubic",
+    layer: "foreground",
     style: {
       color: Palette.Yellow,
       maxWidth: "full",
@@ -141,6 +146,7 @@ export const bustedAnimation: Anim[] = [
     type: "text",
     text: "Better luck next time!",
     easing: "easeOutCubic",
+    layer: "foreground",
     delay: 12,
     style: {
       color: Palette.Yellow,
@@ -162,6 +168,7 @@ export const bustedAnimation: Anim[] = [
     type: "text",
     text: "!restart",
     easing: "easeOutCubic",
+    layer: "foreground",
     delay: 32,
     style: {
       color: Palette.Yellow,
@@ -186,6 +193,7 @@ export const dealerWinAnimation: Anim[] = [
     type: "text",
     text: "Dealer Win!",
     easing: "easeOutCubic",
+    layer: "foreground",
     style: {
       color: Palette.Yellow,
       maxWidth: "full",
@@ -207,6 +215,7 @@ export const dealerWinAnimation: Anim[] = [
     type: "text",
     text: "Better luck next time",
     easing: "easeOutCubic",
+    layer: "foreground",
     delay: 12,
     style: {
       color: Palette.Yellow,
@@ -228,6 +237,7 @@ export const dealerWinAnimation: Anim[] = [
     type: "text",
     text: "!restart",
     easing: "easeOutCubic",
+    layer: "foreground",
     delay: 32,
     style: {
       color: Palette.Yellow,
@@ -250,6 +260,7 @@ export const actionAnimation: TextAnim = {
   id: "action",
   type: "text",
   text: "",
+  layer: "foreground",
   easing: "easeOutCubic",
   speed: 1 / 12,
   style: {

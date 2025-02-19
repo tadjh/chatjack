@@ -95,15 +95,13 @@ export class Blackjack {
   }
 
   hit(player: Player, index = 0) {
-    if (player.seat !== this.#playerTurn) {
-      throw new Error(`It is not ${player.name}'s turn`);
-    }
-
     player.hit(this.draw(), index);
     // TODO Support hitting a split hand
     if (player.hand.isBusted) {
+      player.isDone = true;
       this.#state = State.PlayerBust;
     } else if (player.hand.isBlackjack) {
+      player.isDone = true;
       this.#state = State.PlayerBlackJack;
     } else {
       this.#state = State.PlayerHit;
@@ -112,20 +110,14 @@ export class Blackjack {
   }
 
   stand(player: Player, index = 0) {
-    if (player.seat !== this.#playerTurn) {
-      throw new Error(`It is not ${player.name}'s turn`);
-    }
     player.stand(index);
     this.#state = State.PlayerStand;
+
     this.#playerTurn++;
     return this;
   }
 
   split(player: Player) {
-    if (player.seat !== this.#playerTurn) {
-      throw new Error(`It is not ${player.name}'s turn`);
-    }
-
     player.split();
     return this;
   }

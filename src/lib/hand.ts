@@ -80,6 +80,9 @@ export class Hand extends Deck {
   stand() {
     this.protect();
     this.status = "stand";
+    this.forEach((card) => {
+      card.isStand = true;
+    });
     return this;
   }
 

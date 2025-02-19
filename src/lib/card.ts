@@ -53,6 +53,7 @@ export class Card extends Number {
   #isAce: boolean;
   #isHidden: boolean;
   isBusted: boolean = false;
+  isStand: boolean = false;
   owner: string = "";
   index: number = 0;
 
