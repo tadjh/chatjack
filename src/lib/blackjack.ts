@@ -101,8 +101,10 @@ export class Blackjack {
 
     player.hit(this.draw(), index);
     // TODO Support hitting a split hand
-    if (player.hand.isBusted || player.hand.isBlackjack) {
-      this.#state = State.DealerTurn;
+    if (player.hand.isBusted) {
+      this.#state = State.PlayerBust;
+    } else if (player.hand.isBlackjack) {
+      this.#state = State.PlayerBlackJack;
     } else {
       this.#state = State.PlayerHit;
     }
@@ -113,13 +115,9 @@ export class Blackjack {
     if (player.seat !== this.#playerTurn) {
       throw new Error(`It is not ${player.name}'s turn`);
     }
-
     player.stand(index);
+    this.#state = State.PlayerStand;
     this.#playerTurn++;
-    if (this.#playerTurn > this.players.length) {
-      this.#state = State.DealerTurn;
-      this.dealer.hand[1].show();
-    }
     return this;
   }
 

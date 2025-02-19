@@ -26,7 +26,6 @@ export interface TextAnim extends BaseAnim {
     fontSize: number;
     fontFamily: string;
     lineHeight: number;
-    position: "center" | "left" | "right" | "top" | "bottom";
     shadow?: {
       color: [number, number, number];
       x: number;
@@ -35,6 +34,7 @@ export interface TextAnim extends BaseAnim {
     };
     stroke?: { color: [number, number, number]; width: number };
   };
+  position: "center" | "left" | "right" | "top" | "bottom";
   kerning?: { start: number; end: number };
   index: number;
 }

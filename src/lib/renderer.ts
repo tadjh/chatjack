@@ -1,6 +1,6 @@
 import {
   actionAnimation,
-  bustedAnimation,
+  // bustedAnimation,
   dealerWinAnimation,
   titleAnimation,
 } from "./animations";
@@ -15,7 +15,7 @@ import {
   TICK_RATE,
 } from "./constants";
 import { Dealer } from "./dealer";
-import { Player } from "./player";
+import { Player, Role } from "./player";
 import { Anim, SpriteAnim, TextAnim } from "./types";
 import { easeOut, font, rgb, rgba } from "./utils";
 
@@ -178,7 +178,7 @@ export class Renderer {
     const centerX = this.centerX + translateX;
     let centerY = this.centerY;
 
-    if (anim.style.position === "bottom") {
+    if (anim.position === "bottom") {
       centerY =
         translateY +
         Math.floor(window.innerHeight - window.innerHeight * 0.025) -
@@ -374,17 +374,18 @@ export class Renderer {
       case State.Init:
       case State.Dealing:
       case State.PlayerHit:
+      case State.PlayerBust:
+      case State.PlayerBlackJack:
       case State.DealerTurn:
         break;
-      case State.PlayerBust:
-        if (this.isComplete && !this.isGameover) {
-          this.animations.clear();
-          for (let i = 0; i < bustedAnimation.length; i++) {
-            const anim = bustedAnimation[i];
-            this.animations.set(anim.id, anim);
-          }
-          this.isGameover = true;
-        }
+        // if (this.isComplete && !this.isGameover) {
+        //   this.animations.clear();
+        //   for (let i = 0; i < bustedAnimation.length; i++) {
+        //     const anim = bustedAnimation[i];
+        //     this.animations.set(anim.id, anim);
+        //   }
+        //   this.isGameover = true;
+        // }
         break;
       case State.DealerWin:
         if (this.isComplete && !this.isGameover) {
@@ -402,12 +403,10 @@ export class Renderer {
 
     if (
       this.showActionText !== "done" &&
-      this.animations.has(actionAnimation.id)
+      this.animations.has(actionAnimation.id) &&
+      this.animations.get(actionAnimation.id)!.progress === 1
     ) {
-      const actionAnim = this.animations.get(actionAnimation.id)! as TextAnim;
-      if (actionAnim.progress === 1) {
-        this.updateActionText();
-      }
+      this.updateActionText();
     }
 
     this.animations.forEach((anim) => {
@@ -526,18 +525,19 @@ export class Renderer {
         this.reset();
         break;
       case State.Dealing:
-        this.animations.clear();
         this.createDealingAnimations();
         break;
       case State.PlayerHit:
       case State.PlayerBust:
-        this.createPlayerTurnAnimations();
+      case State.PlayerStand:
+      case State.PlayerBlackJack:
+        this.createPlayerCardsAnimations();
         this.createActionText();
         break;
       case State.DealerTurn:
       case State.DealerWin:
-        this.createPlayerTurnAnimations();
         this.createDealerTurnAnimations();
+        this.createActionText();
         break;
       default:
         break;
@@ -547,6 +547,8 @@ export class Renderer {
   }
 
   private createDealingAnimations() {
+    this.animations.clear();
+
     // TODO support split hands
     let maxLength = this.dealer.hand.length;
 
@@ -579,13 +581,24 @@ export class Renderer {
     }
   }
 
-  createActionText() {
+  createActionText(role: Role = Role.Player) {
     this.showActionText = "in";
     const anim = actionAnimation;
     anim.progress = 0;
     anim.opacity = { start: 0, end: 1 };
-    anim.translateY = { start: 50, end: 0 };
     anim.kerning = { start: 40, end: 0 };
+
+    if (role === Role.Player) {
+      anim.position = "bottom";
+      anim.translateY = { start: 50, end: 0 };
+      anim.style.fontSize = 60;
+      anim.style.color = Palette.Yellow;
+    } else if (role === Role.Dealer) {
+      anim.position = "top";
+      anim.translateY = { start: -50, end: 0 };
+      anim.style.fontSize = 48;
+      anim.style.color = Palette.White;
+    }
 
     if (this.state === State.PlayerHit) {
       anim.text = "Hit!";
@@ -607,6 +620,7 @@ export class Renderer {
         anim.opacity = { start: 1, end: 0 };
         anim.translateY = { start: 0, end: 50 };
         anim.kerning = { start: 0, end: 40 };
+        this.animations.delete(anim.id);
         this.animations.set(anim.id, anim);
         break;
       }
@@ -619,7 +633,9 @@ export class Renderer {
     }
   }
 
-  private createPlayerTurnAnimations() {
+  private createPlayerCardsAnimations() {
+    if (this.playerTurn > this.players.length) return;
+
     this.players[this.playerTurn - 1].hand.forEach((card) => {
       const cardId = this.getCardId(card);
 
