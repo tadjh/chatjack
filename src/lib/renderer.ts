@@ -325,47 +325,6 @@ export class Renderer {
     this.ctx.restore();
   }
 
-  createCardAnim = (card: Card, delay = 0): SpriteAnim => {
-    const isDealer = card.owner === "Dealer";
-    const anim: SpriteAnim = {
-      id: this.getCardId(card),
-      type: "sprite",
-      progress: 0,
-      easing: "easeOutQuint",
-      speed: 1 / 16,
-      x: this.centerX - 80 + card.index * (isDealer ? -64 : 82),
-      y: isDealer
-        ? 0 - card.index * 5
-        : window.innerHeight - window.innerHeight * 0.2 + card.index * 5,
-      sprites: [
-        {
-          x: card.isHidden ? 0 : this.spriteWidth * 2,
-          y: card.isHidden
-            ? this.spriteHeight * 52
-            : this.spriteHeight * card.valueOf(),
-        },
-      ],
-      delay,
-      scale: isDealer ? 0.75 : 1,
-      angle: ((Math.random() * 8 * 2 - 8) * Math.PI) / 180,
-      opacity: { start: 1, end: card.isBusted ? 0.5 : 1 },
-      translateY: {
-        start: isDealer ? -this.spriteHeight * 0.75 : this.spriteHeight,
-        end: 0,
-      },
-      shadow: {
-        color: Palette.DarkestGreen,
-        opacity: 1,
-        offsetX: 4,
-        offsetY: 4,
-        blur: 0,
-      },
-    };
-
-    console.log("Card animation created:", anim.id);
-    return anim;
-  };
-
   private drawCanvas() {
     this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
     this.drawBackground();
@@ -545,6 +504,47 @@ export class Renderer {
 
     this.drawCanvas();
   }
+
+  createCardAnim = (card: Card, delay = 0): SpriteAnim => {
+    const isDealer = card.owner === "Dealer";
+    const anim: SpriteAnim = {
+      id: this.getCardId(card),
+      type: "sprite",
+      progress: 0,
+      easing: "easeOutQuint",
+      speed: 1 / 16,
+      x: this.centerX - 80 + card.index * (isDealer ? -64 : 82),
+      y: isDealer
+        ? 0 - card.index * 5
+        : window.innerHeight - window.innerHeight * 0.2 + card.index * 5,
+      sprites: [
+        {
+          x: card.isHidden ? 0 : this.spriteWidth * 2,
+          y: card.isHidden
+            ? this.spriteHeight * 52
+            : this.spriteHeight * card.valueOf(),
+        },
+      ],
+      delay,
+      scale: isDealer ? 0.75 : 1,
+      angle: ((Math.random() * 8 * 2 - 8) * Math.PI) / 180,
+      opacity: { start: 1, end: card.isBusted ? 0.5 : 1 },
+      translateY: {
+        start: isDealer ? -this.spriteHeight * 0.75 : this.spriteHeight,
+        end: 0,
+      },
+      shadow: {
+        color: Palette.DarkestGreen,
+        opacity: 1,
+        offsetX: 4,
+        offsetY: 4,
+        blur: 0,
+      },
+    };
+
+    console.log("Card animation created:", anim.id);
+    return anim;
+  };
 
   private createDealingAnimations() {
     this.animations.clear();
