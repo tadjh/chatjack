@@ -118,76 +118,7 @@ export const titleAnimation: Anim[] = [
   },
 ];
 
-export const bustedAnimation: Anim[] = [
-  {
-    id: "title",
-    type: "text",
-    text: "Busted!",
-    easing: "easeOutCubic",
-    layer: "foreground",
-    style: {
-      color: Palette.Yellow,
-      maxWidth: "full",
-      fontSize: 112,
-      fontFamily: DISPLAY_FONT,
-      lineHeight: 1.2,
-      shadow: { color: Palette.DarkestGreen, x: 8, y: 8, size: 16 },
-      stroke: { width: 16, color: Palette.Black },
-    },
-    position: "center",
-    translateY: { start: 50, end: 0 },
-    opacity: { start: 0, end: 1 },
-    kerning: { start: 40, end: 0 },
-    float: { x: 0, y: 3, speed: 1 / 6 },
-    index: 0,
-  },
-  {
-    id: "subtitle",
-    type: "text",
-    text: "Better luck next time!",
-    easing: "easeOutCubic",
-    layer: "foreground",
-    delay: 12,
-    style: {
-      color: Palette.Yellow,
-      maxWidth: "title",
-      fontSize: 48,
-      fontFamily: DISPLAY_FONT,
-      lineHeight: 1.2,
-      shadow: { color: Palette.DarkestGreen, x: 4, y: 4, size: 16 },
-      stroke: { width: 8, color: Palette.Black },
-    },
-    position: "center",
-    translateY: { start: 50, end: 0 },
-    opacity: { start: 0, end: 1 },
-    float: { x: 0, y: 3, speed: 1 / 6 },
-    index: 1,
-  },
-  {
-    id: "restart",
-    type: "text",
-    text: "!restart",
-    easing: "easeOutCubic",
-    layer: "foreground",
-    delay: 32,
-    style: {
-      color: Palette.Yellow,
-      maxWidth: "full",
-      fontSize: 24,
-      fontFamily: SANS_SERIF_FONT,
-      lineHeight: 1,
-      shadow: { color: Palette.DarkestGreen, x: 4, y: 4, size: 16 },
-      stroke: { width: 6, color: Palette.Black },
-    },
-    position: "bottom",
-    translateY: { start: 50, end: 0 },
-    opacity: { start: 0, end: 1 },
-    float: { x: 0, y: 2, speed: 1 / 6 },
-    index: 2,
-  },
-];
-
-export const dealerWinAnimation: Anim[] = [
+export const gameoverAnimation: [TextAnim, TextAnim, TextAnim] = [
   {
     id: "title",
     type: "text",
@@ -235,7 +166,7 @@ export const dealerWinAnimation: Anim[] = [
   {
     id: "restart",
     type: "text",
-    text: "!restart",
+    text: "!start",
     easing: "easeOutCubic",
     layer: "foreground",
     delay: 32,

@@ -56,6 +56,7 @@ export function useBlackjack(deckCount = 1, playerCount = 1) {
     players: gameState.players,
     isDealt: blackjack.current.hasDealt,
     isDealerTurn: blackjack.current.isDealerTurn,
+    isGameover: blackjack.current.isGameover,
     allPlayersDone: blackjack.current.allPlayersDone,
     playerTurn: blackjack.current.playerTurn,
     state: blackjack.current.state,

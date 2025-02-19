@@ -8,6 +8,7 @@ export class Blackjack {
   #table: [Dealer, ...Player[]] = [new Dealer()];
   #deck: Deck = new Deck();
   #playerTurn = 0;
+  isGameover = false;
 
   constructor(deckCount = 1, playerCount = 1) {
     this.init(deckCount, playerCount);
@@ -174,6 +175,11 @@ export class Blackjack {
       this.dealer.hand.status === "blackjack"
     ) {
       this.#state = State.Push;
+    } else if (
+      this.player.hand.status === "busted" &&
+      this.dealer.hand.status === "busted"
+    ) {
+      this.#state = State.BothBust;
     } else if (this.player.hand.status === "blackjack") {
       this.#state = State.PlayerBlackJack;
     } else if (this.dealer.hand.status === "blackjack") {
@@ -188,6 +194,8 @@ export class Blackjack {
       this.#state = State.DealerWin;
     }
 
+    this.isGameover = true;
+
     return this;
   }
 
@@ -195,6 +203,7 @@ export class Blackjack {
     this.#table.forEach((player) => player.reset());
     this.#table = [this.dealer];
     this.#playerTurn = 0;
+    this.isGameover = false;
     this.#deck.empty();
     this.init(deckCount, playerCount);
     return this;

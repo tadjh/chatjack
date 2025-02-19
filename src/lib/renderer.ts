@@ -1,7 +1,6 @@
 import {
   actionAnimation,
-  // bustedAnimation,
-  dealerWinAnimation,
+  gameoverAnimation,
   titleAnimation,
 } from "./animations";
 import { Card } from "./card";
@@ -32,10 +31,8 @@ export class Renderer {
   private state: State = State.Dealing;
   private playerTurn = 0;
   private baseFontSize = window.innerWidth * 0.00125;
-  private isGameover = false;
   private showActionText: "in" | "out" | "done" = "done";
   private isHole = true;
-  private isComplete = true;
   #foreground: Map<string, Anim> = new Map();
   #background: Map<string, Anim> = new Map();
 
@@ -335,35 +332,6 @@ export class Renderer {
     // this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
     this.drawBackground();
 
-    switch (this.state) {
-      case State.Init:
-      case State.Dealing:
-      case State.PlayerHit:
-      case State.PlayerBust:
-      case State.PlayerBlackJack:
-      case State.DealerTurn:
-        break;
-        // if (this.isComplete && !this.isGameover) {
-        //   this.animations.clear();
-        //   for (let i = 0; i < bustedAnimation.length; i++) {
-        //     const anim = bustedAnimation[i];
-        //     this.animations.set(anim.id, anim);
-        //   }
-        //   this.isGameover = true;
-        // }
-        break;
-      case State.DealerWin:
-        if (this.isComplete && !this.isGameover) {
-          for (let i = 0; i < dealerWinAnimation.length; i++) {
-            const anim = dealerWinAnimation[i];
-            this.setAnimLayer(anim);
-          }
-          this.isGameover = true;
-        }
-        break;
-      default:
-        break;
-    }
     this.#background.forEach((anim) => {
       if (anim.type === "text") this.drawText(anim);
       if (anim.type === "sprite") this.drawSprite(anim);
@@ -399,11 +367,9 @@ export class Renderer {
   private advance = (anim: Anim) => {
     if (anim.delay && anim.delay > 0) {
       anim.delay -= 1;
-      this.isComplete = false;
     } else {
       anim.progress = anim.progress ?? 0;
       if (anim.progress < 1) {
-        this.isComplete = false;
         anim.progress +=
           anim.speed !== undefined ? anim.speed : this.baseAnimSpeed;
         if (anim.progress > 1) anim.progress = 1;
@@ -438,7 +404,6 @@ export class Renderer {
     if (timestamp - this.lastTick >= this.tickRate) {
       this.lastTick = timestamp;
       this.time += 1;
-      this.isComplete = true;
       this.#background.forEach(this.advance);
       this.#foreground.forEach(this.advance);
       this.drawCanvas();
@@ -465,7 +430,6 @@ export class Renderer {
     this.dealer = new Dealer();
     this.players = [];
     this.state = State.Init;
-    this.isGameover = false;
     this.isHole = true;
     this.playerTurn = 0;
     this.showActionText = "done";
@@ -477,11 +441,13 @@ export class Renderer {
     players,
     state,
     playerTurn,
+    isGameover,
   }: {
     dealer: Dealer;
     players: Player[];
     state: State;
     playerTurn: number;
+    isGameover: boolean;
   }) {
     this.dealer = dealer;
     this.players = players;
@@ -491,27 +457,31 @@ export class Renderer {
     // TODO Remove
     console.log("State:", State[state]);
 
-    switch (this.state) {
-      case State.Init:
-        this.reset();
-        break;
-      case State.Dealing:
-        this.createDealingAnimations();
-        break;
-      case State.PlayerHit:
-      case State.PlayerBust:
-      case State.PlayerStand:
-      case State.PlayerBlackJack:
-        this.createPlayerCardsAnimations();
-        this.createActionText();
-        break;
-      case State.DealerTurn:
-      case State.DealerWin:
-        this.createDealerTurnAnimations();
-        this.createActionText();
-        break;
-      default:
-        break;
+    if (isGameover) {
+      this.createGameoverAnimations();
+    } else {
+      switch (this.state) {
+        case State.Init:
+          this.reset();
+          break;
+        case State.Dealing:
+          this.createDealingAnimations();
+          break;
+        case State.PlayerHit:
+        case State.PlayerBust:
+        case State.PlayerStand:
+        case State.PlayerBlackJack:
+          this.createPlayerCardsAnimations();
+          this.createActionText();
+          break;
+        case State.DealerTurn:
+        case State.DealerWin:
+          this.createDealerTurnAnimations();
+          this.createActionText();
+          break;
+        default:
+          break;
+      }
     }
 
     this.drawCanvas();
@@ -716,6 +686,57 @@ export class Renderer {
 
         this.setAnimLayer(cardAnim);
       });
+    }
+  }
+
+  createGameoverAnimations() {
+    let title = "";
+    let subtitle = "";
+    switch (this.state) {
+      case State.Push:
+        title = "Push!";
+        subtitle = "No winner this time...";
+        break;
+      case State.BothBust:
+        title = "Both Bust!";
+        subtitle = "No winner this time...";
+        break;
+      case State.PlayerBlackJack:
+        title = "Blackjack!";
+        subtitle = "Chat Wins!";
+        break;
+      case State.DealerBlackJack:
+        title = "Dealer hit 21!";
+        subtitle = "Better luck next time!";
+        break;
+      case State.PlayerBust:
+        title = "Player Bust!";
+        subtitle = "Better luck next time!";
+        break;
+      case State.DealerBust:
+        title = "Dealer Bust!";
+        subtitle = "How unfortunate...";
+        break;
+      case State.PlayerWin:
+        title = "Player Wins!";
+        subtitle = "You hand is stronger!";
+        break;
+      case State.DealerWin:
+        title = "Dealer Wins!";
+        subtitle = "Better luck next time!";
+        break;
+      default:
+        break;
+    }
+
+    for (let i = 0; i < gameoverAnimation.length; i++) {
+      const anim = gameoverAnimation[i];
+      if (anim.id === "title") {
+        anim.text = title;
+      } else if (anim.id === "subtitle") {
+        anim.text = subtitle;
+      }
+      this.setAnimLayer(anim);
     }
   }
 

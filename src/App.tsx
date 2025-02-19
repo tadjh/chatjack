@@ -12,6 +12,7 @@ function App() {
     players,
     isDealt,
     isDealerTurn,
+    isGameover,
     playerTurn,
     allPlayersDone,
     state,
@@ -47,10 +48,16 @@ function App() {
   useEffect(() => {
     if (!rendererRef.current) return;
 
-    rendererRef.current.update({ dealer, players, state, playerTurn });
+    rendererRef.current.update({
+      dealer,
+      players,
+      state,
+      playerTurn,
+      isGameover,
+    });
 
     rendererRef.current.resizeCanvas();
-  }, [dealer, players, state, playerTurn]);
+  }, [dealer, players, state, playerTurn, isGameover]);
 
   return (
     <>

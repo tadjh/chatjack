@@ -63,6 +63,7 @@ export enum State {
   PlayerWin,
   DealerWin,
   DealerBust,
+  BothBust,
   Push,
 }
 
