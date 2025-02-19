@@ -33,6 +33,7 @@ export class Renderer {
   private baseFontSize = window.innerWidth * 0.00125;
   private showActionText: "in" | "out" | "done" = "done";
   private isHole = true;
+  private isGameover = false;
   #foreground: Map<string, Anim> = new Map();
   #background: Map<string, Anim> = new Map();
 
@@ -434,6 +435,7 @@ export class Renderer {
     this.players = [];
     this.state = State.Init;
     this.isHole = true;
+    this.isGameover = false;
     this.playerTurn = 0;
     this.showActionText = "done";
     this.drawCanvas();
@@ -452,10 +454,18 @@ export class Renderer {
     playerTurn: number;
     isGameover: boolean;
   }) {
+    // Restarted game
+    if (this.isGameover && state === State.Dealing) {
+      this.reset();
+    }
+
     this.dealer = dealer;
     this.players = players;
     this.state = state;
     this.playerTurn = playerTurn;
+    this.isGameover = isGameover;
+
+    console.log(this.isHole);
 
     // TODO Remove
     console.log("State:", State[state]);
@@ -464,9 +474,6 @@ export class Renderer {
       this.createGameoverAnimations();
     } else {
       switch (this.state) {
-        case State.Init:
-          this.reset();
-          break;
         case State.Dealing:
           this.createDealingAnimations();
           break;
@@ -477,8 +484,11 @@ export class Renderer {
           this.createPlayerCardsAnimations();
           this.createActionText(Role.Player);
           break;
+        case State.RevealHoleCard:
         case State.DealerHit:
-        case State.DealerTurn:
+        case State.DealerStand:
+        case State.DealerBust:
+        case State.DealerBlackJack:
           this.createDealerTurnAnimations();
           this.createActionText(Role.Dealer);
           break;
@@ -600,7 +610,7 @@ export class Renderer {
       this.state === State.DealerBlackJack
     ) {
       anim.text = "Blackjack!";
-    } else if (this.state === State.DealerTurn) {
+    } else if (this.state === State.RevealHoleCard) {
       anim.text = Rank[this.dealer.hand[1].rank];
     }
 
@@ -662,10 +672,12 @@ export class Renderer {
   }
 
   private createDealerTurnAnimations() {
+    console.log("is hole", this.isHole);
+
     if (this.isHole) {
       this.isHole = false;
       const holeCard = this.dealer.hand[1];
-      const cardId = this.getCardId(holeCard, "Hidden");
+      let cardId = this.getCardId(holeCard, "Hidden");
       // TODO if createCardAnim layer is background, then this should be too
       const layer = this.getAnimLayer("background");
 
@@ -683,16 +695,19 @@ export class Renderer {
         ];
         cardAnim.playback = "once";
         cardAnim.spriteDuration = 1;
-        layer.set(cardId, cardAnim);
+        holeCard.show();
+        layer.delete(cardId);
+        cardId = this.getCardId(holeCard);
+        cardAnim.id = cardId;
+        this.setAnimLayer(cardAnim);
       } else {
         throw new Error("Cannot create animation. Dealer card not found");
       }
     } else {
+      // TODO if createCardAnim layer is background, then this should be too
+      const layer = this.getAnimLayer("background");
       this.dealer.hand.forEach((card) => {
         const cardId = this.getCardId(card);
-        // TODO if createCardAnim layer is background, then this should be too
-        const layer = this.getAnimLayer("background");
-
         if (layer.has(cardId)) {
           if (card.isBusted) {
             const anim = layer.get(cardId) as SpriteAnim;
@@ -715,10 +730,6 @@ export class Renderer {
     switch (this.state) {
       case State.Push:
         title = "Push!";
-        subtitle = "No winner this time...";
-        break;
-      case State.BothBust:
-        title = "Both Bust!";
         subtitle = "No winner this time...";
         break;
       case State.PlayerBlackJack:
@@ -751,6 +762,7 @@ export class Renderer {
 
     for (let i = 0; i < gameoverAnimation.length; i++) {
       const anim = gameoverAnimation[i];
+      anim.progress = 0;
       if (anim.id === "title") {
         anim.text = title;
       } else if (anim.id === "subtitle") {

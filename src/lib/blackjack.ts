@@ -42,7 +42,7 @@ export class Blackjack {
   }
 
   get isDealerTurn() {
-    return this.#state === State.DealerTurn;
+    return this.#state === State.RevealHoleCard;
   }
 
   get playerTurn() {
@@ -136,7 +136,7 @@ export class Blackjack {
   reveal() {
     this.dealer.reveal();
     this.isRevealed = true;
-    this.#state = State.DealerTurn;
+    this.#state = State.RevealHoleCard;
     return this;
   }
 
@@ -180,24 +180,16 @@ export class Blackjack {
 
     // TODO Support multiple players
     // TODO Support player with a split hand
-    if (
-      this.player.hand.status === "blackjack" &&
-      this.dealer.hand.status === "blackjack"
-    ) {
+    if (this.player.hand.status === "busted") {
+      this.#state = State.PlayerBust;
+    } else if (this.dealer.hand.status === "busted") {
+      this.#state = State.DealerBust;
+    } else if (this.player.hand.score === this.dealer.hand.score) {
       this.#state = State.Push;
-    } else if (
-      this.player.hand.status === "busted" &&
-      this.dealer.hand.status === "busted"
-    ) {
-      this.#state = State.BothBust;
     } else if (this.player.hand.status === "blackjack") {
       this.#state = State.PlayerBlackJack;
     } else if (this.dealer.hand.status === "blackjack") {
       this.#state = State.DealerBlackJack;
-    } else if (this.player.hand.status === "busted") {
-      this.#state = State.PlayerBust;
-    } else if (this.dealer.hand.status === "busted") {
-      this.#state = State.DealerBust;
     } else if (this.player.hand.score > this.dealer.hand.score) {
       this.#state = State.PlayerWin;
     } else if (this.dealer.hand.score > this.player.hand.score) {
