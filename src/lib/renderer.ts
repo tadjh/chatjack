@@ -1,4 +1,5 @@
 import {
+  actionAnimation,
   bustedAnimation,
   dealerWinAnimation,
   titleAnimation,
@@ -30,8 +31,10 @@ export class Renderer {
   private dealer = new Dealer();
   private players: Player[] = [];
   private state: State = State.Dealing;
+  private playerTurn = 0;
   private baseFontSize = window.innerWidth * 0.00125;
   private isGameover = false;
+  private showActionText: "in" | "out" | "done" = "done";
   private isHole = true;
   private isComplete = true;
   private animations: Map<string, Anim>;
@@ -124,6 +127,7 @@ export class Renderer {
     }
 
     let easing = 1;
+    let opacity = anim.opacity?.end ?? 1;
     let translateX = anim.translateX?.end ?? 0;
     let translateY = anim.translateY?.end ?? 0;
     let kerning = anim.kerning?.end ?? 0;
@@ -151,6 +155,10 @@ export class Renderer {
           anim.translateY.end,
           easing
         );
+      }
+
+      if (anim.opacity) {
+        opacity = this.lerp(anim.opacity.start, anim.opacity.end, easing);
       }
 
       if (anim.kerning) {
@@ -189,9 +197,9 @@ export class Renderer {
     if (anim.style.shadow) {
       const shadowOffset = anim.progress >= 1 ? translateY : 0;
 
-      this.ctx.strokeStyle = rgba(anim.style.shadow.color, easing);
+      this.ctx.strokeStyle = rgba(anim.style.shadow.color, opacity);
       this.ctx.lineWidth = fontSize / anim.style.shadow.size;
-      this.ctx.fillStyle = rgba(anim.style.shadow.color, easing);
+      this.ctx.fillStyle = rgba(anim.style.shadow.color, opacity);
       this.ctx.fillText(
         anim.text,
         centerX + anim.style.shadow.x,
@@ -205,12 +213,12 @@ export class Renderer {
     }
 
     if (anim.style.stroke) {
-      this.ctx.strokeStyle = rgba(anim.style.stroke.color, easing);
+      this.ctx.strokeStyle = rgba(anim.style.stroke.color, opacity);
       this.ctx.lineWidth = fontSize / anim.style.stroke.width;
       this.ctx.strokeText(anim.text, centerX, centerY);
     }
 
-    this.ctx.fillStyle = rgba(anim.style.color, easing);
+    this.ctx.fillStyle = rgba(anim.style.color, opacity);
     this.ctx.fillText(anim.text, centerX, centerY);
   }
 
@@ -317,21 +325,6 @@ export class Renderer {
     this.ctx.restore();
   }
 
-  drawTitle() {
-    this.animations.forEach((anim) => {
-      if (anim.type === "text") this.drawText(anim);
-      if (anim.type === "sprite") this.drawSprite(anim);
-    });
-  }
-
-  drawCards() {
-    this.animations.forEach((card) => {
-      if (card.type === "sprite") {
-        this.drawSprite(card);
-      }
-    });
-  }
-
   createCardAnim = (card: Card, delay = 0): SpriteAnim => {
     const isDealer = card.owner === "Dealer";
     const anim: SpriteAnim = {
@@ -379,44 +372,48 @@ export class Renderer {
 
     switch (this.state) {
       case State.Init:
-        this.drawTitle();
-        break;
       case State.Dealing:
-      case State.PlayerTurn:
+      case State.PlayerHit:
       case State.DealerTurn:
-        this.drawCards();
         break;
       case State.PlayerBust:
-        if (this.isGameover) {
-          this.drawTitle();
-        } else {
-          this.drawCards();
-          if (this.isComplete) {
-            for (let i = 0; i < bustedAnimation.length; i++) {
-              const anim = bustedAnimation[i];
-              this.animations.set(anim.id, anim);
-            }
-            this.isGameover = true;
+        if (this.isComplete && !this.isGameover) {
+          this.animations.clear();
+          for (let i = 0; i < bustedAnimation.length; i++) {
+            const anim = bustedAnimation[i];
+            this.animations.set(anim.id, anim);
           }
+          this.isGameover = true;
         }
         break;
       case State.DealerWin:
-        if (this.isGameover) {
-          this.drawTitle();
-        } else {
-          this.drawCards();
-          if (this.isComplete) {
-            for (let i = 0; i < dealerWinAnimation.length; i++) {
-              const anim = dealerWinAnimation[i];
-              this.animations.set(anim.id, anim);
-            }
-            this.isGameover = true;
+        if (this.isComplete && !this.isGameover) {
+          this.animations.clear();
+          for (let i = 0; i < dealerWinAnimation.length; i++) {
+            const anim = dealerWinAnimation[i];
+            this.animations.set(anim.id, anim);
           }
+          this.isGameover = true;
         }
         break;
       default:
         break;
     }
+
+    if (
+      this.showActionText !== "done" &&
+      this.animations.has(actionAnimation.id)
+    ) {
+      const actionAnim = this.animations.get(actionAnimation.id)! as TextAnim;
+      if (actionAnim.progress === 1) {
+        this.updateActionText();
+      }
+    }
+
+    this.animations.forEach((anim) => {
+      if (anim.type === "text") this.drawText(anim);
+      if (anim.type === "sprite") this.drawSprite(anim);
+    });
   }
 
   public resizeCanvas() {
@@ -500,6 +497,8 @@ export class Renderer {
     this.state = State.Init;
     this.isGameover = false;
     this.isHole = true;
+    this.playerTurn = 0;
+    this.showActionText = "done";
     this.drawCanvas();
   }
 
@@ -507,15 +506,19 @@ export class Renderer {
     dealer,
     players,
     state,
+    playerTurn,
   }: {
     dealer: Dealer;
     players: Player[];
     state: State;
+    playerTurn: number;
   }) {
     this.dealer = dealer;
     this.players = players;
     this.state = state;
+    this.playerTurn = playerTurn;
 
+    // TODO Remove
     console.log("State:", State[state]);
 
     switch (this.state) {
@@ -524,14 +527,16 @@ export class Renderer {
         break;
       case State.Dealing:
         this.animations.clear();
-        this.createReadyToDealAnimations();
+        this.createDealingAnimations();
         break;
-      case State.PlayerTurn:
+      case State.PlayerHit:
       case State.PlayerBust:
         this.createPlayerTurnAnimations();
+        this.createActionText();
         break;
       case State.DealerTurn:
       case State.DealerWin:
+        this.createPlayerTurnAnimations();
         this.createDealerTurnAnimations();
         break;
       default:
@@ -541,7 +546,7 @@ export class Renderer {
     this.drawCanvas();
   }
 
-  private createReadyToDealAnimations() {
+  private createDealingAnimations() {
     // TODO support split hands
     let maxLength = this.dealer.hand.length;
 
@@ -574,24 +579,62 @@ export class Renderer {
     }
   }
 
+  createActionText() {
+    this.showActionText = "in";
+    const anim = actionAnimation;
+    anim.progress = 0;
+    anim.opacity = { start: 0, end: 1 };
+    anim.translateY = { start: 50, end: 0 };
+    anim.kerning = { start: 40, end: 0 };
+
+    if (this.state === State.PlayerHit) {
+      anim.text = "Hit!";
+    } else if (this.state === State.PlayerStand) {
+      anim.text = "Stand!";
+    } else if (this.state === State.PlayerBust) {
+      anim.text = "Bust!";
+    }
+
+    this.animations.set(anim.id, anim);
+  }
+
+  updateActionText() {
+    switch (this.showActionText) {
+      case "in": {
+        const anim = this.animations.get(actionAnimation.id)! as TextAnim;
+        this.showActionText = "out";
+        anim.progress = 0;
+        anim.opacity = { start: 1, end: 0 };
+        anim.translateY = { start: 0, end: 50 };
+        anim.kerning = { start: 0, end: 40 };
+        this.animations.set(anim.id, anim);
+        break;
+      }
+      case "out":
+        this.showActionText = "done";
+        break;
+      case "done":
+      default:
+        break;
+    }
+  }
+
   private createPlayerTurnAnimations() {
-    this.players.forEach((player) => {
-      player.hand.forEach((card) => {
-        const cardId = this.getCardId(card);
+    this.players[this.playerTurn - 1].hand.forEach((card) => {
+      const cardId = this.getCardId(card);
 
-        if (this.animations.has(cardId)) {
-          if (card.isBusted) {
-            const anim = this.animations.get(cardId) as SpriteAnim;
-            anim.opacity = { start: 1, end: card.isBusted ? 0.5 : 1 };
-            this.animations.set(cardId, anim);
-          }
-          return;
+      if (this.animations.has(cardId)) {
+        if (card.isBusted) {
+          const anim = this.animations.get(cardId) as SpriteAnim;
+          anim.opacity = { start: 1, end: card.isBusted ? 0.5 : 1 };
+          this.animations.set(cardId, anim);
         }
+        return;
+      }
 
-        const cardAnim = this.createCardAnim(card, 0);
+      const cardAnim = this.createCardAnim(card, 0);
 
-        this.animations.set(cardAnim.id, cardAnim);
-      });
+      this.animations.set(cardAnim.id, cardAnim);
     });
   }
 
@@ -622,9 +665,11 @@ export class Renderer {
         const cardId = this.getCardId(card);
 
         if (this.animations.has(cardId)) {
-          const anim = this.animations.get(cardId) as SpriteAnim;
-          anim.opacity = { start: 1, end: card.isBusted ? 0.5 : 1 };
-          this.animations.set(cardId, anim);
+          if (card.isBusted) {
+            const anim = this.animations.get(cardId) as SpriteAnim;
+            anim.opacity = { start: 1, end: card.isBusted ? 0.5 : 1 };
+            this.animations.set(cardId, anim);
+          }
           return;
         }
 

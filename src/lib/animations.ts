@@ -5,7 +5,7 @@ import {
   SANS_SERIF_FONT,
   DISPLAY_FONT,
 } from "./constants";
-import { Anim } from "./types";
+import { Anim, TextAnim } from "./types";
 
 export const titleAnimation: Anim[] = [
   {
@@ -38,8 +38,8 @@ export const titleAnimation: Anim[] = [
       { x: 256, y: 19968, flipX: true },
     ],
     delay: 24,
-    opacity: { start: 0, end: 1 },
     translateY: { start: 200, end: 0 },
+    opacity: { start: 0, end: 1 },
     float: { x: 0, y: 5, speed: 1 / 2 },
     shadow: {
       color: Palette.DarkestGreen,
@@ -65,6 +65,7 @@ export const titleAnimation: Anim[] = [
       stroke: { width: 16, color: Palette.Black },
     },
     translateY: { start: 50, end: 0 },
+    opacity: { start: 0, end: 1 },
     kerning: { start: 40, end: 0 },
     float: { x: 0, y: 3, speed: 1 / 6 },
     index: 0,
@@ -86,6 +87,7 @@ export const titleAnimation: Anim[] = [
       stroke: { width: 8, color: Palette.Black },
     },
     translateY: { start: 50, end: 0 },
+    opacity: { start: 0, end: 1 },
     float: { x: 0, y: 3, speed: 1 / 6 },
     index: 1,
   },
@@ -106,6 +108,7 @@ export const titleAnimation: Anim[] = [
       stroke: { width: 6, color: Palette.Black },
     },
     translateY: { start: 50, end: 0 },
+    opacity: { start: 0, end: 1 },
     float: { x: 0, y: 2, speed: 1 / 6 },
     index: 2,
   },
@@ -128,6 +131,7 @@ export const bustedAnimation: Anim[] = [
       stroke: { width: 16, color: Palette.Black },
     },
     translateY: { start: 50, end: 0 },
+    opacity: { start: 0, end: 1 },
     kerning: { start: 40, end: 0 },
     float: { x: 0, y: 3, speed: 1 / 6 },
     index: 0,
@@ -149,6 +153,7 @@ export const bustedAnimation: Anim[] = [
       stroke: { width: 8, color: Palette.Black },
     },
     translateY: { start: 50, end: 0 },
+    opacity: { start: 0, end: 1 },
     float: { x: 0, y: 3, speed: 1 / 6 },
     index: 1,
   },
@@ -169,6 +174,7 @@ export const bustedAnimation: Anim[] = [
       stroke: { width: 6, color: Palette.Black },
     },
     translateY: { start: 50, end: 0 },
+    opacity: { start: 0, end: 1 },
     float: { x: 0, y: 2, speed: 1 / 6 },
     index: 2,
   },
@@ -191,6 +197,7 @@ export const dealerWinAnimation: Anim[] = [
       stroke: { width: 16, color: Palette.Black },
     },
     translateY: { start: 50, end: 0 },
+    opacity: { start: 0, end: 1 },
     kerning: { start: 40, end: 0 },
     float: { x: 0, y: 3, speed: 1 / 6 },
     index: 0,
@@ -212,6 +219,7 @@ export const dealerWinAnimation: Anim[] = [
       stroke: { width: 8, color: Palette.Black },
     },
     translateY: { start: 50, end: 0 },
+    opacity: { start: 0, end: 1 },
     float: { x: 0, y: 3, speed: 1 / 6 },
     index: 1,
   },
@@ -232,8 +240,32 @@ export const dealerWinAnimation: Anim[] = [
       stroke: { width: 6, color: Palette.Black },
     },
     translateY: { start: 50, end: 0 },
+    opacity: { start: 0, end: 1 },
     float: { x: 0, y: 2, speed: 1 / 6 },
     index: 2,
   },
 ];
+
+export const actionAnimation: TextAnim = {
+  id: "action",
+  type: "text",
+  text: "",
+  easing: "easeOutCubic",
+  speed: 1 / 12,
+  style: {
+    color: Palette.Yellow,
+    maxWidth: "full",
+    fontSize: 60,
+    position: "bottom",
+    fontFamily: SANS_SERIF_FONT,
+    lineHeight: 1.2,
+    shadow: { color: Palette.DarkestGreen, x: 8, y: 8, size: 16 },
+    stroke: { width: 16, color: Palette.Black },
+  },
+  opacity: { start: 0, end: 1 },
+  translateY: { start: 50, end: 0 },
+  kerning: { start: 40, end: 0 },
+  float: { x: 0, y: 3, speed: 1 / 6 },
+  index: 0,
+};
 

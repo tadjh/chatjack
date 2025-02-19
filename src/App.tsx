@@ -45,10 +45,10 @@ function App() {
   useEffect(() => {
     if (!rendererRef.current) return;
 
-    rendererRef.current.update({ dealer, players, state });
+    rendererRef.current.update({ dealer, players, state, playerTurn });
 
     rendererRef.current.resizeCanvas();
-  }, [dealer, players, state]);
+  }, [dealer, players, state, playerTurn]);
 
   return (
     <>
@@ -65,7 +65,7 @@ function App() {
         </div>
         <div className="flex gap-2 border p-2 items-center">
           <Button onClick={dealerTurn} disabled={!isDealerTurn}>
-            Hit
+            Resolve
           </Button>
           <div>
             <div>Dealer</div>

@@ -9,6 +9,7 @@ interface BaseAnim {
   delay?: number;
   translateX?: { start: number; end: number };
   translateY?: { start: number; end: number };
+  opacity?: { start: number; end: number };
   float?: {
     x: number;
     y: number;
@@ -49,7 +50,6 @@ export interface SpriteAnim extends BaseAnim {
   sprites: { x: number; y: number; flipX?: boolean; flipY?: boolean }[];
   scale?: number;
   angle?: number;
-  opacity?: { start: number; end: number };
   shadow?: {
     color: [number, number, number];
     opacity: number;
