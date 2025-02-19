@@ -118,7 +118,7 @@ export class Blackjack {
 
     player.stand(index);
     this.#playerTurn++;
-    if (this.#playerTurn === this.players.length) {
+    if (this.#playerTurn > this.players.length) {
       this.#state = State.DealerTurn;
       this.dealer.hand[1].show();
     }
@@ -126,8 +126,6 @@ export class Blackjack {
   }
 
   split(player: Player) {
-    console.log(player.seat, this.#playerTurn);
-
     if (player.seat !== this.#playerTurn) {
       throw new Error(`It is not ${player.name}'s turn`);
     }

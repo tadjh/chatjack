@@ -80,8 +80,6 @@ describe("Player", () => {
     expect(player.hands[0].length).toBe(1);
     expect(player.hands[1].length).toBe(1);
 
-    console.log(player.hands);
-
     // Their scores should match the individual card's points
     expect(player.getScore(0)).toBe(card1.points);
     expect(player.getScore(1)).toBe(card2.points);
