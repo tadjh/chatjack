@@ -43,6 +43,7 @@ describe("Player", () => {
     expect(player.hand.length).toBe(0);
     expect(player.score).toBe(0);
     expect(player.name).toBe("John");
+    expect(player.seat).toBe(1);
   });
 
   it("should allow hitting (adding a card) to the player's hand", () => {

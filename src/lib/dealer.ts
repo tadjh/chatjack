@@ -3,7 +3,7 @@ import { Player, Role } from "./player";
 
 export class Dealer extends Player {
   constructor() {
-    super("Dealer", Role.Dealer);
+    super("Dealer", 0, Role.Dealer);
   }
 
   get isBusted() {

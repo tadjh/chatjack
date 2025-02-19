@@ -75,7 +75,7 @@ function App() {
             </div>
           </div>
         </div>
-        {players.map((player, p) => (
+        {players.map((player) => (
           <div key={player.name} className="grid gap-2 border p-2">
             <div>{player.name}</div>
             <div className="flex gap-4">
@@ -89,7 +89,7 @@ function App() {
                     <Button
                       onClick={() => hit(player)}
                       disabled={
-                        playerTurn !== p ||
+                        playerTurn !== player.seat ||
                         hand.isBusted ||
                         hand.isStand ||
                         hand.isBlackjack
@@ -105,7 +105,7 @@ function App() {
                   </Button> */}
                     <Button
                       disabled={
-                        playerTurn !== p ||
+                        playerTurn !== player.seat ||
                         hand.isBusted ||
                         hand.isStand ||
                         hand.isBlackjack

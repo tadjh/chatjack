@@ -71,9 +71,7 @@ describe("Blackjack", () => {
     game.deal();
     const player = game.players[0];
     game.stand(player); // Move to next player's turn
-    expect(() => game.hit(player)).toThrow(
-      `It is not this ${player.name} turn`
-    );
+    expect(() => game.hit(player)).toThrow(`It is not ${player.name}'s turn`);
   });
 
   it("should throw an error if a player stands out of turn", () => {
@@ -81,9 +79,7 @@ describe("Blackjack", () => {
     game.deal();
     const player = game.players[0];
     game.stand(player); // Move to next player's turn
-    expect(() => game.stand(player)).toThrow(
-      `It is not this ${player.name} turn`
-    );
+    expect(() => game.stand(player)).toThrow(`It is not ${player.name}'s turn`);
   });
 
   it("should throw an error if a player splits out of turn", () => {
@@ -91,9 +87,7 @@ describe("Blackjack", () => {
     game.deal();
     const player = game.players[0];
     game.stand(player); // Move to next player's turn
-    expect(() => game.split(player)).toThrow(
-      `It is not this ${player.name} turn`
-    );
+    expect(() => game.split(player)).toThrow(`It is not ${player.name}'s turn`);
   });
 });
 

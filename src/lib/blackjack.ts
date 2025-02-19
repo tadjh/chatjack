@@ -7,7 +7,7 @@ export class Blackjack {
   #state = State.Init;
   #table: [Dealer, ...Player[]] = [new Dealer()];
   #deck: Deck = new Deck();
-  #playerTurn = -1;
+  #playerTurn = 0;
 
   constructor(deckCount = 1, playerCount = 1) {
     this.init(deckCount, playerCount);
@@ -54,8 +54,9 @@ export class Blackjack {
   init(deckCount: number, playerCount: number) {
     this.#state = State.Init;
     this.#deck.init(deckCount);
-    for (let i = 0; i < playerCount; i++) {
-      this.#table.push(new Player(`Player ${i + 1}`));
+    for (let i = 1; i <= playerCount; i++) {
+      const player = new Player(`Player ${i}`, i);
+      this.#table.push(player);
     }
     return this;
   }
@@ -94,8 +95,8 @@ export class Blackjack {
   }
 
   hit(player: Player, index = 0) {
-    if (player.id !== this.#playerTurn) {
-      throw new Error(`It is not this ${player.name} turn`);
+    if (player.seat !== this.#playerTurn) {
+      throw new Error(`It is not ${player.name}'s turn`);
     }
 
     player.hit(this.draw(), index);
@@ -111,8 +112,8 @@ export class Blackjack {
   }
 
   stand(player: Player, index = 0) {
-    if (player.id !== this.#playerTurn) {
-      throw new Error(`It is not this ${player.name} turn`);
+    if (player.seat !== this.#playerTurn) {
+      throw new Error(`It is not ${player.name}'s turn`);
     }
 
     player.stand(index);
@@ -125,8 +126,10 @@ export class Blackjack {
   }
 
   split(player: Player) {
-    if (player.id !== this.#playerTurn) {
-      throw new Error(`It is not this ${player.name} turn`);
+    console.log(player.seat, this.#playerTurn);
+
+    if (player.seat !== this.#playerTurn) {
+      throw new Error(`It is not ${player.name}'s turn`);
     }
 
     player.split();

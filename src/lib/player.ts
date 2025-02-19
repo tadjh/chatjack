@@ -1,15 +1,13 @@
 import { Card } from "./card";
 import { Hand } from "./hand";
 
-let id = 0;
-
 export class Player {
-  public readonly id = id++;
   #hasSplit = false;
   #hands: Hand[];
 
   constructor(
     public readonly name = "Player",
+    public readonly seat = 1,
     public readonly role = Role.Player
   ) {
     this.#hands = [new Hand(this.name)];
@@ -65,10 +63,6 @@ export class Player {
       throw new Error("Player has already split");
     }
 
-    if (this.#hands[0].length !== 2) {
-      throw new Error("Hand must have exactly two cards to split");
-    }
-
     this.#hands = this.#hands[0].split();
     this.#hasSplit = true;
     return this;
@@ -90,7 +84,7 @@ export class Player {
 }
 
 export enum Role {
-  Player,
   Dealer,
+  Player,
 }
 
