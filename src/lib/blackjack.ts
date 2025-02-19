@@ -191,7 +191,7 @@ export class Blackjack {
   reset(deckCount = 1, playerCount = 1) {
     this.#table.forEach((player) => player.reset());
     this.#table = [this.dealer];
-    this.#playerTurn = -1;
+    this.#playerTurn = 0;
     this.#deck.empty();
     this.init(deckCount, playerCount);
     return this;
