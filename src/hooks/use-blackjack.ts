@@ -46,8 +46,14 @@ export function useBlackjack(deckCount = 1, playerCount = 1) {
     updateSnapshot();
   }
 
-  function reset() {
+  function exit() {
     blackjack.current.reset();
+    updateSnapshot();
+  }
+
+  function restart() {
+    blackjack.current.reset();
+    blackjack.current.deal();
     updateSnapshot();
   }
 
@@ -66,7 +72,8 @@ export function useBlackjack(deckCount = 1, playerCount = 1) {
     split,
     reveal,
     dealerTurn,
-    reset,
+    exit,
+    restart,
   };
 }
 

@@ -17,7 +17,8 @@ function App() {
     allPlayersDone,
     state,
     deal,
-    reset,
+    exit,
+    restart,
     hit,
     stand,
     reveal,
@@ -65,11 +66,13 @@ function App() {
       {/* Debug */}
       <div className="p-4 grid gap-2 absolute top-0 right-0 z-10">
         <div className="flex gap-2">
-          <Button onClick={deal} disabled={isDealt}>
-            Deal
-          </Button>
-          <Button onClick={reset} disabled={!isDealt}>
-            Reset
+          {isDealt ? (
+            <Button onClick={restart}>Restart</Button>
+          ) : (
+            <Button onClick={deal}>Deal</Button>
+          )}
+          <Button onClick={exit} disabled={!isDealt}>
+            Exit
           </Button>
         </div>
         <div className="flex gap-2 border p-2 items-center">
