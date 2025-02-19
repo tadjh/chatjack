@@ -3,7 +3,7 @@ import {
   gameoverAnimation,
   titleAnimation,
 } from "./animations";
-import { Card } from "./card";
+import { Card, Rank } from "./card";
 import {
   ANIMATION_SPEED,
   Palette,
@@ -185,6 +185,9 @@ export class Renderer {
         translateY +
         Math.floor(window.innerHeight - window.innerHeight * 0.025) -
         lineHeight;
+    } else if (anim.position === "top") {
+      centerY =
+        Math.floor(window.innerHeight * 0.025) + translateY + lineHeight;
     } else {
       centerY =
         Math.floor(window.innerHeight / 3) +
@@ -472,12 +475,12 @@ export class Renderer {
         case State.PlayerStand:
         case State.PlayerBlackJack:
           this.createPlayerCardsAnimations();
-          this.createActionText();
+          this.createActionText(Role.Player);
           break;
         case State.DealerTurn:
         case State.DealerWin:
           this.createDealerTurnAnimations();
-          this.createActionText();
+          this.createActionText(Role.Dealer);
           break;
         default:
           break;
@@ -561,7 +564,7 @@ export class Renderer {
     }
   }
 
-  createActionText(role: Role = Role.Player) {
+  createActionText(role: Role) {
     this.showActionText = "in";
     const anim = actionAnimation;
     anim.progress = 0;
@@ -586,6 +589,10 @@ export class Renderer {
       anim.text = "Stand!";
     } else if (this.state === State.PlayerBust) {
       anim.text = "Bust!";
+    } else if (this.state === State.PlayerBlackJack) {
+      anim.text = "Blackjack!";
+    } else if (this.state === State.DealerTurn) {
+      anim.text = Rank[this.dealer.hand[1].rank];
     }
 
     this.setAnimLayer(anim);
@@ -600,7 +607,11 @@ export class Renderer {
         this.showActionText = "out";
         anim.progress = 0;
         anim.opacity = { start: 1, end: 0 };
-        anim.translateY = { start: 0, end: 50 };
+        if (anim.position === "bottom") {
+          anim.translateY = { start: 0, end: 50 };
+        } else if (anim.position === "top") {
+          anim.translateY = { start: 0, end: -50 };
+        }
         anim.kerning = { start: 0, end: 40 };
         this.setAnimLayer(anim);
         break;
