@@ -4,7 +4,7 @@ import {
   gameoverText,
   animatedCardSprite,
   titleScreen,
-} from "./animations";
+} from "./entities";
 import { Card, Rank } from "./card";
 import { ANIMATION_SPEED, Palette, State, TICK_RATE } from "./constants";
 import { Dealer } from "./dealer";
