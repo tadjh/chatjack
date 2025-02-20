@@ -67,7 +67,7 @@ function App() {
     <>
       <canvas id="canvas" ref={canvasRef}></canvas>
       {/* Debug */}
-      <div className="p-4 grid gap-2 absolute top-0 right-0 z-10">
+      <div className="p-4 grid gap-2 absolute top-1/2 -translate-y-1/2 right-0 z-10">
         <div className="flex gap-2">
           {isDealt ? (
             <Button onClick={restart}>Restart</Button>

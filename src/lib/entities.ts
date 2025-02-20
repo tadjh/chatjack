@@ -64,7 +64,7 @@ export const titleScreen: [AnimatedSprite, Text, Text, Text] = [
     style: {
       color: Palette.Yellow,
       maxWidth: "full",
-      fontSize: 112,
+      fontSize: 148,
       fontFamily: FONT_DISPLAY,
       lineHeight: 1.2,
       shadow: { color: Palette.DarkestGreen, x: 8, y: 8, size: 16 },
@@ -106,6 +106,7 @@ export const titleScreen: [AnimatedSprite, Text, Text, Text] = [
     easing: "easeOutCubic",
     layer: LayerOrder.Foreground,
     delay: 32,
+    y: -50,
     style: {
       color: Palette.Yellow,
       maxWidth: "full",
@@ -175,6 +176,7 @@ export const gameoverText: [Text, Text, Text] = [
     easing: "easeOutCubic",
     layer: LayerOrder.Foreground,
     delay: 32,
+    y: -50,
     style: {
       color: Palette.Yellow,
       maxWidth: "full",
@@ -211,9 +213,27 @@ export const actionText: Text = {
   position: "bottom",
   opacity: { start: 0, end: 1 },
   translateY: { start: 50, end: 0 },
-  kerning: { start: 40, end: 0 },
+  // kerning: { start: 40, end: 0 },
   float: { x: 0, y: 3, speed: 1 / 6 },
-  index: 0,
+};
+
+export const scoreText: Text = {
+  id: "score",
+  type: "text",
+  text: "",
+  layer: LayerOrder.Foreground,
+  easing: "linear",
+  style: {
+    color: Palette.White,
+    maxWidth: "full",
+    fontSize: 32,
+    fontFamily: FONT_SANS_SERIF,
+    lineHeight: 1,
+    shadow: { color: Palette.DarkestGreen, x: 8, y: 8, size: 16 },
+    stroke: { width: 16, color: Palette.Black },
+  },
+  position: "bottom right",
+  clamp: true,
 };
 
 export const cardSprite: Sprite = {

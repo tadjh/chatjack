@@ -4,14 +4,22 @@ import {
   gameoverText,
   animatedCardSprite,
   titleScreen,
+  scoreText,
 } from "./entities";
-import { Card, Rank } from "./card";
-import { ANIMATION_SPEED, Palette, State, TICK_RATE } from "./constants";
+import { Card } from "./card";
+import {
+  ANIMATION_SPEED,
+  BASE_FONT_SCALE,
+  PADDING,
+  Palette,
+  State,
+  TICK_RATE,
+} from "./constants";
 import { Dealer } from "./dealer";
 import { Layer } from "./layer";
 import { Player, Role } from "./player";
 import { AnimatedSprite, Entity, LayerOrder, Sprite, Text } from "./types";
-import { easeOut, font, lerp, rgb, rgba } from "./utils";
+import { clamp, easeOut, font, lerp, rgb, rgba } from "./utils";
 
 export class Renderer {
   #canvas: HTMLCanvasElement;
@@ -25,10 +33,11 @@ export class Renderer {
   #dealer = new Dealer();
   #players: Player[] = [];
   #state: State = State.Dealing;
-  #baseFontSize = window.innerWidth / 800;
+  #baseFontSize = window.innerWidth * BASE_FONT_SCALE;
   #showActionText: "in" | "out" | "done" = "done";
   #isGameover = false;
   #layers: Map<LayerOrder, Layer> = new Map();
+  #padding = Math.floor(window.innerWidth * PADDING);
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -112,175 +121,215 @@ export class Renderer {
     this.#ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
   }
 
-  private drawText(anim: Text) {
-    const baseMaxWidth = window.innerWidth * 0.8;
+  private drawText(entity: Text) {
+    const baseMaxWidth = window.innerWidth - this.#padding * 2;
 
     this.#ctx.textAlign = "center";
     this.#ctx.fillStyle = rgb(Palette.White);
 
-    anim.progress = anim.progress ?? 0;
+    entity.progress = entity.progress ?? 0;
 
-    if (anim.type !== "text") return;
-    let fontSize = this.#baseFontSize * anim.style.fontSize;
-    this.#ctx.font = font(fontSize, anim.style.fontFamily);
-    const textWidth = this.#ctx.measureText(anim.text).width;
+    if (entity.type !== "text") return;
+    let fontSize = this.#baseFontSize * entity.style.fontSize;
+    this.#ctx.font = font(fontSize, entity.style.fontFamily);
+    let textWidth = this.#ctx.measureText(entity.text).width;
     let maxWidth = baseMaxWidth;
-    if (anim.style.maxWidth !== "full") {
-      maxWidth = this.#widthMap.get(anim.style.maxWidth) || maxWidth;
+    if (entity.style.maxWidth !== "full") {
+      maxWidth = this.#widthMap.get(entity.style.maxWidth) || maxWidth;
     }
     if (textWidth > maxWidth) {
       fontSize *= maxWidth / textWidth;
-      this.#ctx.font = font(fontSize, anim.style.fontFamily);
+      this.#ctx.font = font(fontSize, entity.style.fontFamily);
     }
+
+    textWidth = this.#ctx.measureText(entity.text).width;
 
     let easing = 1;
-    let opacity = anim.opacity?.end ?? 1;
-    let translateX = anim.translateX?.end ?? 0;
-    let translateY = anim.translateY?.end ?? 0;
-    let kerning = anim.kerning?.end ?? 0;
+    let opacity = entity.opacity?.end ?? 1;
+    let translateX = entity.translateX?.end ?? 0;
+    let translateY = entity.translateY?.end ?? 0;
+    let kerning = entity.kerning?.end ?? 0;
 
-    if (anim.progress < 1) {
-      if (anim.easing === "linear") {
-        easing = anim.progress;
-      } else if (anim.easing === "easeOutCubic") {
-        easing = easeOut(anim.progress, 3);
-      } else if (anim.easing === "easeOutQuint") {
-        easing = easeOut(anim.progress, 5);
+    if (entity.progress < 1) {
+      if (entity.easing === "linear") {
+        easing = entity.progress;
+      } else if (entity.easing === "easeOutCubic") {
+        easing = easeOut(entity.progress, 3);
+      } else if (entity.easing === "easeOutQuint") {
+        easing = easeOut(entity.progress, 5);
       }
 
-      if (anim.translateX) {
-        translateX = lerp(anim.translateX.start, anim.translateX.end, easing);
+      if (entity.translateX) {
+        translateX = lerp(
+          entity.translateX.start,
+          entity.translateX.end,
+          easing
+        );
       }
 
-      if (anim.translateY) {
-        translateY = lerp(anim.translateY.start, anim.translateY.end, easing);
+      if (entity.translateY) {
+        translateY = lerp(
+          entity.translateY.start,
+          entity.translateY.end,
+          easing
+        );
       }
 
-      if (anim.opacity) {
-        opacity = lerp(anim.opacity.start, anim.opacity.end, easing);
+      if (entity.opacity) {
+        opacity = lerp(entity.opacity.start, entity.opacity.end, easing);
       }
 
-      if (anim.kerning) {
-        kerning = lerp(anim.kerning.start, anim.kerning.end, easing);
+      if (entity.kerning) {
+        kerning = lerp(entity.kerning.start, entity.kerning.end, easing);
       }
     }
 
-    if (anim.float && anim.float.x !== 0) {
-      translateX += Math.sin(this.#time * anim.float.speed) * anim.float.x;
+    if (entity.float && entity.float.x !== 0) {
+      translateX += Math.sin(this.#time * entity.float.speed) * entity.float.x;
     }
 
-    if (anim.float && anim.float.y !== 0) {
-      translateY += Math.sin(this.#time * anim.float.speed) * anim.float.y;
+    if (entity.float && entity.float.y !== 0) {
+      translateY += Math.sin(this.#time * entity.float.speed) * entity.float.y;
     }
 
-    const lineHeight = fontSize * anim.style.lineHeight;
-    const centerX = this.#centerX + translateX;
-    let centerY = this.#centerY;
+    const lineHeight = fontSize * entity.style.lineHeight;
+    let originX = this.#centerX;
+    let originY = this.#centerY;
 
-    if (anim.position === "bottom") {
-      centerY =
-        translateY +
-        Math.floor(window.innerHeight - window.innerHeight * 0.025) -
-        lineHeight;
-    } else if (anim.position === "top") {
-      centerY =
-        Math.floor(window.innerHeight * 0.025) + translateY + lineHeight;
-    } else {
-      centerY =
+    if (entity.position.includes("top")) {
+      originY = this.#padding + lineHeight;
+    } else if (entity.position.includes("bottom")) {
+      originY = window.innerHeight - this.#padding;
+    }
+
+    if (entity.position.includes("right")) {
+      originX = window.innerWidth - textWidth / 2 - this.#padding;
+    } else if (entity.position.includes("left")) {
+      originX = this.#padding + textWidth / 2;
+    }
+
+    if (entity.position === "center") {
+      originY =
         Math.floor(window.innerHeight / 3) +
         translateY +
-        anim.index * lineHeight;
+        (entity.index ?? 0) * lineHeight;
+    }
+
+    originX += translateX + (entity.x ?? 0);
+    originY += translateY + (entity.y ?? 0);
+
+    if (entity.clamp) {
+      originX = clamp(
+        originX,
+        textWidth / 2,
+        window.innerWidth - textWidth / 2
+      );
+      originY = clamp(
+        originY,
+        lineHeight / 2,
+        window.innerHeight - lineHeight / 2
+      );
     }
 
     this.#ctx.letterSpacing = `${kerning}px`;
 
-    this.#widthMap.set(anim.id, this.#ctx.measureText(anim.text).width);
+    this.#widthMap.set(entity.id, this.#ctx.measureText(entity.text).width);
 
-    if (anim.style.shadow) {
-      const shadowOffset = anim.progress >= 1 ? translateY : 0;
+    if (entity.style.shadow) {
+      const shadowOffset = entity.progress >= 1 ? translateY : 0;
 
-      this.#ctx.strokeStyle = rgba(anim.style.shadow.color, opacity);
-      this.#ctx.lineWidth = fontSize / anim.style.shadow.size;
-      this.#ctx.fillStyle = rgba(anim.style.shadow.color, opacity);
+      this.#ctx.strokeStyle = rgba(entity.style.shadow.color, opacity);
+      this.#ctx.lineWidth = fontSize / entity.style.shadow.size;
+      this.#ctx.fillStyle = rgba(entity.style.shadow.color, opacity);
       this.#ctx.fillText(
-        anim.text,
-        centerX + anim.style.shadow.x,
-        centerY + anim.style.shadow.y - shadowOffset
+        entity.text,
+        originX + entity.style.shadow.x,
+        originY + entity.style.shadow.y - shadowOffset
       );
       this.#ctx.strokeText(
-        anim.text,
-        centerX + anim.style.shadow.x,
-        centerY + anim.style.shadow.y - shadowOffset
+        entity.text,
+        originX + entity.style.shadow.x,
+        originY + entity.style.shadow.y - shadowOffset
       );
     }
 
-    if (anim.style.stroke) {
-      this.#ctx.strokeStyle = rgba(anim.style.stroke.color, opacity);
-      this.#ctx.lineWidth = fontSize / anim.style.stroke.width;
-      this.#ctx.strokeText(anim.text, centerX, centerY);
+    if (entity.style.stroke) {
+      this.#ctx.strokeStyle = rgba(entity.style.stroke.color, opacity);
+      this.#ctx.lineWidth = fontSize / entity.style.stroke.width;
+      this.#ctx.strokeText(entity.text, originX, originY);
     }
 
-    this.#ctx.fillStyle = rgba(anim.style.color, opacity);
-    this.#ctx.fillText(anim.text, centerX, centerY);
+    this.#ctx.fillStyle = rgba(entity.style.color, opacity);
+    this.#ctx.fillText(entity.text, originX, originY);
   }
 
-  drawSprite(anim: Sprite | AnimatedSprite) {
+  drawSprite(entity: Sprite | AnimatedSprite) {
     if (!this.#spriteSheet) return;
 
     let easing = 1;
-    let translateX = anim.translateX?.end ?? 0;
-    let translateY = anim.translateY?.end ?? 0;
-    let opacity = anim.opacity?.end ?? 1;
-    const anchorX = anim.x ?? this.#centerX;
-    const anchorY = anim.y ?? this.#centerY;
-    anim.progress = anim.progress ?? 0;
+    let translateX = entity.translateX?.end ?? 0;
+    let translateY = entity.translateY?.end ?? 0;
+    let opacity = entity.opacity?.end ?? 1;
+    const anchorX = entity.x ?? this.#centerX;
+    const anchorY = entity.y ?? this.#centerY;
+    entity.progress = entity.progress ?? 0;
 
-    if (anim.progress < 1) {
-      if (anim.easing === "linear") {
-        easing = anim.progress;
-      } else if (anim.easing === "easeOutCubic") {
-        easing = easeOut(anim.progress, 3);
-      } else if (anim.easing === "easeOutQuint") {
-        easing = easeOut(anim.progress, 5);
+    if (entity.progress < 1) {
+      if (entity.easing === "linear") {
+        easing = entity.progress;
+      } else if (entity.easing === "easeOutCubic") {
+        easing = easeOut(entity.progress, 3);
+      } else if (entity.easing === "easeOutQuint") {
+        easing = easeOut(entity.progress, 5);
       }
 
-      if (anim.translateX) {
-        translateX = lerp(anim.translateX.start, anim.translateX.end, easing);
+      if (entity.translateX) {
+        translateX = lerp(
+          entity.translateX.start,
+          entity.translateX.end,
+          easing
+        );
       }
 
-      if (anim.translateY) {
-        translateY = lerp(anim.translateY.start, anim.translateY.end, easing);
+      if (entity.translateY) {
+        translateY = lerp(
+          entity.translateY.start,
+          entity.translateY.end,
+          easing
+        );
       }
 
-      if (anim.opacity) {
-        opacity = lerp(anim.opacity.start, anim.opacity.end, easing);
+      if (entity.opacity) {
+        opacity = lerp(entity.opacity.start, entity.opacity.end, easing);
       }
     }
 
     let index = 0;
 
-    if (anim.type === "animated-sprite") {
-      index = anim.spriteIndex ?? 0;
+    if (entity.type === "animated-sprite") {
+      index = entity.spriteIndex ?? 0;
     }
 
-    const sprite = anim.sprites[index];
+    const sprite = entity.sprites[index];
 
     const sourceX = sprite.x;
     const sourceY = sprite.y;
 
     const scale =
-      (window.innerWidth * 0.2 * (anim.scale ?? 1)) / anim.spriteWidth;
+      (window.innerWidth * 0.2 * (entity.scale ?? 1)) / entity.spriteWidth;
 
-    const destWidth = anim.spriteWidth * scale;
-    const destHeight = anim.spriteHeight * scale;
+    const destWidth = entity.spriteWidth * scale;
+    const destHeight = entity.spriteHeight * scale;
 
-    if (anim.float) {
-      if (anim.float.x !== 0) {
-        translateX += Math.sin(this.#time * anim.float.speed) * anim.float.x;
+    if (entity.float) {
+      if (entity.float.x !== 0) {
+        translateX +=
+          Math.sin(this.#time * entity.float.speed) * entity.float.x;
       }
 
-      if (anim.float.y !== 0) {
-        translateY += Math.sin(this.#time * anim.float.speed) * anim.float.y;
+      if (entity.float.y !== 0) {
+        translateY +=
+          Math.sin(this.#time * entity.float.speed) * entity.float.y;
       }
     }
 
@@ -289,9 +338,9 @@ export class Renderer {
 
     this.#ctx.save();
 
-    if (anim.angle) {
+    if (entity.angle) {
       this.#ctx.translate(0, 0);
-      this.#ctx.rotate(anim.angle);
+      this.#ctx.rotate(entity.angle);
     }
 
     this.#ctx.globalAlpha = opacity;
@@ -304,19 +353,19 @@ export class Renderer {
       destY = translateY - anchorY - destHeight / 2;
     }
 
-    if (anim.shadow) {
-      this.#ctx.shadowColor = rgba(anim.shadow.color, anim.shadow.opacity);
-      this.#ctx.shadowBlur = anim.shadow.blur;
-      this.#ctx.shadowOffsetX = anim.shadow.offsetX;
-      this.#ctx.shadowOffsetY = anim.shadow.offsetY;
+    if (entity.shadow) {
+      this.#ctx.shadowColor = rgba(entity.shadow.color, entity.shadow.opacity);
+      this.#ctx.shadowBlur = entity.shadow.blur;
+      this.#ctx.shadowOffsetX = entity.shadow.offsetX;
+      this.#ctx.shadowOffsetY = entity.shadow.offsetY;
     }
 
     this.#ctx.drawImage(
       this.#spriteSheet,
       sourceX,
       sourceY,
-      anim.spriteWidth,
-      anim.spriteHeight,
+      entity.spriteWidth,
+      entity.spriteHeight,
       destX,
       destY,
       destWidth,
@@ -354,7 +403,8 @@ export class Renderer {
     this.#canvas.style.height = `${window.innerHeight}px`;
     this.#centerX = Math.floor(window.innerWidth / 2);
     this.#centerY = Math.floor(window.innerHeight / 2);
-    this.#baseFontSize = window.innerWidth / 800;
+    this.#baseFontSize = window.innerWidth * BASE_FONT_SCALE;
+    this.#padding = Math.floor(window.innerWidth * PADDING);
     this.#ctx.scale(dpr, dpr);
     this.drawCanvas();
   };
@@ -462,6 +512,7 @@ export class Renderer {
       case State.Dealing:
         this.clearLayer(LayerOrder.All);
         this.createDealingCards();
+        this.createScores();
         break;
       case State.PlayerHit:
       case State.PlayerBust:
@@ -469,9 +520,11 @@ export class Renderer {
       case State.PlayerBlackJack:
         this.createPlayerCards(playerTurn);
         this.createActionText(Role.Player);
+        this.updateScores(Role.Player);
         break;
       case State.RevealHoleCard:
         this.updateHoleCard();
+        this.updateScores(Role.Dealer);
         break;
       case State.DealerHit:
       case State.DealerStand:
@@ -479,9 +532,75 @@ export class Renderer {
       case State.DealerBlackJack:
         this.createDealerCards();
         this.createActionText(Role.Dealer);
+        this.updateScores(Role.Dealer);
         break;
       default:
         break;
+    }
+  }
+
+  private createScores() {
+    const dealerScore = this.#dealer.score;
+    // TODO Handle split hands
+    const playerScores = this.#players.map((player) => player.score);
+
+    const dealerText: Text = {
+      ...scoreText,
+      id: "dealer-score",
+      text: dealerScore.toString(),
+      position: "top right",
+      style: { ...scoreText.style },
+    };
+
+    this.setEntity(dealerText);
+
+    playerScores.forEach((score, index) => {
+      const playerText: Text = {
+        ...scoreText,
+        id: `player-${index + 1}-score`,
+        text: score.toString(),
+        position: "bottom right",
+        style: { ...scoreText.style },
+      };
+
+      this.setEntity(playerText);
+    });
+  }
+
+  private getColorScore(score: number) {
+    if (score > 21) return Palette.Red;
+    if (score === 21) return Palette.Blue;
+    if (score > 17) return Palette.Yellow;
+    return Palette.White;
+  }
+
+  private updateScores(role: Role) {
+    if (role === Role.Dealer) {
+      const dealerScore = this.#dealer.score;
+      const dealerText = this.getEntityById(
+        "dealer-score",
+        LayerOrder.Foreground
+      ) as Text | undefined;
+      if (dealerText) {
+        dealerText.text = dealerScore.toString();
+        dealerText.style.color = this.getColorScore(dealerScore);
+        this.setEntity(dealerText);
+      }
+    } else {
+      // TODO Handle split hands
+      const playerScores = this.#players.map((player) => player.score);
+
+      playerScores.forEach((score, index) => {
+        const playerText = this.getEntityById(
+          `player-${index + 1}-score`,
+          LayerOrder.Foreground
+        ) as Text | undefined;
+        if (playerText) {
+          playerText.text = score.toString();
+          playerText.style.color = this.getColorScore(score);
+          this.setEntity(playerText);
+        }
+      });
     }
   }
 
@@ -563,39 +682,41 @@ export class Renderer {
     const entity = actionText;
     entity.progress = 0;
     entity.opacity = { start: 0, end: 1 };
-    entity.kerning = { start: 40, end: 0 };
+    // entity.kerning = { start: 40, end: 0 };
 
     if (role === Role.Player) {
       entity.position = "bottom";
       entity.translateY = { start: 50, end: 0 };
-      entity.style.fontSize = 60;
-      entity.style.color = Palette.Yellow;
+      entity.style.fontSize = 48;
+      entity.y = -window.innerHeight * 0.15;
     } else if (role === Role.Dealer) {
       entity.position = "top";
       entity.translateY = { start: -50, end: 0 };
       entity.style.fontSize = 48;
-      entity.style.color = Palette.White;
+      entity.y = window.innerHeight * 0.15;
     }
 
     if (this.#state === State.PlayerHit || this.#state === State.DealerHit) {
       entity.text = "Hit!";
+      entity.style.color = Palette.White;
     } else if (
       this.#state === State.PlayerStand ||
       this.#state === State.DealerStand
     ) {
+      entity.style.color = Palette.LightestGrey;
       entity.text = "Stand!";
     } else if (
       this.#state === State.PlayerBust ||
       this.#state === State.DealerBust
     ) {
+      entity.style.color = Palette.Red;
       entity.text = "Bust!";
     } else if (
       this.#state === State.PlayerBlackJack ||
       this.#state === State.DealerBlackJack
     ) {
+      entity.style.color = Palette.Blue;
       entity.text = "Blackjack!";
-    } else if (this.#state === State.RevealHoleCard) {
-      entity.text = Rank[this.#dealer.hand[1].rank];
     }
 
     this.setEntity(entity);
@@ -604,18 +725,18 @@ export class Renderer {
   private updateActionText() {
     switch (this.#showActionText) {
       case "in": {
-        const anim = this.getEntity(actionText);
-        if (!anim) return;
+        const entity = this.getEntity(actionText);
+        if (!entity) return;
         this.#showActionText = "out";
-        anim.progress = 0;
-        anim.opacity = { start: 1, end: 0 };
-        if (anim.position === "bottom") {
-          anim.translateY = { start: 0, end: 50 };
-        } else if (anim.position === "top") {
-          anim.translateY = { start: 0, end: -50 };
+        entity.progress = 0;
+        entity.opacity = { start: 1, end: 0 };
+        if (entity.position === "bottom") {
+          entity.translateY = { start: 0, end: 50 };
+        } else if (entity.position === "top") {
+          entity.translateY = { start: 0, end: -50 };
         }
-        anim.kerning = { start: 0, end: 40 };
-        this.setEntity(anim);
+        // entity.kerning = { start: 0, end: 40 };
+        this.setEntity(entity);
         break;
       }
       case "out":

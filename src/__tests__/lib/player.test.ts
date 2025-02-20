@@ -81,8 +81,8 @@ describe("Player", () => {
     expect(player.hands[1].length).toBe(1);
 
     // Their scores should match the individual card's points
-    expect(player.getScore(0)).toBe(card1.points);
-    expect(player.getScore(1)).toBe(card2.points);
+    expect(player.scores[0]).toBe(card1.points);
+    expect(player.scores[1]).toBe(card2.points);
   });
 
   it("should throw an error when attempting to split a hand with not exactly two cards", () => {

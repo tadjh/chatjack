@@ -93,13 +93,6 @@ export class Player {
     return this;
   }
 
-  getScore(handIndex = 0) {
-    if (handIndex >= this.#hands.length) {
-      throw new Error("Hand does not exist");
-    }
-    return this.#hands[handIndex].score;
-  }
-
   reset() {
     this.#hands.forEach((hand) => hand.reset());
     this.#hands = [new Hand(this.name)];

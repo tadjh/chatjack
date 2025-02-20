@@ -22,3 +22,7 @@ export const lerp = (start: number, end: number, easing: number) => {
   }
   return result;
 };
+
+export const clamp = (value: number, min: number, max: number): number => {
+  return Math.min(Math.max(value, min), max);
+};

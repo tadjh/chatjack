@@ -14,6 +14,8 @@ interface BaseEntity {
   layer: LayerOrder;
   speed?: number;
   delay?: number;
+  x?: number;
+  y?: number;
   translateX?: { start: number; end: number };
   translateY?: { start: number; end: number };
   opacity?: { start: number; end: number };
@@ -41,9 +43,19 @@ export interface Text extends BaseEntity {
     };
     stroke?: { color: [number, number, number]; width: number };
   };
-  position: "center" | "left" | "right" | "top" | "bottom";
+  position:
+    | "center"
+    | "left"
+    | "right"
+    | "top"
+    | "bottom"
+    | "top left"
+    | "top right"
+    | "bottom left"
+    | "bottom right";
   kerning?: { start: number; end: number };
-  index: number;
+  index?: number;
+  clamp?: boolean;
 }
 
 interface Spritesheet {
@@ -54,8 +66,6 @@ interface Spritesheet {
 }
 
 interface BaseSprite extends BaseEntity {
-  x?: number;
-  y?: number;
   sprites: [Spritesheet, ...Spritesheet[]];
   spriteWidth: number;
   spriteHeight: number;

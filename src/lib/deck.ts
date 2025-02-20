@@ -54,6 +54,7 @@ export class Deck extends Array<Card> {
 
     if (isHidden) {
       card.hide();
+      console.log("Hole card drawn 🂠");
     } else {
       console.log("Card drawn:", card.name);
     }

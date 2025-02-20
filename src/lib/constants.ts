@@ -9,6 +9,8 @@ export const FLOAT_SPEED = 1 / 6;
 export const FLOAT_AMPLITUDE = 3;
 export const SPRITE_WIDTH = 256;
 export const SPRITE_HEIGHT = 384;
+export const BASE_FONT_SCALE = 1 / 960;
+export const PADDING = 1 / 72;
 export const FONT_DISPLAY = "Jacquard24";
 export const FONT_SANS_SERIF = "PressStart2P";
 const isDevelopment = import.meta.env.MODE === "development";
