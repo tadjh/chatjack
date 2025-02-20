@@ -12,6 +12,5 @@
 
 ## Quality of life
 
-- TODO Instead of "Player" say "Chat" since this is designed for twtich chat
 - TODO Bust and opacity drop should happen AFTER card finishes animating
 

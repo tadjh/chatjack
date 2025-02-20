@@ -88,7 +88,7 @@ export const gameoverTitles: Record<
     subtitle: "Better luck next time!",
   },
   [State.PlayerWin]: {
-    title: "Player Wins!",
+    title: "Chat Wins!",
     subtitle: "You hand is stronger!",
   },
   [State.DealerWin]: {
