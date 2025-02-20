@@ -4,18 +4,21 @@ import {
   Palette,
   FONT_SANS_SERIF,
   FONT_DISPLAY,
+  SPRITE_HEIGHT,
+  SPRITE_WIDTH,
 } from "./constants";
-import { Anim, TextAnim } from "./types";
+import { Text, AnimatedSprite, Sprite, LayerOrder } from "./types";
 
-export const titleAnimation: Anim[] = [
+export const titleScreen: [AnimatedSprite, Text, Text, Text] = [
   {
-    id: "card",
-    type: "sprite",
+    id: "flip-card",
+    type: "animated-sprite",
     playback: "loop",
-    layer: "background",
+    layer: LayerOrder.Background,
     easing: "easeOutQuint",
-    spriteProgress: 0,
+    spriteElapsed: 0,
     spriteDuration: 6,
+    spriteIndex: 0,
     sprites: [
       { x: 0, y: 4992 },
       { x: 256, y: 4992 },
@@ -38,6 +41,8 @@ export const titleAnimation: Anim[] = [
       { x: 512, y: 4992, flipX: true },
       { x: 256, y: 4992, flipX: true },
     ],
+    spriteWidth: SPRITE_WIDTH,
+    spriteHeight: SPRITE_HEIGHT,
     delay: 24,
     translateY: { start: 200, end: 0 },
     opacity: { start: 0, end: 1 },
@@ -55,7 +60,7 @@ export const titleAnimation: Anim[] = [
     type: "text",
     text: TITLE_TEXT,
     easing: "easeOutCubic",
-    layer: "foreground",
+    layer: LayerOrder.Foreground,
     style: {
       color: Palette.Yellow,
       maxWidth: "full",
@@ -77,7 +82,7 @@ export const titleAnimation: Anim[] = [
     type: "text",
     text: SUBTITLE_TEXT,
     easing: "easeOutCubic",
-    layer: "foreground",
+    layer: LayerOrder.Foreground,
     delay: 12,
     style: {
       color: Palette.Yellow,
@@ -99,7 +104,7 @@ export const titleAnimation: Anim[] = [
     type: "text",
     text: "!start",
     easing: "easeOutCubic",
-    layer: "foreground",
+    layer: LayerOrder.Foreground,
     delay: 32,
     style: {
       color: Palette.Yellow,
@@ -118,13 +123,13 @@ export const titleAnimation: Anim[] = [
   },
 ];
 
-export const gameoverAnimation: [TextAnim, TextAnim, TextAnim] = [
+export const gameoverText: [Text, Text, Text] = [
   {
     id: "title",
     type: "text",
     text: "Dealer Win!",
     easing: "easeOutCubic",
-    layer: "foreground",
+    layer: LayerOrder.Foreground,
     style: {
       color: Palette.Yellow,
       maxWidth: "full",
@@ -146,7 +151,7 @@ export const gameoverAnimation: [TextAnim, TextAnim, TextAnim] = [
     type: "text",
     text: "Better luck next time",
     easing: "easeOutCubic",
-    layer: "foreground",
+    layer: LayerOrder.Foreground,
     delay: 12,
     style: {
       color: Palette.Yellow,
@@ -168,7 +173,7 @@ export const gameoverAnimation: [TextAnim, TextAnim, TextAnim] = [
     type: "text",
     text: "!start",
     easing: "easeOutCubic",
-    layer: "foreground",
+    layer: LayerOrder.Foreground,
     delay: 32,
     style: {
       color: Palette.Yellow,
@@ -187,11 +192,11 @@ export const gameoverAnimation: [TextAnim, TextAnim, TextAnim] = [
   },
 ];
 
-export const actionAnimation: TextAnim = {
+export const actionText: Text = {
   id: "action",
   type: "text",
   text: "",
-  layer: "foreground",
+  layer: LayerOrder.Foreground,
   easing: "easeOutCubic",
   speed: 1 / 12,
   style: {
@@ -209,5 +214,34 @@ export const actionAnimation: TextAnim = {
   kerning: { start: 40, end: 0 },
   float: { x: 0, y: 3, speed: 1 / 6 },
   index: 0,
+};
+
+export const cardSprite: Sprite = {
+  id: "default-card",
+  type: "sprite",
+  easing: "easeOutQuint",
+  layer: LayerOrder.Background,
+  speed: 1 / 12,
+  sprites: [{ x: 0, y: 4992 }],
+  spriteWidth: SPRITE_WIDTH,
+  spriteHeight: SPRITE_HEIGHT,
+};
+
+export const animatedCardSprite: AnimatedSprite = {
+  id: "animated-card",
+  type: "animated-sprite",
+  playback: "once",
+  easing: "easeOutQuint",
+  layer: LayerOrder.Background,
+  spriteWidth: SPRITE_WIDTH,
+  spriteHeight: SPRITE_HEIGHT,
+  spriteElapsed: 0,
+  spriteDuration: 1,
+  spriteIndex: 0,
+  sprites: [
+    { x: 0, y: 4992 },
+    { x: 256, y: 4992 },
+    { x: 512, y: 4992 },
+  ],
 };
 

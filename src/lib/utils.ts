@@ -15,3 +15,10 @@ export const rgb = (color: Vector3): string => rgba(color, 1);
 
 export const easeOut = (x: number, y: number): number => 1 - Math.pow(1 - x, y);
 
+export const lerp = (start: number, end: number, easing: number) => {
+  let result = end;
+  if (start !== end) {
+    result = start + (end - start) * easing;
+  }
+  return result;
+};

@@ -35,7 +35,9 @@ export class Hand extends Deck {
 
   add(card: Card) {
     this.protect();
-    card.index = this.length;
+    card.handIndex = this.length;
+    card.owner = this.#owner;
+    card.setId();
     super.push(card);
     return this.accumulate();
   }

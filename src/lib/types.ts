@@ -1,11 +1,17 @@
 export type Vector3 = [number, number, number];
 
-interface BaseAnim {
+export enum LayerOrder {
+  Background,
+  Foreground,
+  All,
+}
+
+interface BaseEntity {
   id: string;
-  type: "text" | "loop" | "sprite";
+  type: "text" | "sprite" | "animated-sprite";
   progress?: number;
   easing: "linear" | "easeOutCubic" | "easeOutQuint";
-  layer: "background" | "foreground";
+  layer: LayerOrder;
   speed?: number;
   delay?: number;
   translateX?: { start: number; end: number };
@@ -18,7 +24,7 @@ interface BaseAnim {
   };
 }
 
-export interface TextAnim extends BaseAnim {
+export interface Text extends BaseEntity {
   type: "text";
   text: string;
   style: {
@@ -40,15 +46,19 @@ export interface TextAnim extends BaseAnim {
   index: number;
 }
 
-export interface SpriteAnim extends BaseAnim {
-  type: "sprite";
-  playback?: "once" | "loop";
+interface Spritesheet {
+  x: number;
+  y: number;
+  flipX?: boolean;
+  flipY?: boolean;
+}
+
+interface BaseSprite extends BaseEntity {
   x?: number;
   y?: number;
-  spriteProgress?: number;
-  spriteDuration?: number;
-  currentSprite?: number;
-  sprites: { x: number; y: number; flipX?: boolean; flipY?: boolean }[];
+  sprites: [Spritesheet, ...Spritesheet[]];
+  spriteWidth: number;
+  spriteHeight: number;
   scale?: number;
   angle?: number;
   shadow?: {
@@ -60,5 +70,19 @@ export interface SpriteAnim extends BaseAnim {
   };
 }
 
-export type Anim = TextAnim | SpriteAnim;
+export interface Sprite extends BaseSprite {
+  type: "sprite";
+}
+
+export type Playback = "once" | "loop";
+
+export interface AnimatedSprite extends BaseSprite {
+  type: "animated-sprite";
+  playback: Playback;
+  spriteElapsed?: number;
+  spriteDuration: number;
+  spriteIndex: number;
+}
+
+export type Entity = Text | Sprite | AnimatedSprite;
 

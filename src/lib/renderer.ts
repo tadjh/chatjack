@@ -1,58 +1,50 @@
 import {
-  actionAnimation,
-  gameoverAnimation,
-  titleAnimation,
+  actionText,
+  cardSprite,
+  gameoverText,
+  animatedCardSprite,
+  titleScreen,
 } from "./animations";
 import { Card, Rank } from "./card";
-import {
-  ANIMATION_SPEED,
-  Palette,
-  SPRITE_HEIGHT,
-  SPRITE_WIDTH,
-  State,
-  TICK_RATE,
-} from "./constants";
+import { ANIMATION_SPEED, Palette, State, TICK_RATE } from "./constants";
 import { Dealer } from "./dealer";
+import { Layer } from "./layer";
 import { Player, Role } from "./player";
-import { Anim, SpriteAnim, TextAnim } from "./types";
-import { easeOut, font, rgb, rgba } from "./utils";
+import { AnimatedSprite, Entity, LayerOrder, Sprite, Text } from "./types";
+import { easeOut, font, lerp, rgb, rgba } from "./utils";
 
 export class Renderer {
-  private canvas: HTMLCanvasElement;
-  private ctx: CanvasRenderingContext2D;
-  private lastTick = 0;
-  private time = 0;
-  private spriteSheet: OffscreenCanvas | HTMLImageElement | null = null;
-  private widthMap: Map<string, number> = new Map();
-  private centerX = Math.floor(window.innerWidth / 2);
-  private centerY = Math.floor(window.innerHeight / 2);
-  private dealer = new Dealer();
-  private players: Player[] = [];
-  private state: State = State.Dealing;
-  private playerTurn = 0;
-  private baseFontSize = window.innerWidth * 0.00125;
-  private showActionText: "in" | "out" | "done" = "done";
-  private isHole = true;
-  private isGameover = false;
-  #foreground: Map<string, Anim> = new Map();
-  #background: Map<string, Anim> = new Map();
+  #canvas: HTMLCanvasElement;
+  #ctx: CanvasRenderingContext2D;
+  #lastTick = 0;
+  #time = 0;
+  #spriteSheet: CanvasImageSource | null = null;
+  #widthMap: Map<string, number> = new Map();
+  #centerX = Math.floor(window.innerWidth / 2);
+  #centerY = Math.floor(window.innerHeight / 2);
+  #dealer = new Dealer();
+  #players: Player[] = [];
+  #state: State = State.Dealing;
+  #baseFontSize = window.innerWidth / 800;
+  #showActionText: "in" | "out" | "done" = "done";
+  #isGameover = false;
+  #layers: Map<LayerOrder, Layer> = new Map();
 
   constructor(
     canvas: HTMLCanvasElement,
     private tickRate = TICK_RATE,
     private baseAnimSpeed = ANIMATION_SPEED,
-    private spriteWidth = SPRITE_WIDTH,
-    private spriteHeight = SPRITE_HEIGHT
+    private titleEntities = titleScreen
   ) {
-    this.canvas = canvas;
+    this.#canvas = canvas;
     const ctx = canvas.getContext("2d");
     if (!ctx) {
       throw new Error("Unable to get canvas context");
     }
     ctx.imageSmoothingEnabled = false;
-    this.ctx = ctx;
-    titleAnimation.forEach(this.setAnimLayer);
-    this.resizeCanvas();
+    this.#ctx = ctx;
+    this.setEntities(this.titleEntities);
+    // this.resizeCanvas();
   }
 
   public async loadFont(fontName: string, fontUrl: string): Promise<void> {
@@ -74,59 +66,71 @@ export class Renderer {
 
   public async createSpriteSheet(url: string): Promise<void> {
     const spriteSheet = await this.loadSpriteSheet(url);
-    this.spriteSheet = spriteSheet;
+    this.#spriteSheet = spriteSheet;
   }
 
-  private setAnimLayer = (anim: Anim | Anim[]) => {
-    if (Array.isArray(anim)) {
-      anim.forEach(this.setAnimLayer);
+  private getLayer(layer: LayerOrder) {
+    if (!this.#layers.has(layer)) {
+      this.#layers.set(layer, new Layer(layer));
+    }
+    return this.#layers.get(layer)!;
+  }
+
+  private clearLayer(layer: LayerOrder) {
+    if (layer === LayerOrder.All) {
+      this.#layers.forEach((layer) => layer.clear());
       return;
     }
-
-    if (anim.layer === "foreground") {
-      this.#foreground.set(anim.id, anim);
-    } else if (anim.layer === "background") {
-      this.#background.set(anim.id, anim);
-    }
-  };
-
-  private getAnimLayer = (layer: "foreground" | "background") => {
-    return layer === "foreground" ? this.#foreground : this.#background;
-  };
-
-  private clearAnimLayer = (layer: "foreground" | "background" | "both") => {
-    if (layer === "foreground" || layer === "both") {
-      this.#foreground.clear();
-    }
-    if (layer === "background" || layer === "both") {
-      this.#background.clear();
-    }
-  };
-
-  private drawBackground() {
-    this.ctx.fillStyle = rgb(Palette.DarkGreen);
-    this.ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+    this.#layers.get(layer)?.clear();
   }
 
-  private drawText(anim: TextAnim) {
+  private getEntity<T extends Entity>(entity: T) {
+    return this.getLayer(entity.layer).get(entity.id) as T | undefined;
+  }
+
+  private getEntityById(id: string, layer: LayerOrder) {
+    return this.getLayer(layer).get(id);
+  }
+
+  private setEntity(entity: Entity) {
+    this.getLayer(entity.layer).set(entity.id, entity);
+  }
+
+  private setEntities(entities: Entity[]) {
+    for (const entity of entities) {
+      this.setEntity(entity);
+    }
+  }
+
+  private clearEntity(entity: Entity) {
+    this.getLayer(entity.layer).delete(entity.id);
+  }
+
+  private drawBackground() {
+    // this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    this.#ctx.fillStyle = rgb(Palette.DarkGreen);
+    this.#ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+  }
+
+  private drawText(anim: Text) {
     const baseMaxWidth = window.innerWidth * 0.8;
 
-    this.ctx.textAlign = "center";
-    this.ctx.fillStyle = rgb(Palette.White);
+    this.#ctx.textAlign = "center";
+    this.#ctx.fillStyle = rgb(Palette.White);
 
     anim.progress = anim.progress ?? 0;
 
     if (anim.type !== "text") return;
-    let fontSize = this.baseFontSize * anim.style.fontSize;
-    this.ctx.font = font(fontSize, anim.style.fontFamily);
-    const textWidth = this.ctx.measureText(anim.text).width;
+    let fontSize = this.#baseFontSize * anim.style.fontSize;
+    this.#ctx.font = font(fontSize, anim.style.fontFamily);
+    const textWidth = this.#ctx.measureText(anim.text).width;
     let maxWidth = baseMaxWidth;
     if (anim.style.maxWidth !== "full") {
-      maxWidth = this.widthMap.get(anim.style.maxWidth) || maxWidth;
+      maxWidth = this.#widthMap.get(anim.style.maxWidth) || maxWidth;
     }
     if (textWidth > maxWidth) {
       fontSize *= maxWidth / textWidth;
-      this.ctx.font = font(fontSize, anim.style.fontFamily);
+      this.#ctx.font = font(fontSize, anim.style.fontFamily);
     }
 
     let easing = 1;
@@ -145,41 +149,33 @@ export class Renderer {
       }
 
       if (anim.translateX) {
-        translateX = this.lerp(
-          anim.translateX.start,
-          anim.translateX.end,
-          easing
-        );
+        translateX = lerp(anim.translateX.start, anim.translateX.end, easing);
       }
 
       if (anim.translateY) {
-        translateY = this.lerp(
-          anim.translateY.start,
-          anim.translateY.end,
-          easing
-        );
+        translateY = lerp(anim.translateY.start, anim.translateY.end, easing);
       }
 
       if (anim.opacity) {
-        opacity = this.lerp(anim.opacity.start, anim.opacity.end, easing);
+        opacity = lerp(anim.opacity.start, anim.opacity.end, easing);
       }
 
       if (anim.kerning) {
-        kerning = this.lerp(anim.kerning.start, anim.kerning.end, easing);
+        kerning = lerp(anim.kerning.start, anim.kerning.end, easing);
       }
     }
 
     if (anim.float && anim.float.x !== 0) {
-      translateX += Math.sin(this.time * anim.float.speed) * anim.float.x;
+      translateX += Math.sin(this.#time * anim.float.speed) * anim.float.x;
     }
 
     if (anim.float && anim.float.y !== 0) {
-      translateY += Math.sin(this.time * anim.float.speed) * anim.float.y;
+      translateY += Math.sin(this.#time * anim.float.speed) * anim.float.y;
     }
 
     const lineHeight = fontSize * anim.style.lineHeight;
-    const centerX = this.centerX + translateX;
-    let centerY = this.centerY;
+    const centerX = this.#centerX + translateX;
+    let centerY = this.#centerY;
 
     if (anim.position === "bottom") {
       centerY =
@@ -196,22 +192,22 @@ export class Renderer {
         anim.index * lineHeight;
     }
 
-    this.ctx.letterSpacing = `${kerning}px`;
+    this.#ctx.letterSpacing = `${kerning}px`;
 
-    this.widthMap.set(anim.id, this.ctx.measureText(anim.text).width);
+    this.#widthMap.set(anim.id, this.#ctx.measureText(anim.text).width);
 
     if (anim.style.shadow) {
       const shadowOffset = anim.progress >= 1 ? translateY : 0;
 
-      this.ctx.strokeStyle = rgba(anim.style.shadow.color, opacity);
-      this.ctx.lineWidth = fontSize / anim.style.shadow.size;
-      this.ctx.fillStyle = rgba(anim.style.shadow.color, opacity);
-      this.ctx.fillText(
+      this.#ctx.strokeStyle = rgba(anim.style.shadow.color, opacity);
+      this.#ctx.lineWidth = fontSize / anim.style.shadow.size;
+      this.#ctx.fillStyle = rgba(anim.style.shadow.color, opacity);
+      this.#ctx.fillText(
         anim.text,
         centerX + anim.style.shadow.x,
         centerY + anim.style.shadow.y - shadowOffset
       );
-      this.ctx.strokeText(
+      this.#ctx.strokeText(
         anim.text,
         centerX + anim.style.shadow.x,
         centerY + anim.style.shadow.y - shadowOffset
@@ -219,24 +215,24 @@ export class Renderer {
     }
 
     if (anim.style.stroke) {
-      this.ctx.strokeStyle = rgba(anim.style.stroke.color, opacity);
-      this.ctx.lineWidth = fontSize / anim.style.stroke.width;
-      this.ctx.strokeText(anim.text, centerX, centerY);
+      this.#ctx.strokeStyle = rgba(anim.style.stroke.color, opacity);
+      this.#ctx.lineWidth = fontSize / anim.style.stroke.width;
+      this.#ctx.strokeText(anim.text, centerX, centerY);
     }
 
-    this.ctx.fillStyle = rgba(anim.style.color, opacity);
-    this.ctx.fillText(anim.text, centerX, centerY);
+    this.#ctx.fillStyle = rgba(anim.style.color, opacity);
+    this.#ctx.fillText(anim.text, centerX, centerY);
   }
 
-  drawSprite(anim: SpriteAnim) {
-    if (!this.spriteSheet) return;
+  drawSprite(anim: Sprite | AnimatedSprite) {
+    if (!this.#spriteSheet) return;
 
     let easing = 1;
     let translateX = anim.translateX?.end ?? 0;
     let translateY = anim.translateY?.end ?? 0;
     let opacity = anim.opacity?.end ?? 1;
-    const anchorX = anim.x ?? this.centerX;
-    const anchorY = anim.y ?? this.centerY;
+    const anchorX = anim.x ?? this.#centerX;
+    const anchorY = anim.y ?? this.#centerY;
     anim.progress = anim.progress ?? 0;
 
     if (anim.progress < 1) {
@@ -249,196 +245,183 @@ export class Renderer {
       }
 
       if (anim.translateX) {
-        translateX = this.lerp(
-          anim.translateX.start,
-          anim.translateX.end,
-          easing
-        );
+        translateX = lerp(anim.translateX.start, anim.translateX.end, easing);
       }
 
       if (anim.translateY) {
-        translateY = this.lerp(
-          anim.translateY.start,
-          anim.translateY.end,
-          easing
-        );
+        translateY = lerp(anim.translateY.start, anim.translateY.end, easing);
       }
 
       if (anim.opacity) {
-        opacity = this.lerp(anim.opacity.start, anim.opacity.end, easing);
+        opacity = lerp(anim.opacity.start, anim.opacity.end, easing);
       }
     }
 
-    const sprite = anim.sprites[anim.currentSprite ?? 0];
+    let index = 0;
+
+    if (anim.type === "animated-sprite") {
+      index = anim.spriteIndex ?? 0;
+    }
+
+    const sprite = anim.sprites[index];
 
     const sourceX = sprite.x;
     const sourceY = sprite.y;
 
     const scale =
-      (window.innerWidth * 0.2 * (anim.scale ?? 1)) / this.spriteWidth;
+      (window.innerWidth * 0.2 * (anim.scale ?? 1)) / anim.spriteWidth;
 
-    const destWidth = this.spriteWidth * scale;
-    const destHeight = this.spriteHeight * scale;
+    const destWidth = anim.spriteWidth * scale;
+    const destHeight = anim.spriteHeight * scale;
 
     if (anim.float) {
       if (anim.float.x !== 0) {
-        translateX += Math.sin(this.time * anim.float.speed) * anim.float.x;
+        translateX += Math.sin(this.#time * anim.float.speed) * anim.float.x;
       }
 
       if (anim.float.y !== 0) {
-        translateY += Math.sin(this.time * anim.float.speed) * anim.float.y;
+        translateY += Math.sin(this.#time * anim.float.speed) * anim.float.y;
       }
     }
 
     let destX = translateX + anchorX - destWidth / 2;
     let destY = translateY + anchorY - destHeight / 2;
 
-    this.ctx.save();
+    this.#ctx.save();
 
     if (anim.angle) {
-      this.ctx.translate(0, 0);
-      this.ctx.rotate(anim.angle);
+      this.#ctx.translate(0, 0);
+      this.#ctx.rotate(anim.angle);
     }
 
-    this.ctx.globalAlpha = opacity;
+    this.#ctx.globalAlpha = opacity;
 
     if (sprite.flipX) {
-      this.ctx.scale(-1, 1);
+      this.#ctx.scale(-1, 1);
       destX = translateX - anchorX - destWidth / 2;
     } else if (sprite.flipY) {
-      this.ctx.scale(1, -1);
+      this.#ctx.scale(1, -1);
       destY = translateY - anchorY - destHeight / 2;
     }
 
     if (anim.shadow) {
-      this.ctx.shadowColor = rgba(anim.shadow.color, anim.shadow.opacity);
-      this.ctx.shadowBlur = anim.shadow.blur;
-      this.ctx.shadowOffsetX = anim.shadow.offsetX;
-      this.ctx.shadowOffsetY = anim.shadow.offsetY;
+      this.#ctx.shadowColor = rgba(anim.shadow.color, anim.shadow.opacity);
+      this.#ctx.shadowBlur = anim.shadow.blur;
+      this.#ctx.shadowOffsetX = anim.shadow.offsetX;
+      this.#ctx.shadowOffsetY = anim.shadow.offsetY;
     }
 
-    this.ctx.drawImage(
-      this.spriteSheet,
+    this.#ctx.drawImage(
+      this.#spriteSheet,
       sourceX,
       sourceY,
-      this.spriteWidth,
-      this.spriteHeight,
+      anim.spriteWidth,
+      anim.spriteHeight,
       destX,
       destY,
       destWidth,
       destHeight
     );
 
-    this.ctx.restore();
+    this.#ctx.restore();
   }
 
   private drawCanvas() {
-    // this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
     this.drawBackground();
-
-    this.#background.forEach((anim) => {
-      if (anim.type === "text") this.drawText(anim);
-      if (anim.type === "sprite") this.drawSprite(anim);
-    });
-
-    if (
-      this.showActionText !== "done" &&
-      this.#foreground.has(actionAnimation.id) &&
-      this.#foreground.get(actionAnimation.id)!.progress === 1
-    ) {
-      this.updateActionText();
-    }
-
-    this.#foreground.forEach((anim) => {
-      if (anim.type === "text") this.drawText(anim);
-      if (anim.type === "sprite") this.drawSprite(anim);
-    });
-  }
-
-  public resizeCanvas() {
-    const dpr = window.devicePixelRatio || 1;
-    this.canvas.width = window.innerWidth * dpr;
-    this.canvas.height = window.innerHeight * dpr;
-    this.canvas.style.width = `${window.innerWidth}px`;
-    this.canvas.style.height = `${window.innerHeight}px`;
-    this.centerX = Math.floor(window.innerWidth / 2);
-    this.centerY = Math.floor(window.innerHeight / 2);
-    this.baseFontSize = window.innerWidth * 0.00125;
-    this.ctx.scale(dpr, dpr);
-    this.drawCanvas();
-  }
-
-  private advance = (anim: Anim) => {
-    if (anim.delay && anim.delay > 0) {
-      anim.delay -= 1;
-    } else {
-      anim.progress = anim.progress ?? 0;
-      if (anim.progress < 1) {
-        anim.progress +=
-          anim.speed !== undefined ? anim.speed : this.baseAnimSpeed;
-        if (anim.progress > 1) anim.progress = 1;
+    for (const [, layer] of this.#layers) {
+      // TODO Find a way to mathmetically determine when to reverse action text animation
+      if (layer.has(actionText.id)) {
+        const action = layer.get(actionText.id)! as Text;
+        if (action.progress === 1 && this.#showActionText !== "done") {
+          this.updateActionText();
+        }
       }
-
-      if (anim.type === "sprite" && anim.playback) {
-        anim.currentSprite = anim.currentSprite ?? 0;
-        anim.spriteDuration = anim.spriteDuration ?? 6;
-        anim.spriteProgress = anim.spriteProgress ?? 0;
-        if (anim.playback === "loop") {
-          anim.spriteProgress += 1;
-          if (anim.spriteProgress >= anim.spriteDuration) {
-            anim.spriteProgress = 0;
-            anim.currentSprite = (anim.currentSprite + 1) % anim.sprites.length;
-          }
-        } else if (
-          anim.playback === "once" &&
-          anim.currentSprite < anim.sprites.length - 1
-        ) {
-          anim.spriteProgress += 1;
-          if (anim.spriteProgress >= anim.spriteDuration) {
-            anim.spriteProgress = 0;
-            anim.currentSprite = (anim.currentSprite + 1) % anim.sprites.length;
-          }
+      for (const [, entity] of layer) {
+        if (entity.type === "text") {
+          this.drawText(entity);
+        } else {
+          this.drawSprite(entity);
         }
       }
     }
+  }
+
+  public resizeCanvas = () => {
+    const dpr = window.devicePixelRatio || 1;
+    this.#canvas.width = window.innerWidth * dpr;
+    this.#canvas.height = window.innerHeight * dpr;
+    this.#canvas.style.width = `${window.innerWidth}px`;
+    this.#canvas.style.height = `${window.innerHeight}px`;
+    this.#centerX = Math.floor(window.innerWidth / 2);
+    this.#centerY = Math.floor(window.innerHeight / 2);
+    this.#baseFontSize = window.innerWidth / 800;
+    this.#ctx.scale(dpr, dpr);
+    this.drawCanvas();
   };
 
   // The game loop updates animation progress and redraws the canvas.
-  private gameLoop = (timestamp: number) => {
-    if (timestamp - this.lastTick >= this.tickRate) {
-      this.lastTick = timestamp;
-      this.time += 1;
-      this.#background.forEach(this.advance);
-      this.#foreground.forEach(this.advance);
+  private step = (timestamp: number) => {
+    if (timestamp - this.#lastTick >= this.tickRate) {
+      this.#lastTick = timestamp;
+      this.#time += 1;
+
+      for (const [, layer] of this.#layers) {
+        for (const [, entity] of layer) {
+          if (entity.delay && entity.delay > 0) {
+            entity.delay -= 1;
+            continue;
+          }
+
+          entity.progress = entity.progress ?? 0;
+
+          if (entity.progress < 1) {
+            entity.progress += entity.speed ?? this.baseAnimSpeed;
+            if (entity.progress > 1) entity.progress = 1;
+          }
+
+          if (entity.type === "animated-sprite") {
+            if (
+              entity.playback === "once" &&
+              entity.spriteIndex === entity.sprites.length - 1
+            ) {
+              continue;
+            }
+
+            entity.spriteElapsed = entity.spriteElapsed ?? 0;
+            entity.spriteElapsed += 1;
+            if (entity.spriteElapsed >= entity.spriteDuration) {
+              entity.spriteElapsed = 0;
+              entity.spriteIndex =
+                (entity.spriteIndex + 1) % entity.sprites.length;
+            }
+          }
+        }
+      }
+
       this.drawCanvas();
     }
-    requestAnimationFrame(this.gameLoop);
+    requestAnimationFrame(this.step);
   };
 
   public start() {
-    this.lastTick = performance.now();
-    requestAnimationFrame(this.gameLoop);
-    window.addEventListener("resize", this.resizeCanvas.bind(this));
+    this.#lastTick = performance.now();
+    requestAnimationFrame(this.step);
+    window.addEventListener("resize", this.resizeCanvas);
   }
 
   public stop() {
-    window.removeEventListener("resize", this.resizeCanvas.bind(this));
+    window.removeEventListener("resize", this.resizeCanvas);
   }
 
-  reset() {
-    this.setAnimLayer(titleAnimation);
-    this.clearAnimLayer("both");
-    this.#foreground = new Map<string, Anim>(
-      titleAnimation.map((anim) => [anim.id, anim])
-    );
-    this.dealer = new Dealer();
-    this.players = [];
-    this.state = State.Init;
-    this.isHole = true;
-    this.isGameover = false;
-    this.playerTurn = 0;
-    this.showActionText = "done";
-    this.drawCanvas();
+  private reset() {
+    this.clearLayer(LayerOrder.All);
+    this.setEntities(this.titleEntities);
+    this.#dealer = new Dealer();
+    this.#players = [];
+    this.#state = State.Init;
+    this.#isGameover = false;
+    this.#showActionText = "done";
+    // this.drawCanvas();
   }
 
   public update({
@@ -455,68 +438,69 @@ export class Renderer {
     isGameover: boolean;
   }) {
     // Restarted game
-    if (this.isGameover && state === State.Dealing) {
+    if (this.#isGameover && state === State.Dealing) {
       this.reset();
     }
 
-    this.dealer = dealer;
-    this.players = players;
-    this.state = state;
-    this.playerTurn = playerTurn;
-    this.isGameover = isGameover;
-
-    console.log(this.isHole);
+    this.#dealer = dealer;
+    this.#players = players;
+    this.#state = state;
+    this.#isGameover = isGameover;
 
     // TODO Remove
     console.log("State:", State[state]);
 
     if (isGameover) {
-      this.createGameoverAnimations();
-    } else {
-      switch (this.state) {
-        case State.Dealing:
-          this.createDealingAnimations();
-          break;
-        case State.PlayerHit:
-        case State.PlayerBust:
-        case State.PlayerStand:
-        case State.PlayerBlackJack:
-          this.createPlayerCardsAnimations();
-          this.createActionText(Role.Player);
-          break;
-        case State.RevealHoleCard:
-        case State.DealerHit:
-        case State.DealerStand:
-        case State.DealerBust:
-        case State.DealerBlackJack:
-          this.createDealerTurnAnimations();
-          this.createActionText(Role.Dealer);
-          break;
-        default:
-          break;
-      }
+      this.createGameoverText();
+      return;
     }
 
-    this.drawCanvas();
+    switch (this.#state) {
+      case State.Init:
+        this.reset();
+        break;
+      case State.Dealing:
+        this.clearLayer(LayerOrder.All);
+        this.createDealingCards();
+        break;
+      case State.PlayerHit:
+      case State.PlayerBust:
+      case State.PlayerStand:
+      case State.PlayerBlackJack:
+        this.createPlayerCards(playerTurn);
+        this.createActionText(Role.Player);
+        break;
+      case State.RevealHoleCard:
+        this.updateHoleCard();
+        break;
+      case State.DealerHit:
+      case State.DealerStand:
+      case State.DealerBust:
+      case State.DealerBlackJack:
+        this.createDealerCards();
+        this.createActionText(Role.Dealer);
+        break;
+      default:
+        break;
+    }
   }
 
-  createCardAnim = (card: Card, delay = 0): SpriteAnim => {
+  private createCard(card: Card, delay = 0) {
     const isDealer = card.owner === "Dealer";
-    const anim: SpriteAnim = {
-      id: this.getCardId(card),
-      type: "sprite",
+    const entity: Sprite = {
+      ...cardSprite,
+      id: card.id,
       progress: 0,
-      easing: "easeOutQuint",
-      layer: "background",
-      speed: 1 / 12,
-      x: this.centerX - 80 + card.index * (isDealer ? -64 : 82),
+      x: this.#centerX - 80 + card.handIndex * (isDealer ? -64 : 82),
       y: isDealer
-        ? 0 - card.index * 5
-        : window.innerHeight - window.innerHeight * 0.2 + card.index * 5,
+        ? 0 - card.handIndex * 5
+        : window.innerHeight - window.innerHeight * 0.2 + card.handIndex * 5,
       sprites: [
         {
-          x: card.isHidden ? 0 : (card.suit % 12) * 1024 + this.spriteWidth * 2,
-          y: card.isHidden ? 4992 : card.rank * this.spriteHeight,
+          x: card.isHidden
+            ? 0
+            : (card.suit % 12) * 1024 + cardSprite.spriteWidth * 2,
+          y: card.isHidden ? 4992 : card.rank * cardSprite.spriteHeight,
         },
       ],
       delay,
@@ -524,7 +508,9 @@ export class Renderer {
       angle: ((Math.random() * 8 * 2 - 8) * Math.PI) / 180,
       opacity: { start: 1, end: card.isBusted ? 0.5 : 1 },
       translateY: {
-        start: isDealer ? -this.spriteHeight * 0.75 : this.spriteHeight,
+        start: isDealer
+          ? -cardSprite.spriteHeight * 0.75
+          : cardSprite.spriteHeight,
         end: 0,
       },
       shadow: {
@@ -536,16 +522,15 @@ export class Renderer {
       },
     };
 
-    console.log("Card animation created:", anim.id);
-    return anim;
-  };
+    console.log("Card entity created:", entity.id);
+    this.setEntity(entity);
+  }
 
-  private createDealingAnimations() {
-    this.clearAnimLayer("both");
+  private createDealingCards() {
     // TODO support split hands
-    let maxLength = this.dealer.hand.length;
+    let maxLength = this.#dealer.hand.length;
 
-    this.players.forEach((player) => {
+    this.#players.forEach((player) => {
       // TODO Support split hands
       maxLength = Math.max(maxLength, player.hand.length);
     });
@@ -554,76 +539,74 @@ export class Renderer {
 
     for (let i = 0; i < maxLength; i++) {
       cards.push(
-        ...this.players
+        ...this.#players
           .map((player) => {
             if (player.hand.length <= i) return undefined;
             return player.hand[i];
           })
           .filter((card) => card !== undefined)
       );
-      if (this.dealer.hand.length > i) {
-        cards.push(this.dealer.hand[i]);
+      if (this.#dealer.hand.length > i) {
+        cards.push(this.#dealer.hand[i]);
       }
     }
 
     const delay = 8;
 
     for (let i = 0; i < cards.length; i++) {
-      const cardAnim = this.createCardAnim(cards[i], i * delay);
-      this.setAnimLayer(cardAnim);
+      this.createCard(cards[i], i * delay);
     }
   }
 
-  createActionText(role: Role) {
-    this.showActionText = "in";
-    const anim = actionAnimation;
-    anim.progress = 0;
-    anim.opacity = { start: 0, end: 1 };
-    anim.kerning = { start: 40, end: 0 };
+  private createActionText(role: Role) {
+    this.#showActionText = "in";
+    const entity = actionText;
+    entity.progress = 0;
+    entity.opacity = { start: 0, end: 1 };
+    entity.kerning = { start: 40, end: 0 };
 
     if (role === Role.Player) {
-      anim.position = "bottom";
-      anim.translateY = { start: 50, end: 0 };
-      anim.style.fontSize = 60;
-      anim.style.color = Palette.Yellow;
+      entity.position = "bottom";
+      entity.translateY = { start: 50, end: 0 };
+      entity.style.fontSize = 60;
+      entity.style.color = Palette.Yellow;
     } else if (role === Role.Dealer) {
-      anim.position = "top";
-      anim.translateY = { start: -50, end: 0 };
-      anim.style.fontSize = 48;
-      anim.style.color = Palette.White;
+      entity.position = "top";
+      entity.translateY = { start: -50, end: 0 };
+      entity.style.fontSize = 48;
+      entity.style.color = Palette.White;
     }
 
-    if (this.state === State.PlayerHit || this.state === State.DealerHit) {
-      anim.text = "Hit!";
+    if (this.#state === State.PlayerHit || this.#state === State.DealerHit) {
+      entity.text = "Hit!";
     } else if (
-      this.state === State.PlayerStand ||
-      this.state === State.DealerStand
+      this.#state === State.PlayerStand ||
+      this.#state === State.DealerStand
     ) {
-      anim.text = "Stand!";
+      entity.text = "Stand!";
     } else if (
-      this.state === State.PlayerBust ||
-      this.state === State.DealerBust
+      this.#state === State.PlayerBust ||
+      this.#state === State.DealerBust
     ) {
-      anim.text = "Bust!";
+      entity.text = "Bust!";
     } else if (
-      this.state === State.PlayerBlackJack ||
-      this.state === State.DealerBlackJack
+      this.#state === State.PlayerBlackJack ||
+      this.#state === State.DealerBlackJack
     ) {
-      anim.text = "Blackjack!";
-    } else if (this.state === State.RevealHoleCard) {
-      anim.text = Rank[this.dealer.hand[1].rank];
+      entity.text = "Blackjack!";
+    } else if (this.#state === State.RevealHoleCard) {
+      entity.text = Rank[this.#dealer.hand[1].rank];
     }
 
-    this.setAnimLayer(anim);
+    this.setEntity(entity);
   }
 
-  updateActionText() {
-    switch (this.showActionText) {
+  private updateActionText() {
+    switch (this.#showActionText) {
       case "in": {
-        const layer = this.getAnimLayer(actionAnimation.layer);
-        const anim = layer.get(actionAnimation.id) as TextAnim;
+        const anim = this.getEntity(actionText);
         if (!anim) return;
-        this.showActionText = "out";
+        this.#showActionText = "out";
         anim.progress = 0;
         anim.opacity = { start: 1, end: 0 };
         if (anim.position === "bottom") {
@@ -632,102 +615,89 @@ export class Renderer {
           anim.translateY = { start: 0, end: -50 };
         }
         anim.kerning = { start: 0, end: 40 };
-        this.setAnimLayer(anim);
+        this.setEntity(anim);
         break;
       }
       case "out":
-        this.showActionText = "done";
+        this.#showActionText = "done";
         break;
       case "done":
-      default:
+        this.clearEntity(actionText);
         break;
+      default:
+        throw new Error(
+          `Cannot update step: ${this.#showActionText} for action text`
+        );
     }
   }
 
-  private createPlayerCardsAnimations() {
-    this.players[this.playerTurn - 1].hand.forEach((card) => {
-      const cardId = this.getCardId(card);
-      // TODO if createCardAnim layer is background, then this should be too
-      const layer = this.getAnimLayer("background");
-
-      if (layer.has(cardId)) {
+  private createPlayerCards(turn: number) {
+    this.#players[turn - 1].hand.forEach((card) => {
+      const layer = this.getLayer(cardSprite.layer);
+      if (layer.has(card.id)) {
         if (card.isBusted) {
-          const anim = layer.get(cardId) as SpriteAnim;
-          anim.opacity = { start: 1, end: card.isBusted ? 0.5 : 1 };
-          layer.set(cardId, anim);
+          // If bust, draw card with 50% opacity
+          const entity = layer.get(card.id) as Sprite;
+          entity.opacity = { start: 1, end: card.isBusted ? 0.5 : 1 };
+          layer.set(card.id, entity);
         } else if (card.isStand) {
-          const anim = layer.get(cardId) as SpriteAnim;
-          anim.sprites[0] = {
-            x: anim.sprites[0].x + this.spriteWidth,
-            y: anim.sprites[0].y,
+          // If stand, draw tinted sprite
+          const entity = layer.get(card.id) as Sprite;
+          entity.sprites[0] = {
+            x: entity.sprites[0].x + entity.spriteWidth,
+            y: entity.sprites[0].y,
           };
-          layer.set(cardId, anim);
+          layer.set(card.id, entity);
         }
         return;
       }
-      const cardAnim = this.createCardAnim(card, 0);
-
-      this.setAnimLayer(cardAnim);
+      this.createCard(card, 0);
     });
   }
 
-  private createDealerTurnAnimations() {
-    console.log("is hole", this.isHole);
-
-    if (this.isHole) {
-      this.isHole = false;
-      const holeCard = this.dealer.hand[1];
-      let cardId = this.getCardId(holeCard, "Hidden");
-      // TODO if createCardAnim layer is background, then this should be too
-      const layer = this.getAnimLayer("background");
-
-      if (layer.has(cardId)) {
-        const cardAnim = layer.get(cardId) as SpriteAnim;
-        const cardX = (holeCard.suit % 12) * 1024;
-        const cardY = holeCard.rank * this.spriteHeight;
-        cardAnim.sprites = [
-          { x: 0, y: 4992 },
-          { x: 256, y: 4992 },
-          { x: 512, y: 4992 },
-          { x: cardX, y: cardY },
-          { x: cardX + 256, y: cardY },
-          { x: cardX + 512, y: cardY },
-        ];
-        cardAnim.playback = "once";
-        cardAnim.spriteDuration = 1;
-        holeCard.show();
-        layer.delete(cardId);
-        cardId = this.getCardId(holeCard);
-        cardAnim.id = cardId;
-        this.setAnimLayer(cardAnim);
-      } else {
-        throw new Error("Cannot create animation. Dealer card not found");
-      }
-    } else {
-      // TODO if createCardAnim layer is background, then this should be too
-      const layer = this.getAnimLayer("background");
-      this.dealer.hand.forEach((card) => {
-        const cardId = this.getCardId(card);
-        if (layer.has(cardId)) {
-          if (card.isBusted) {
-            const anim = layer.get(cardId) as SpriteAnim;
-            anim.opacity = { start: 1, end: card.isBusted ? 0.5 : 1 };
-            layer.set(cardId, anim);
-          }
-          return;
-        }
-
-        const cardAnim = this.createCardAnim(card, 0);
-
-        this.setAnimLayer(cardAnim);
-      });
+  private updateHoleCard() {
+    const holeCard = this.#dealer.hand[1];
+    const entity = this.getEntityById(holeCard.id, cardSprite.layer) as
+      | Sprite
+      | undefined;
+    if (!entity) {
+      throw new Error("Cannot animate entity. Hole card not found");
     }
+    const cardX = (holeCard.suit % 12) * 1024;
+    const cardY = holeCard.rank * entity.spriteHeight;
+    const newHoleCard: AnimatedSprite = {
+      ...entity,
+      ...animatedCardSprite,
+      id: holeCard.id,
+      sprites: [
+        ...animatedCardSprite.sprites,
+        { x: cardX, y: cardY },
+        { x: cardX + 256, y: cardY },
+        { x: cardX + 512, y: cardY },
+      ],
+    };
+    this.setEntity(newHoleCard);
   }
 
-  createGameoverAnimations() {
+  private createDealerCards() {
+    this.#dealer.hand.forEach((card) => {
+      const layer = this.getLayer(cardSprite.layer);
+      if (layer.has(card.id)) {
+        if (card.isBusted) {
+          const entity = layer.get(card.id) as Sprite;
+          entity.opacity = { start: 1, end: card.isBusted ? 0.5 : 1 };
+          this.setEntity(entity);
+        }
+        return;
+      }
+      this.createCard(card, 0);
+    });
+  }
+
+  private createGameoverText() {
     let title = "";
     let subtitle = "";
-    switch (this.state) {
+    switch (this.#state) {
       case State.PlayerBust:
         title = "Player Bust!";
         subtitle = "Better luck next time!";
@@ -760,28 +730,13 @@ export class Renderer {
         break;
     }
 
-    for (let i = 0; i < gameoverAnimation.length; i++) {
-      const anim = gameoverAnimation[i];
-      anim.progress = 0;
-      if (anim.id === "title") {
-        anim.text = title;
-      } else if (anim.id === "subtitle") {
-        anim.text = subtitle;
+    for (const text of gameoverText) {
+      if (text.id === "title") {
+        text.text = title;
+      } else if (text.id === "subtitle") {
+        text.text = subtitle;
       }
-      this.setAnimLayer(anim);
+      this.setEntity(text);
     }
-  }
-
-  private getCardId(card: Card, name = card.name) {
-    return `[${card.index}] ${card.owner}'s ${name}`;
-  }
-
-  private lerp(start: number, end: number, easing: number) {
-    let result = end;
-    if (start !== end) {
-      result = start + (end - start) * easing;
-    }
-    return result;
   }
 }
-

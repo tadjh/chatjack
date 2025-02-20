@@ -82,8 +82,8 @@ describe("Hand", () => {
     const card2 = new Card(Suit.Spades + Rank.Eight);
     hand.add(card1);
     hand.add(card2);
-    expect(card1.index).toBe(0);
-    expect(card2.index).toBe(1);
+    expect(card1.handIndex).toBe(0);
+    expect(card2.handIndex).toBe(1);
   });
 
   test("should correctly calculate score with three Aces", () => {

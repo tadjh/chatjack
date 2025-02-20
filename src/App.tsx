@@ -28,6 +28,7 @@ function App() {
   useEffect(() => {
     if (!canvasRef.current) return;
 
+    // TODO Simplify this asset loading api.
     rendererRef.current = new Renderer(canvasRef.current);
 
     if (!rendererRef.current) return;

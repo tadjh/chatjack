@@ -45,6 +45,7 @@ const Letter: Map<number, string> = new Map([
 ]);
 
 export class Card extends Number {
+  id: string = "";
   readonly suit: number;
   readonly rank: number;
   #icon: string;
@@ -55,7 +56,7 @@ export class Card extends Number {
   isBusted: boolean = false;
   isStand: boolean = false;
   owner: string = "";
-  index: number = 0;
+  handIndex: number = -1;
 
   constructor(card: number, hidden = false) {
     if (card < 0 || card > 52) {
@@ -68,6 +69,7 @@ export class Card extends Number {
     this.#isAce = this.rank === Rank.Ace;
     this.#name = `${Rank[this.rank]} of ${Suit[this.suit]}`;
     this.#icon = `${Letter.get(this.rank)} ${Icon.get(this.suit)}`;
+    this.setId();
     this.setPoints();
   }
 
@@ -166,6 +168,16 @@ export class Card extends Number {
       this.#points = 11;
     }
 
+    return this;
+  }
+
+  setId() {
+    const segments = [
+      this.owner && this.owner.replace(/\s/g, "").toLowerCase(),
+      this.#name.replace(/\s/g, "-").toLowerCase(),
+      this.handIndex > -1 && `slot-${this.handIndex}`,
+    ].filter(Boolean);
+    this.id = segments.join("-");
     return this;
   }
 

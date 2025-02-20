@@ -50,7 +50,6 @@ export class Player {
     if (this.#hands.length <= index || index < 0) {
       throw new Error("Hand does not exist");
     }
-    card.owner = this.name;
     this.#hands[index].add(card);
     return this;
   }
