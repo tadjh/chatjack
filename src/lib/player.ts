@@ -51,6 +51,11 @@ export class Player {
       throw new Error("Hand does not exist");
     }
     this.#hands[index].add(card);
+
+    if (this.#hands[index].isBlackjack) {
+      this.stand(index);
+    }
+
     return this;
   }
 

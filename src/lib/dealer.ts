@@ -10,6 +10,14 @@ export class Dealer extends Player {
     return this.hand.isBusted;
   }
 
+  get score() {
+    if (this.hand.length === 0) {
+      return 0;
+    }
+
+    return this.hand[1].isHidden ? this.hand[0].points : this.hand.score;
+  }
+
   reveal() {
     this.hand[1].show();
   }

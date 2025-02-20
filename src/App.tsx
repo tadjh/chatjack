@@ -91,7 +91,7 @@ function App() {
           <div>
             <div>Dealer</div>
             <div>
-              {`Score: ${dealer.hand.score} `}
+              {`Score: ${dealer.score} `}
               {dealer.hand.map((card) => card.icon).join(" ")}
             </div>
           </div>

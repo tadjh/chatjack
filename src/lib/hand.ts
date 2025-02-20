@@ -46,7 +46,7 @@ export class Hand extends Deck {
     this.protect();
     let aces = 0;
     this.#score = this.reduce((score, card) => {
-      if (card.isAce) {
+      if (card.isAce && card.points === 11) {
         aces++;
       }
       score += card.points;
@@ -55,9 +55,10 @@ export class Hand extends Deck {
 
     if (this.#score > 21 && aces > 0) {
       this.#score = this.reduce((total, card) => {
-        if (total > 21 && card.isAce) {
+        if (total > 21 && card.points === 11) {
           card.setAce("low");
           total -= 10;
+          aces--;
         }
         return total;
       }, this.#score);
