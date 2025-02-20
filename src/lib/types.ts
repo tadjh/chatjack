@@ -26,6 +26,16 @@ interface BaseEntity {
     y: number;
     speed: number;
   };
+  position?:
+    | "center"
+    | "left"
+    | "right"
+    | "top"
+    | "bottom"
+    | "top left"
+    | "top right"
+    | "bottom left"
+    | "bottom right";
 }
 
 export interface Text extends BaseEntity {
@@ -45,16 +55,6 @@ export interface Text extends BaseEntity {
     };
     stroke?: { color: [number, number, number]; width: number };
   };
-  position:
-    | "center"
-    | "left"
-    | "right"
-    | "top"
-    | "bottom"
-    | "top left"
-    | "top right"
-    | "bottom left"
-    | "bottom right";
   kerning?: { start: number; end: number };
   index?: number;
   clamp?: boolean;

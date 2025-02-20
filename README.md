@@ -1,12 +1,17 @@
 ## Bugs
 
+- TODO Player Blackjack card doesn't tint during auto-stand
+- TODO Dealer Stand doesn't tint
+- TODO Cards have 1 pixel bleeding on sprite sheet, consider moving all sprites right 1 or 2 pixels
+- TODO Cards are a litte blurry? maybe Math.floor needed
+
 ## Development
 
 - TODO show chat actions on the opposite side of the scores "!hit or !stand", hide when no longer chat's turn
-- TODO Sprites don't use offsetX, offsetY. Text don't use x,y
+- TODO Consider removing Player array since this will always be single player
 
 ## Quality of life
 
-- TODO Player action text is too big
-- TODO Player cards go up too high, dealer cards deal a little too low
+- TODO Instead of "Player" say "Chat" since this is designed for twtich chat
+- TODO Bust and opacity drop should happen AFTER card finishes animating
 

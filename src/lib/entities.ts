@@ -245,6 +245,13 @@ export const cardSprite: Sprite = {
   sprites: [{ x: 0, y: 4992 }],
   spriteWidth: SPRITE_WIDTH,
   spriteHeight: SPRITE_HEIGHT,
+  shadow: {
+    color: Palette.DarkestGreen,
+    opacity: 1,
+    offsetX: 12,
+    offsetY: 12,
+    blur: 0,
+  },
 };
 
 export const animatedCardSprite: AnimatedSprite = {

@@ -203,24 +203,25 @@ export class Renderer {
     const lineHeight = fontSize * entity.style.lineHeight;
     let originX = this.#centerX;
     let originY = this.#centerY;
+    if (entity.position) {
+      if (entity.position.includes("top")) {
+        originY = this.#padding + lineHeight;
+      } else if (entity.position.includes("bottom")) {
+        originY = window.innerHeight - this.#padding;
+      }
 
-    if (entity.position.includes("top")) {
-      originY = this.#padding + lineHeight;
-    } else if (entity.position.includes("bottom")) {
-      originY = window.innerHeight - this.#padding;
-    }
+      if (entity.position.includes("right")) {
+        originX = window.innerWidth - textWidth / 2 - this.#padding;
+      } else if (entity.position.includes("left")) {
+        originX = this.#padding + textWidth / 2;
+      }
 
-    if (entity.position.includes("right")) {
-      originX = window.innerWidth - textWidth / 2 - this.#padding;
-    } else if (entity.position.includes("left")) {
-      originX = this.#padding + textWidth / 2;
-    }
-
-    if (entity.position === "center") {
-      originY =
-        Math.floor(window.innerHeight / 3) +
-        translateY +
-        (entity.index ?? 0) * lineHeight;
+      if (entity.position === "center") {
+        originY =
+          Math.floor(window.innerHeight / 3) +
+          translateY +
+          (entity.index ?? 0) * lineHeight;
+      }
     }
 
     originX += translateX + (entity.offsetX ?? 0);
@@ -278,8 +279,6 @@ export class Renderer {
     let translateX = entity.translateX?.end ?? 0;
     let translateY = entity.translateY?.end ?? 0;
     let opacity = entity.opacity?.end ?? 1;
-    const originX = entity.x ?? this.#centerX;
-    const originY = entity.y ?? this.#centerY;
     entity.progress = entity.progress ?? 0;
 
     if (entity.progress < 1) {
@@ -317,17 +316,18 @@ export class Renderer {
     if (entity.type === "animated-sprite") {
       index = entity.spriteIndex ?? 0;
     }
-
     const sprite = entity.sprites[index];
 
     const sourceX = sprite.x;
     const sourceY = sprite.y;
 
     const scale =
-      (window.innerWidth * 0.2 * (entity.scale ?? 1)) / entity.spriteWidth;
+      ((entity.scale ?? 1) * (window.innerWidth * 0.2)) / entity.spriteWidth;
 
     const destWidth = entity.spriteWidth * scale;
     const destHeight = entity.spriteHeight * scale;
+    const halfWidth = destWidth / 2;
+    const halfHeight = destHeight / 2;
 
     if (entity.float) {
       if (entity.float.x !== 0) {
@@ -341,24 +341,46 @@ export class Renderer {
       }
     }
 
-    let destX = translateX + originX - destWidth / 2;
-    let destY = translateY + originY - destHeight / 2;
+    let originX = this.#centerX;
+    let originY = this.#centerY;
+
+    if (entity.position) {
+      if (entity.position.includes("top")) {
+        originY = this.#padding; // + halfHeight;
+      } else if (entity.position.includes("bottom")) {
+        originY = window.innerHeight - this.#padding;
+      }
+
+      if (entity.position.includes("right")) {
+        originX = window.innerWidth - destWidth - this.#padding;
+      } else if (entity.position.includes("left")) {
+        originX = this.#padding;
+      }
+    }
+
+    originX += translateX + (entity.offsetX ?? 0) * scale;
+    originY += translateY + (entity.offsetY ?? 0) * scale;
+
+    let destX = originX - halfWidth;
+    let destY = originY - halfHeight;
 
     this.#ctx.save();
-
-    if (entity.angle) {
-      this.#ctx.translate(0, 0);
-      this.#ctx.rotate(entity.angle);
-    }
 
     this.#ctx.globalAlpha = opacity;
 
     if (sprite.flipX) {
       this.#ctx.scale(-1, 1);
-      destX = translateX - originX - destWidth / 2;
+      destX = translateX - originX - halfWidth;
     } else if (sprite.flipY) {
       this.#ctx.scale(1, -1);
-      destY = translateY - originY - destHeight / 2;
+      destY = translateY - originY - halfHeight;
+    }
+
+    if (entity.angle) {
+      this.#ctx.translate(destX + halfWidth, destY + halfHeight);
+      this.#ctx.rotate(entity.angle);
+      destX = -halfWidth;
+      destY = -halfHeight;
     }
 
     if (entity.shadow) {
@@ -372,7 +394,7 @@ export class Renderer {
       this.#spriteSheet,
       sourceX,
       sourceY,
-      entity.spriteWidth,
+      entity.spriteWidth - 1, // TODO 1 px bleeding
       entity.spriteHeight,
       destX,
       destY,
@@ -618,10 +640,10 @@ export class Renderer {
       ...cardSprite,
       id: card.id,
       progress: 0,
-      x: this.#centerX - 80 + card.handIndex * (isDealer ? -64 : 82),
-      y: isDealer
-        ? 0 - card.handIndex * 5
-        : window.innerHeight - window.innerHeight * 0.2 + card.handIndex * 5,
+      offsetX:
+        (isDealer ? 80 : -cardSprite.spriteWidth / 2) +
+        card.handIndex * (isDealer ? -128 : 128),
+      offsetY: isDealer ? Math.random() * 64 : -32 + Math.random() * -128,
       sprites: [
         {
           x: card.isHidden
@@ -630,22 +652,16 @@ export class Renderer {
           y: card.isHidden ? 4992 : card.rank * cardSprite.spriteHeight,
         },
       ],
+      position: isDealer ? "top" : "bottom",
       delay,
       scale: isDealer ? 0.75 : 1,
-      angle: ((Math.random() * 8 * 2 - 8) * Math.PI) / 180,
+      angle: ((Math.random() * 12 * 2 - 12) * Math.PI) / 180,
       opacity: { start: 1, end: card.isBusted ? 0.5 : 1 },
       translateY: {
         start: isDealer
-          ? -cardSprite.spriteHeight * 0.75
-          : cardSprite.spriteHeight,
+          ? -cardSprite.spriteHeight * 2 * 0.75
+          : cardSprite.spriteHeight * 2,
         end: 0,
-      },
-      shadow: {
-        color: Palette.DarkestGreen,
-        opacity: 1,
-        offsetX: 4,
-        offsetY: 4,
-        blur: 0,
       },
     };
 
