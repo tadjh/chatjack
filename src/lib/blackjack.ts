@@ -1,7 +1,7 @@
-import { State } from "./constants";
 import { Dealer } from "./dealer";
 import { Deck } from "./deck";
 import { Player } from "./player";
+import { State } from "./types";
 
 export class Blackjack {
   #state = State.Init;

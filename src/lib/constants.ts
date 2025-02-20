@@ -1,4 +1,4 @@
-import { Vector3 } from "./types";
+import { GameoverStates, State, Vector3 } from "./types";
 
 export const TITLE_TEXT = "ChatJack";
 export const SUBTITLE_TEXT = "Twitch Chat Plays Blackjack";
@@ -63,20 +63,36 @@ export const fonts: Map<string, string> = new Map([
 
 export const spriteSheet = `${isDevelopment ? "/src" : ""}/assets/sprites/cards.png`;
 
-export enum State {
-  Init,
-  Dealing,
-  PlayerHit,
-  PlayerStand,
-  PlayerSplit,
-  RevealHoleCard,
-  DealerHit,
-  DealerStand,
-  PlayerBust,
-  DealerBust,
-  Push,
-  PlayerBlackJack,
-  DealerBlackJack,
-  PlayerWin,
-  DealerWin,
-}
+export const gameoverTitles: Record<
+  GameoverStates,
+  { title: string; subtitle: string }
+> = {
+  [State.PlayerBust]: {
+    title: "Player Bust!",
+    subtitle: "Better luck next time!",
+  },
+  [State.DealerBust]: {
+    title: "Dealer Bust!",
+    subtitle: "How unfortunate...",
+  },
+  [State.Push]: {
+    title: "Push!",
+    subtitle: "No winner...",
+  },
+  [State.PlayerBlackJack]: {
+    title: "Blackjack!",
+    subtitle: "Chat Wins!",
+  },
+  [State.DealerBlackJack]: {
+    title: "Dealer hit 21!",
+    subtitle: "Better luck next time!",
+  },
+  [State.PlayerWin]: {
+    title: "Player Wins!",
+    subtitle: "You hand is stronger!",
+  },
+  [State.DealerWin]: {
+    title: "Dealer Wins!",
+    subtitle: "Better luck next time!",
+  },
+};

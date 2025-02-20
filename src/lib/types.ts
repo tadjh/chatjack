@@ -3,7 +3,7 @@ export type Vector3 = [number, number, number];
 export enum LayerOrder {
   Background,
   Foreground,
-  All,
+  _ALL,
 }
 
 interface BaseEntity {
@@ -14,6 +14,8 @@ interface BaseEntity {
   layer: LayerOrder;
   speed?: number;
   delay?: number;
+  offsetX?: number;
+  offsetY?: number;
   x?: number;
   y?: number;
   translateX?: { start: number; end: number };
@@ -95,4 +97,31 @@ export interface AnimatedSprite extends BaseSprite {
 }
 
 export type Entity = Text | Sprite | AnimatedSprite;
+
+export enum State {
+  Init,
+  Dealing,
+  PlayerHit,
+  PlayerStand,
+  PlayerSplit,
+  RevealHoleCard,
+  DealerHit,
+  DealerStand,
+  PlayerBust,
+  DealerBust,
+  Push,
+  PlayerBlackJack,
+  DealerBlackJack,
+  PlayerWin,
+  DealerWin,
+}
+
+export type GameoverStates =
+  | State.PlayerBust
+  | State.DealerBust
+  | State.Push
+  | State.PlayerBlackJack
+  | State.DealerBlackJack
+  | State.PlayerWin
+  | State.DealerWin;
 

@@ -10,15 +10,23 @@ import { Card } from "./card";
 import {
   ANIMATION_SPEED,
   BASE_FONT_SCALE,
+  gameoverTitles,
   PADDING,
   Palette,
-  State,
   TICK_RATE,
 } from "./constants";
 import { Dealer } from "./dealer";
 import { Layer } from "./layer";
 import { Player, Role } from "./player";
-import { AnimatedSprite, Entity, LayerOrder, Sprite, Text } from "./types";
+import {
+  AnimatedSprite,
+  Entity,
+  GameoverStates,
+  LayerOrder,
+  Sprite,
+  State,
+  Text,
+} from "./types";
 import { clamp, easeOut, font, lerp, rgb, rgba } from "./utils";
 
 export class Renderer {
@@ -86,7 +94,7 @@ export class Renderer {
   }
 
   private clearLayer(layer: LayerOrder) {
-    if (layer === LayerOrder.All) {
+    if (layer === LayerOrder._ALL) {
       this.#layers.forEach((layer) => layer.clear());
       return;
     }
@@ -215,8 +223,8 @@ export class Renderer {
         (entity.index ?? 0) * lineHeight;
     }
 
-    originX += translateX + (entity.x ?? 0);
-    originY += translateY + (entity.y ?? 0);
+    originX += translateX + (entity.offsetX ?? 0);
+    originY += translateY + (entity.offsetY ?? 0);
 
     if (entity.clamp) {
       originX = clamp(
@@ -270,8 +278,8 @@ export class Renderer {
     let translateX = entity.translateX?.end ?? 0;
     let translateY = entity.translateY?.end ?? 0;
     let opacity = entity.opacity?.end ?? 1;
-    const anchorX = entity.x ?? this.#centerX;
-    const anchorY = entity.y ?? this.#centerY;
+    const originX = entity.x ?? this.#centerX;
+    const originY = entity.y ?? this.#centerY;
     entity.progress = entity.progress ?? 0;
 
     if (entity.progress < 1) {
@@ -333,8 +341,8 @@ export class Renderer {
       }
     }
 
-    let destX = translateX + anchorX - destWidth / 2;
-    let destY = translateY + anchorY - destHeight / 2;
+    let destX = translateX + originX - destWidth / 2;
+    let destY = translateY + originY - destHeight / 2;
 
     this.#ctx.save();
 
@@ -347,10 +355,10 @@ export class Renderer {
 
     if (sprite.flipX) {
       this.#ctx.scale(-1, 1);
-      destX = translateX - anchorX - destWidth / 2;
+      destX = translateX - originX - destWidth / 2;
     } else if (sprite.flipY) {
       this.#ctx.scale(1, -1);
-      destY = translateY - anchorY - destHeight / 2;
+      destY = translateY - originY - destHeight / 2;
     }
 
     if (entity.shadow) {
@@ -464,7 +472,7 @@ export class Renderer {
   }
 
   private reset() {
-    this.clearLayer(LayerOrder.All);
+    this.clearLayer(LayerOrder._ALL);
     this.setEntities(this.titleEntities);
     this.#dealer = new Dealer();
     this.#players = [];
@@ -510,7 +518,7 @@ export class Renderer {
         this.reset();
         break;
       case State.Dealing:
-        this.clearLayer(LayerOrder.All);
+        this.clearLayer(LayerOrder._ALL);
         this.createDealingCards();
         this.createScores();
         break;
@@ -688,12 +696,12 @@ export class Renderer {
       entity.position = "bottom";
       entity.translateY = { start: 50, end: 0 };
       entity.style.fontSize = 48;
-      entity.y = -window.innerHeight * 0.15;
+      entity.offsetY = -window.innerHeight * 0.15;
     } else if (role === Role.Dealer) {
       entity.position = "top";
       entity.translateY = { start: -50, end: 0 };
       entity.style.fontSize = 48;
-      entity.y = window.innerHeight * 0.15;
+      entity.offsetY = window.innerHeight * 0.15;
     }
 
     if (this.#state === State.PlayerHit || this.#state === State.DealerHit) {
@@ -816,48 +824,21 @@ export class Renderer {
   }
 
   private createGameoverText() {
-    let title = "";
-    let subtitle = "";
-    switch (this.#state) {
-      case State.PlayerBust:
-        title = "Player Bust!";
-        subtitle = "Better luck next time!";
-        break;
-      case State.DealerBust:
-        title = "Dealer Bust!";
-        subtitle = "How unfortunate...";
-        break;
-      case State.Push:
-        title = "Push!";
-        subtitle = "No winner this time...";
-        break;
-      case State.PlayerBlackJack:
-        title = "Blackjack!";
-        subtitle = "Chat Wins!";
-        break;
-      case State.DealerBlackJack:
-        title = "Dealer hit 21!";
-        subtitle = "Better luck next time!";
-        break;
-      case State.PlayerWin:
-        title = "Player Wins!";
-        subtitle = "You hand is stronger!";
-        break;
-      case State.DealerWin:
-        title = "Dealer Wins!";
-        subtitle = "Better luck next time!";
-        break;
-      default:
-        break;
+    const titles = gameoverTitles[this.#state as GameoverStates];
+
+    if (!titles) {
+      throw new Error("Gameover title not found");
     }
 
-    for (const text of gameoverText) {
-      if (text.id === "title") {
-        text.text = title;
-      } else if (text.id === "subtitle") {
-        text.text = subtitle;
+    const { title, subtitle } = titles;
+
+    for (const entity of gameoverText) {
+      if (entity.id === "title") {
+        entity.text = title;
+      } else if (entity.id === "subtitle") {
+        entity.text = subtitle;
       }
-      this.setEntity(text);
+      this.setEntity(entity);
     }
   }
 }
