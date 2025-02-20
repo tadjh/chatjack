@@ -30,6 +30,8 @@ function App() {
 
     rendererRef.current = new Renderer(canvasRef.current);
 
+    if (!rendererRef.current) return;
+
     const loadAssets = async () => {
       [...fonts.entries()].forEach(async ([name, url]) => {
         await rendererRef.current!.loadFont(name, url);

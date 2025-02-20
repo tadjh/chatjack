@@ -9,8 +9,8 @@ export const FLOAT_SPEED = 1 / 6;
 export const FLOAT_AMPLITUDE = 3;
 export const SPRITE_WIDTH = 256;
 export const SPRITE_HEIGHT = 384;
-export const DISPLAY_FONT = "Jacquard";
-export const SANS_SERIF_FONT = "PressStart2P";
+export const FONT_DISPLAY = "Jacquard24";
+export const FONT_SANS_SERIF = "PressStart2P";
 const isDevelopment = import.meta.env.MODE === "development";
 
 export const Palette: Record<string, Vector3> = {
@@ -38,12 +38,12 @@ export const Palette: Record<string, Vector3> = {
 
 export const fonts: Map<string, string> = new Map([
   [
-    DISPLAY_FONT,
-    `${isDevelopment ? "/src" : ""}/assets/fonts/Jacquard24-Regular.ttf`,
+    FONT_DISPLAY,
+    `${isDevelopment ? "/src" : ""}/assets/fonts/${FONT_DISPLAY}-Regular.ttf`,
   ],
   [
-    SANS_SERIF_FONT,
-    `${isDevelopment ? "/src" : ""}/assets/fonts/PressStart2P-Regular.ttf`,
+    FONT_SANS_SERIF,
+    `${isDevelopment ? "/src" : ""}/assets/fonts/${FONT_SANS_SERIF}-Regular.ttf`,
   ],
 ]);
 
@@ -66,4 +66,3 @@ export enum State {
   PlayerWin,
   DealerWin,
 }
-
