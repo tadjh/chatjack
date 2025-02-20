@@ -1,9 +1,9 @@
 ## Bugs
 
 - TODO Player Blackjack card doesn't tint during auto-stand
-- TODO Dealer Stand doesn't tint
 - TODO Cards have 1 pixel bleeding on sprite sheet, consider moving all sprites right 1 or 2 pixels
 - TODO Cards are a litte blurry? maybe Math.floor needed
+- TODO Gameover Titles aren't animating
 
 ## Development
 

@@ -28,6 +28,7 @@ import {
   Text,
 } from "./types";
 import { clamp, easeOut, font, lerp, rgb, rgba } from "./utils";
+import { Status } from "./hand";
 
 export class Renderer {
   #canvas: HTMLCanvasElement;
@@ -634,7 +635,7 @@ export class Renderer {
     }
   }
 
-  private createCard(card: Card, delay = 0) {
+  private createCard(card: Card, delay = 0, status: Status) {
     const isDealer = card.owner === "Dealer";
     const entity: Sprite = {
       ...cardSprite,
@@ -648,7 +649,9 @@ export class Renderer {
         {
           x: card.isHidden
             ? 0
-            : (card.suit % 12) * 1024 + cardSprite.spriteWidth * 2,
+            : status === "stand"
+              ? (card.suit % 12) * 1024 + cardSprite.spriteWidth * 3
+              : (card.suit % 12) * 1024 + cardSprite.spriteWidth * 2,
           y: card.isHidden ? 4992 : card.rank * cardSprite.spriteHeight,
         },
       ],
@@ -656,7 +659,7 @@ export class Renderer {
       delay,
       scale: isDealer ? 0.75 : 1,
       angle: ((Math.random() * 12 * 2 - 12) * Math.PI) / 180,
-      opacity: { start: 1, end: card.isBusted ? 0.5 : 1 },
+      opacity: { start: 1, end: status === "busted" ? 0.5 : 1 },
       translateY: {
         start: isDealer
           ? -cardSprite.spriteHeight * 2 * 0.75
@@ -679,12 +682,16 @@ export class Renderer {
     });
 
     const cards: Card[] = [];
+    let isNaturalBlackjack = false;
 
     for (let i = 0; i < maxLength; i++) {
       cards.push(
         ...this.#players
           .map((player) => {
             if (player.hand.length <= i) return undefined;
+            if (player.hand.status === "blackjack" && i === 0) {
+              isNaturalBlackjack = true;
+            }
             return player.hand[i];
           })
           .filter((card) => card !== undefined)
@@ -697,7 +704,9 @@ export class Renderer {
     const delay = 8;
 
     for (let i = 0; i < cards.length; i++) {
-      this.createCard(cards[i], i * delay);
+      const status =
+        i % 2 === 1 ? "playing" : isNaturalBlackjack ? "blackjack" : "playing";
+      this.createCard(cards[i], i * delay, status);
     }
   }
 
@@ -780,12 +789,15 @@ export class Renderer {
     this.#players[turn - 1].hand.forEach((card) => {
       const layer = this.getLayer(cardSprite.layer);
       if (layer.has(card.id)) {
-        if (card.isBusted) {
+        if (this.#players[turn - 1].hand.isBusted) {
           // If bust, draw card with 50% opacity
           const entity = layer.get(card.id) as Sprite;
-          entity.opacity = { start: 1, end: card.isBusted ? 0.5 : 1 };
+          entity.opacity = {
+            start: 1,
+            end: 0.5,
+          };
           layer.set(card.id, entity);
-        } else if (card.isStand) {
+        } else if (this.#players[turn - 1].hand.isStand) {
           // If stand, draw tinted sprite
           const entity = layer.get(card.id) as Sprite;
           entity.sprites[0] = {
@@ -796,7 +808,7 @@ export class Renderer {
         }
         return;
       }
-      this.createCard(card, 0);
+      this.createCard(card, 0, this.#players[turn - 1].hand.status);
     });
   }
 
@@ -827,15 +839,34 @@ export class Renderer {
   private createDealerCards() {
     this.#dealer.hand.forEach((card) => {
       const layer = this.getLayer(cardSprite.layer);
+      console.log(card, this.#state);
       if (layer.has(card.id)) {
-        if (card.isBusted) {
-          const entity = layer.get(card.id) as Sprite;
-          entity.opacity = { start: 1, end: card.isBusted ? 0.5 : 1 };
+        if (this.#dealer.hand.isBusted) {
+          const entity = this.getEntityById(card.id, cardSprite.layer)!;
+          entity.opacity = {
+            start: 1,
+            end: this.#dealer.hand.isBusted ? 0.5 : 1,
+          };
+          this.setEntity(entity);
+        } else if (this.#dealer.hand.isStand) {
+          const entity = this.getEntityById(card.id, cardSprite.layer)!;
+          if (entity.type === "animated-sprite") {
+            entity.sprites[entity.spriteIndex] = {
+              x: entity.sprites[entity.spriteIndex].x + entity.spriteWidth,
+              y: entity.sprites[entity.spriteIndex].y,
+            };
+          } else if (entity.type === "sprite") {
+            entity.sprites[0] = {
+              x: entity.sprites[0].x + entity.spriteWidth,
+              y: entity.sprites[0].y,
+            };
+          }
           this.setEntity(entity);
         }
         return;
       }
-      this.createCard(card, 0);
+
+      this.createCard(card, 0, this.#dealer.hand.status);
     });
   }
 
@@ -854,6 +885,7 @@ export class Renderer {
       } else if (entity.id === "subtitle") {
         entity.text = subtitle;
       }
+      entity.progress = 0;
       this.setEntity(entity);
     }
   }

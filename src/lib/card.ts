@@ -53,8 +53,6 @@ export class Card extends Number {
   #points: number = 0;
   #isAce: boolean;
   #isHidden: boolean;
-  isBusted: boolean = false;
-  isStand: boolean = false;
   owner: string = "";
   handIndex: number = -1;
 

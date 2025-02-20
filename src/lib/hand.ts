@@ -73,9 +73,6 @@ export class Hand extends Deck {
       this.status = "blackjack";
     } else if (this.#score > 21) {
       this.status = "busted";
-      this.forEach((card) => {
-        card.isBusted = true;
-      });
     }
     return this;
   }
@@ -84,9 +81,6 @@ export class Hand extends Deck {
     this.protect();
 
     this.status = "stand";
-    this.forEach((card) => {
-      card.isStand = true;
-    });
     return this;
   }
 
