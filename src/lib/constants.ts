@@ -9,7 +9,7 @@ export const FLOAT_SPEED = 1 / 6;
 export const FLOAT_AMPLITUDE = 3;
 export const SPRITE_WIDTH = 256;
 export const SPRITE_HEIGHT = 384;
-export const BASE_FONT_SCALE = 1 / 960;
+export const BASE_FONT_SCALE = 1 / 800;
 export const PADDING = 1 / 72;
 export const FONT_DISPLAY = "Jacquard24";
 export const FONT_SANS_SERIF = "PressStart2P";
@@ -68,7 +68,7 @@ export const gameoverTitles: Record<
   { title: string; subtitle: string }
 > = {
   [State.PlayerBust]: {
-    title: "Player Bust!",
+    title: "Chat Bust!",
     subtitle: "Better luck next time!",
   },
   [State.DealerBust]: {
@@ -89,7 +89,7 @@ export const gameoverTitles: Record<
   },
   [State.PlayerWin]: {
     title: "Chat Wins!",
-    subtitle: "You hand is stronger!",
+    subtitle: "Your hand is stronger!",
   },
   [State.DealerWin]: {
     title: "Dealer Wins!",

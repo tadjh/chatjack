@@ -64,7 +64,7 @@ export const titleScreen: [AnimatedSprite, Text, Text, Text] = [
     style: {
       color: Palette.Yellow,
       maxWidth: "full",
-      fontSize: 148,
+      fontSize: 128,
       fontFamily: FONT_DISPLAY,
       lineHeight: 1.2,
       shadow: { color: Palette.DarkestGreen, x: 8, y: 8, size: 16 },
@@ -134,7 +134,7 @@ export const gameoverText: [Text, Text, Text] = [
     style: {
       color: Palette.Yellow,
       maxWidth: "full",
-      fontSize: 112,
+      fontSize: 100,
       fontFamily: FONT_DISPLAY,
       lineHeight: 1.2,
       shadow: { color: Palette.DarkestGreen, x: 8, y: 8, size: 16 },
@@ -176,7 +176,7 @@ export const gameoverText: [Text, Text, Text] = [
     easing: "easeOutCubic",
     layer: LayerOrder.Foreground,
     delay: 32,
-    offsetY: -50,
+    offsetY: 0.1,
     style: {
       color: Palette.Yellow,
       maxWidth: "full",
@@ -229,7 +229,7 @@ export const scoreText: Text = {
     fontSize: 32,
     fontFamily: FONT_SANS_SERIF,
     lineHeight: 1,
-    shadow: { color: Palette.DarkestGreen, x: 8, y: 8, size: 16 },
+    shadow: { color: Palette.DarkestGreen, x: 4, y: 4, size: 16 },
     stroke: { width: 16, color: Palette.Black },
   },
   position: "bottom right",

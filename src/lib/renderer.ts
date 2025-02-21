@@ -42,7 +42,7 @@ export class Renderer {
   #dealer = new Dealer();
   #player: Player = new Player("Chat", 1);
   #state: State = State.Dealing;
-  #baseFontSize = window.innerWidth * BASE_FONT_SCALE;
+  #fontScaleFactor = window.innerWidth * BASE_FONT_SCALE;
   #showActionText: "in" | "out" | "done" = "done";
   #isGameover = false;
   #layers: Map<LayerOrder, Layer> = new Map();
@@ -136,18 +136,16 @@ export class Renderer {
   }
 
   private drawText(entity: Text) {
-    const baseMaxWidth = window.innerWidth - this.#padding * 2;
-
     this.#ctx.textAlign = "center";
     this.#ctx.fillStyle = rgb(Palette.White);
 
     entity.progress = entity.progress ?? 0;
 
     if (entity.type !== "text") return;
-    let fontSize = this.#baseFontSize * entity.style.fontSize;
+    let fontSize = this.#fontScaleFactor * entity.style.fontSize;
     this.#ctx.font = font(fontSize, entity.style.fontFamily);
     let textWidth = this.#ctx.measureText(entity.text).width;
-    let maxWidth = baseMaxWidth;
+    let maxWidth = window.innerWidth - this.#padding * 2;
     if (entity.style.maxWidth !== "full") {
       maxWidth = this.#widthMap.get(entity.style.maxWidth) || maxWidth;
     }
@@ -230,8 +228,8 @@ export class Renderer {
       }
     }
 
-    originX += translateX + (entity.offsetX ?? 0);
-    originY += translateY + (entity.offsetY ?? 0);
+    originX += translateX + (entity.offsetX ?? 0) * window.innerWidth;
+    originY += translateY + (entity.offsetY ?? 0) * window.innerHeight;
 
     if (entity.clamp) {
       originX = clamp(
@@ -440,7 +438,7 @@ export class Renderer {
     this.#canvas.style.height = `${window.innerHeight}px`;
     this.#centerX = Math.floor(window.innerWidth / 2);
     this.#centerY = Math.floor(window.innerHeight / 2);
-    this.#baseFontSize = window.innerWidth * BASE_FONT_SCALE;
+    this.#fontScaleFactor = window.innerWidth * BASE_FONT_SCALE;
     this.#padding = Math.floor(window.innerWidth * PADDING);
     this.#ctx.scale(dpr, dpr);
     this.drawCanvas();
@@ -580,25 +578,46 @@ export class Renderer {
   }
 
   private createScores() {
-    const dealerScore = this.#dealer.score;
     // TODO Handle split hands
+
+    const dealerScoreText: Text = {
+      ...scoreText,
+      id: "dealer-score",
+      text: `${this.#dealer.score}`,
+      position: "top left",
+      style: { ...scoreText.style },
+      offsetY: 0.1,
+    };
+
+    this.setEntity(dealerScoreText);
 
     const dealerText: Text = {
       ...scoreText,
-      id: "dealer-score",
-      text: dealerScore.toString(),
-      position: "top right",
-      style: { ...scoreText.style },
+      id: "dealer-text",
+      text: this.#dealer.name,
+      position: "top left",
+      style: { ...scoreText.style, fontSize: 20 },
     };
 
     this.setEntity(dealerText);
 
+    const playerScoreText: Text = {
+      ...scoreText,
+      id: `${this.#player.name.toLowerCase()}-score`,
+      text: this.#player.score.toString(),
+      position: "bottom left",
+      style: { ...scoreText.style },
+      offsetY: -0.1,
+    };
+
+    this.setEntity(playerScoreText);
+
     const playerText: Text = {
       ...scoreText,
-      id: `${this.#player.name}-score`,
-      text: this.#player.score.toString(),
-      position: "bottom right",
-      style: { ...scoreText.style },
+      id: `${this.#player.name.toLowerCase()}-text`,
+      text: this.#player.name,
+      position: "bottom left",
+      style: { ...scoreText.style, fontSize: 20 },
     };
 
     this.setEntity(playerText);
@@ -614,25 +633,25 @@ export class Renderer {
   private updateScores(role: Role) {
     if (role === Role.Dealer) {
       const dealerScore = this.#dealer.score;
-      const dealerText = this.getEntityById<Text>(
+      const dealerScoreText = this.getEntityById<Text>(
         scoreText.layer,
         "dealer-score"
       );
-      if (dealerText) {
-        dealerText.text = dealerScore.toString();
-        dealerText.style.color = this.getColorScore(dealerScore);
-        this.setEntity(dealerText);
+      if (dealerScoreText) {
+        dealerScoreText.text = dealerScore.toString();
+        dealerScoreText.style.color = this.getColorScore(dealerScore);
+        this.setEntity(dealerScoreText);
       }
     } else {
       // TODO Handle split hands
-      const playerText = this.getEntityById<Text>(
+      const playerScoreText = this.getEntityById<Text>(
         scoreText.layer,
-        `${this.#player.name}-score`
+        `${this.#player.name.toLowerCase()}-score`
       );
-      if (playerText) {
-        playerText.text = this.#player.score.toString();
-        playerText.style.color = this.getColorScore(this.#player.score);
-        this.setEntity(playerText);
+      if (playerScoreText) {
+        playerScoreText.text = this.#player.score.toString();
+        playerScoreText.style.color = this.getColorScore(this.#player.score);
+        this.setEntity(playerScoreText);
       }
     }
   }
@@ -691,6 +710,8 @@ export class Renderer {
       playerHand.forEach((card, index) => {
         const entity = this.getEntityById<Sprite>(cardSprite.layer, card.id)!;
         entity.onEnd = () => {
+          console.log("Blackjack card animation done");
+
           entity.sprites[0] = {
             x: (card.suit % 12) * 1024 + cardSprite.spriteWidth * 3,
             y: card.rank * cardSprite.spriteHeight,
@@ -715,12 +736,12 @@ export class Renderer {
       entity.position = "bottom";
       entity.translateY = { start: 50, end: 0 };
       entity.style.fontSize = 48;
-      entity.offsetY = -window.innerHeight * 0.15;
+      entity.offsetY = -0.15;
     } else if (role === Role.Dealer) {
       entity.position = "top";
       entity.translateY = { start: -50, end: 0 };
       entity.style.fontSize = 48;
-      entity.offsetY = window.innerHeight * 0.15;
+      entity.offsetY = 0.15;
     }
 
     if (this.#state === State.PlayerHit || this.#state === State.DealerHit) {
