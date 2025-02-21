@@ -9,12 +9,10 @@ function App() {
   const rendererRef = useRef<Renderer>(null);
   const {
     dealer,
-    players,
+    player,
     isDealt,
     isRevealed,
     isGameover,
-    playerTurn,
-    allPlayersDone,
     state,
     deal,
     hit,
@@ -54,14 +52,13 @@ function App() {
 
     rendererRef.current.update({
       dealer,
-      players,
+      player,
       state,
-      playerTurn,
       isGameover,
     });
 
     rendererRef.current.resizeCanvas();
-  }, [dealer, players, state, playerTurn, isGameover]);
+  }, [dealer, player, state, isGameover]);
 
   return (
     <>
@@ -84,7 +81,7 @@ function App() {
               Next
             </Button>
           ) : (
-            <Button onClick={reveal} disabled={!allPlayersDone}>
+            <Button onClick={reveal} disabled={!player.isDone}>
               Reveal
             </Button>
           )}
@@ -96,49 +93,39 @@ function App() {
             </div>
           </div>
         </div>
-        {players.map((player) => (
-          <div key={player.name} className="grid gap-2 border p-2">
-            <div>{player.name}</div>
-            <div className="flex gap-4">
-              {player.hands.map((hand, h) => (
-                <div key={h} className="grid gap-2">
-                  <p className="h-5 text-center">
-                    {hand.map((card) => card.icon).join(" ")}
-                  </p>
-                  <p className="text-center min-w-18">{`Score: ${hand.score}`}</p>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => hit(player)}
-                      disabled={
-                        playerTurn !== player.seat ||
-                        hand.isBusted ||
-                        hand.isStand
-                      }
-                    >
-                      Hit
-                    </Button>
-                    {/* <Button
+        <div className="grid gap-2 border p-2">
+          <div>{player.name}</div>
+          <div className="flex gap-4">
+            {player.hands.map((hand, h) => (
+              <div key={h} className="grid gap-2">
+                <p className="h-5 text-center">
+                  {hand.map((card) => card.icon).join(" ")}
+                </p>
+                <p className="text-center min-w-18">{`Score: ${hand.score}`}</p>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => hit(player)}
+                    disabled={hand.isBusted || hand.isStand}
+                  >
+                    Hit
+                  </Button>
+                  {/* <Button
                     onClick={() => split(player)}
                     disabled={playerTurn !== p || hand.length !== 2}
                   >
                     Split
                   </Button> */}
-                    <Button
-                      disabled={
-                        playerTurn !== player.seat ||
-                        hand.isBusted ||
-                        hand.isStand
-                      }
-                      onClick={() => stand(player, h)}
-                    >
-                      Stand
-                    </Button>
-                  </div>
+                  <Button
+                    disabled={hand.isBusted || hand.isStand}
+                    onClick={() => stand(player, h)}
+                  >
+                    Stand
+                  </Button>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
       </div>
       {/* Debug */}
     </>

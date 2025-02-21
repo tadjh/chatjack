@@ -9,7 +9,6 @@
 - TODO Add hand owner next to scores
 - TODO Add action timer top left corner
 - TODO show chat actions on the opposite side of the scores "!hit or !stand", hide when no longer chat's turn
-- TODO Consider removing Player array since this will always be single player
 
 ## Quality of life
 

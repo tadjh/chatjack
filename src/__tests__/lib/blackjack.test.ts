@@ -46,14 +46,12 @@ describe("Blackjack", () => {
 
   it("should deal cards to players and the dealer correctly", () => {
     // Create game with one deck and two players (dealer + two players = 3 in table).
-    const game = new Blackjack(1, 2);
+    const game = new Blackjack(1);
     game.deal();
 
     expect(game.hasDealt).toBe(true);
-    // Each player should have 2 cards.
-    game.players.forEach((player) => {
-      expect(player.hand.length).toBe(2);
-    });
+    // Player should have 2 cards.
+    expect(game.player.hand.length).toBe(2);
     // The dealer should also have 2 cards.
     expect(game.dealer.hand.length).toBe(2);
     // The dealer's second card should be hidden (drawn with isHidden = true).
@@ -69,7 +67,7 @@ describe("Blackjack", () => {
   it("should throw an error if a player hits out of turn", () => {
     const game = new Blackjack();
     game.deal();
-    const player = game.players[0];
+    const player = game.player;
     game.stand(player); // Move to next player's turn
     expect(() => game.hit(player)).toThrow(`It is not ${player.name}'s turn`);
   });
@@ -77,7 +75,7 @@ describe("Blackjack", () => {
   it("should throw an error if a player stands out of turn", () => {
     const game = new Blackjack();
     game.deal();
-    const player = game.players[0];
+    const player = game.player;
     game.stand(player); // Move to next player's turn
     expect(() => game.stand(player)).toThrow(`It is not ${player.name}'s turn`);
   });
@@ -85,7 +83,7 @@ describe("Blackjack", () => {
   it("should throw an error if a player splits out of turn", () => {
     const game = new Blackjack();
     game.deal();
-    const player = game.players[0];
+    const player = game.player;
     game.stand(player); // Move to next player's turn
     expect(() => game.split(player)).toThrow(`It is not ${player.name}'s turn`);
   });

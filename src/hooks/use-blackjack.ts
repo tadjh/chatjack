@@ -2,17 +2,17 @@ import { Blackjack } from "@/lib/blackjack";
 import { Player } from "@/lib/player";
 import { useRef, useState } from "react";
 
-export function useBlackjack(deckCount = 1, playerCount = 1) {
-  const blackjack = useRef(new Blackjack(deckCount, playerCount));
+export function useBlackjack(deckCount = 1) {
+  const blackjack = useRef(new Blackjack(deckCount));
   const [gameState, setGameState] = useState({
     dealer: blackjack.current.dealer,
-    players: blackjack.current.players,
+    player: blackjack.current.player,
   });
 
   function updateSnapshot() {
     setGameState({
       dealer: blackjack.current.dealer,
-      players: blackjack.current.players,
+      player: blackjack.current.player,
     });
   }
 
@@ -63,12 +63,10 @@ export function useBlackjack(deckCount = 1, playerCount = 1) {
 
   return {
     dealer: gameState.dealer,
-    players: gameState.players,
+    player: gameState.player,
     isDealt: blackjack.current.hasDealt,
     isRevealed: blackjack.current.isRevealed,
     isGameover: blackjack.current.isGameover,
-    allPlayersDone: blackjack.current.allPlayersDone,
-    playerTurn: blackjack.current.playerTurn,
     state: blackjack.current.state,
     deal,
     hit,

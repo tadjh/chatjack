@@ -40,7 +40,7 @@ export class Renderer {
   #centerX = Math.floor(window.innerWidth / 2);
   #centerY = Math.floor(window.innerHeight / 2);
   #dealer = new Dealer();
-  #players: Player[] = [];
+  #player: Player = new Player("Chat", 1);
   #state: State = State.Dealing;
   #baseFontSize = window.innerWidth * BASE_FONT_SCALE;
   #showActionText: "in" | "out" | "done" = "done";
@@ -506,8 +506,8 @@ export class Renderer {
   private reset() {
     this.clearLayer(LayerOrder._ALL);
     this.setEntities(this.titleEntities);
-    this.#dealer = new Dealer();
-    this.#players = [];
+    this.#dealer.reset();
+    this.#player.reset();
     this.#state = State.Init;
     this.#isGameover = false;
     this.#showActionText = "done";
@@ -516,24 +516,24 @@ export class Renderer {
 
   public update({
     dealer,
-    players,
+    player,
     state,
-    playerTurn,
     isGameover,
   }: {
     dealer: Dealer;
-    players: Player[];
+    player: Player;
     state: State;
-    playerTurn: number;
     isGameover: boolean;
   }) {
+    console.log(dealer, player, state, isGameover);
+
     // Restarted game
     if (this.#isGameover && state === State.Dealing) {
       this.reset();
     }
 
     this.#dealer = dealer;
-    this.#players = players;
+    this.#player = player;
     this.#state = state;
     this.#isGameover = isGameover;
 
@@ -558,7 +558,7 @@ export class Renderer {
       case State.PlayerBust:
       case State.PlayerStand:
       case State.PlayerBlackJack:
-        this.updateHand(this.#players[playerTurn - 1].hand);
+        this.updateHand(this.#player.hand);
         this.createActionText(Role.Player);
         this.updateScores(Role.Player);
         break;
@@ -582,7 +582,6 @@ export class Renderer {
   private createScores() {
     const dealerScore = this.#dealer.score;
     // TODO Handle split hands
-    const playerScores = this.#players.map((player) => player.score);
 
     const dealerText: Text = {
       ...scoreText,
@@ -594,17 +593,15 @@ export class Renderer {
 
     this.setEntity(dealerText);
 
-    playerScores.forEach((score, index) => {
-      const playerText: Text = {
-        ...scoreText,
-        id: `player-${index + 1}-score`,
-        text: score.toString(),
-        position: "bottom right",
-        style: { ...scoreText.style },
-      };
+    const playerText: Text = {
+      ...scoreText,
+      id: `${this.#player.name}-score`,
+      text: this.#player.score.toString(),
+      position: "bottom right",
+      style: { ...scoreText.style },
+    };
 
-      this.setEntity(playerText);
-    });
+    this.setEntity(playerText);
   }
 
   private getColorScore(score: number) {
@@ -628,19 +625,15 @@ export class Renderer {
       }
     } else {
       // TODO Handle split hands
-      const playerScores = this.#players.map((player) => player.score);
-
-      playerScores.forEach((score, index) => {
-        const playerText = this.getEntityById<Text>(
-          scoreText.layer,
-          `player-${index + 1}-score`
-        );
-        if (playerText) {
-          playerText.text = score.toString();
-          playerText.style.color = this.getColorScore(score);
-          this.setEntity(playerText);
-        }
-      });
+      const playerText = this.getEntityById<Text>(
+        scoreText.layer,
+        `${this.#player.name}-score`
+      );
+      if (playerText) {
+        playerText.text = this.#player.score.toString();
+        playerText.style.color = this.getColorScore(this.#player.score);
+        this.setEntity(playerText);
+      }
     }
   }
 
@@ -684,8 +677,10 @@ export class Renderer {
   private createHands() {
     const delay = 8;
     let count = 0;
-    const playerHand = this.#players[0].hand;
+    const playerHand = this.#player.hand;
     const dealerHand = this.#dealer.hand;
+    console.log(dealerHand);
+
     this.#holeCardId = this.#dealer.hand[1].id;
     for (let i = 0; i < this.#dealer.hand.length; i++) {
       this.createCard(playerHand[i], count++ * delay, "playing");

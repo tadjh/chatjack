@@ -5,14 +5,13 @@ import { State } from "./types";
 
 export class Blackjack {
   #state = State.Init;
-  #table: [Dealer, ...Player[]] = [new Dealer()];
+  #table: [Dealer, Player] = [new Dealer(), new Player("Chat", 1)];
   #deck: Deck = new Deck();
-  #playerTurn = 0;
   isGameover = false;
   isRevealed = false;
 
-  constructor(deckCount = 1, playerCount = 1) {
-    this.init(deckCount, playerCount);
+  constructor(deckCount = 1) {
+    this.init(deckCount);
   }
 
   get table() {
@@ -24,29 +23,19 @@ export class Blackjack {
   }
 
   get player() {
-    const [, player] = this.#table;
-    return player;
-  }
-
-  get players() {
-    const [, ...players] = this.#table;
-    return players;
+    return this.#table[1];
   }
 
   get hasDealt() {
     return this.#state > State.Init;
   }
 
-  get allPlayersDone() {
-    return this.players.every((player) => player.isDone);
+  get isPlayerDone() {
+    return this.player.isDone;
   }
 
   get isDealerTurn() {
     return this.#state === State.RevealHoleCard;
-  }
-
-  get playerTurn() {
-    return this.#playerTurn;
   }
 
   get remaining() {
@@ -61,13 +50,9 @@ export class Blackjack {
     this.#state = state;
   }
 
-  init(deckCount: number, playerCount: number) {
+  init(deckCount: number) {
     this.#state = State.Init;
     this.#deck.init(deckCount);
-    for (let i = 1; i <= playerCount; i++) {
-      const player = new Player(`Player ${i}`, i);
-      this.#table.push(player);
-    }
     return this;
   }
 
@@ -84,23 +69,11 @@ export class Blackjack {
     if (this.#state !== State.Init) {
       throw new Error("Game has already started");
     }
-
-    // Deal a card to each player
-    this.players.forEach((player) => {
-      player.hit(this.draw());
-    });
-
-    this.dealer.hit(this.draw());
-
-    // Deal a second card to each player except the dealer
-    this.players.forEach((player) => {
-      player.hit(this.draw());
-    });
-
-    this.dealer.hit(this.draw(true));
-
     this.#state = State.Dealing;
-    this.#playerTurn++;
+    this.player.hit(this.draw());
+    this.dealer.hit(this.draw());
+    this.player.hit(this.draw());
+    this.dealer.hit(this.draw(true));
     return this;
   }
 
@@ -201,14 +174,13 @@ export class Blackjack {
     return this;
   }
 
-  reset(deckCount = 1, playerCount = 1) {
+  reset(deckCount = 1) {
     this.#table.forEach((player) => player.reset());
-    this.#table = [this.dealer];
-    this.#playerTurn = 0;
+    this.#table = [new Dealer(), new Player("Chat", 1)];
     this.isGameover = false;
     this.isRevealed = false;
     this.#deck.empty();
-    this.init(deckCount, playerCount);
+    this.init(deckCount);
     return this;
   }
 }
