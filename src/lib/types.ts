@@ -36,6 +36,8 @@ interface BaseEntity {
     | "top right"
     | "bottom left"
     | "bottom right";
+  onBeing?: () => void;
+  onEnd?: () => void;
 }
 
 export interface Text extends BaseEntity {

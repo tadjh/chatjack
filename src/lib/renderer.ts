@@ -28,7 +28,7 @@ import {
   Text,
 } from "./types";
 import { clamp, easeOut, font, lerp, rgb, rgba } from "./utils";
-import { Status } from "./hand";
+import { Hand, Status } from "./hand";
 
 export class Renderer {
   #canvas: HTMLCanvasElement;
@@ -106,8 +106,12 @@ export class Renderer {
     return this.getLayer(entity.layer).get(entity.id) as T | undefined;
   }
 
-  private getEntityById(id: string, layer: LayerOrder) {
-    return this.getLayer(layer).get(id);
+  private getEntityById<T extends Entity>(layer: LayerOrder, id: string) {
+    return this.getLayer(layer).get(id) as T | undefined;
+  }
+
+  private hasEntityById(layer: LayerOrder, id: string) {
+    return this.getLayer(layer).has(id);
   }
 
   private setEntity(entity: Entity) {
@@ -408,6 +412,7 @@ export class Renderer {
 
   private drawCanvas() {
     this.drawBackground();
+
     for (const [, layer] of this.#layers) {
       // TODO Find a way to mathmetically determine when to reverse action text animation
       if (layer.has(actionText.id)) {
@@ -458,6 +463,9 @@ export class Renderer {
           if (entity.progress < 1) {
             entity.progress += entity.speed ?? this.baseAnimSpeed;
             if (entity.progress > 1) entity.progress = 1;
+          } else if (entity.onEnd) {
+            entity.onEnd();
+            entity.onEnd = undefined;
           }
 
           if (entity.type === "animated-sprite") {
@@ -542,14 +550,14 @@ export class Renderer {
         break;
       case State.Dealing:
         this.clearLayer(LayerOrder._ALL);
-        this.createDealingCards();
+        this.createHands();
         this.createScores();
         break;
       case State.PlayerHit:
       case State.PlayerBust:
       case State.PlayerStand:
       case State.PlayerBlackJack:
-        this.createPlayerCards(playerTurn);
+        this.updateHand(this.#players[playerTurn - 1].hand);
         this.createActionText(Role.Player);
         this.updateScores(Role.Player);
         break;
@@ -561,7 +569,7 @@ export class Renderer {
       case State.DealerStand:
       case State.DealerBust:
       case State.DealerBlackJack:
-        this.createDealerCards();
+        this.updateHand(this.#dealer.hand);
         this.createActionText(Role.Dealer);
         this.updateScores(Role.Dealer);
         break;
@@ -608,10 +616,10 @@ export class Renderer {
   private updateScores(role: Role) {
     if (role === Role.Dealer) {
       const dealerScore = this.#dealer.score;
-      const dealerText = this.getEntityById(
-        "dealer-score",
-        LayerOrder.Foreground
-      ) as Text | undefined;
+      const dealerText = this.getEntityById<Text>(
+        scoreText.layer,
+        "dealer-score"
+      );
       if (dealerText) {
         dealerText.text = dealerScore.toString();
         dealerText.style.color = this.getColorScore(dealerScore);
@@ -622,10 +630,10 @@ export class Renderer {
       const playerScores = this.#players.map((player) => player.score);
 
       playerScores.forEach((score, index) => {
-        const playerText = this.getEntityById(
-          `player-${index + 1}-score`,
-          LayerOrder.Foreground
-        ) as Text | undefined;
+        const playerText = this.getEntityById<Text>(
+          scoreText.layer,
+          `player-${index + 1}-score`
+        );
         if (playerText) {
           playerText.text = score.toString();
           playerText.style.color = this.getColorScore(score);
@@ -672,41 +680,31 @@ export class Renderer {
     this.setEntity(entity);
   }
 
-  private createDealingCards() {
-    // TODO support split hands
-    let maxLength = this.#dealer.hand.length;
-
-    this.#players.forEach((player) => {
-      // TODO Support split hands
-      maxLength = Math.max(maxLength, player.hand.length);
-    });
-
-    const cards: Card[] = [];
-    let isNaturalBlackjack = false;
-
-    for (let i = 0; i < maxLength; i++) {
-      cards.push(
-        ...this.#players
-          .map((player) => {
-            if (player.hand.length <= i) return undefined;
-            if (player.hand.status === "blackjack" && i === 0) {
-              isNaturalBlackjack = true;
-            }
-            return player.hand[i];
-          })
-          .filter((card) => card !== undefined)
-      );
-      if (this.#dealer.hand.length > i) {
-        cards.push(this.#dealer.hand[i]);
-      }
+  private createHands() {
+    const delay = 8;
+    let count = 0;
+    const playerHand = this.#players[0].hand;
+    const dealerHand = this.#dealer.hand;
+    const isNaturalBlackjack = playerHand.status === "blackjack";
+    for (let i = 0; i < this.#dealer.hand.length; i++) {
+      this.createCard(playerHand[i], count++ * delay, "playing");
+      this.createCard(dealerHand[i], count++ * delay, "playing");
     }
 
-    const delay = 8;
-
-    for (let i = 0; i < cards.length; i++) {
-      const status =
-        i % 2 === 1 ? "playing" : isNaturalBlackjack ? "blackjack" : "playing";
-      this.createCard(cards[i], i * delay, status);
+    if (isNaturalBlackjack) {
+      playerHand.forEach((card, index) => {
+        const entity = this.getEntityById<Sprite>(cardSprite.layer, card.id)!;
+        entity.onEnd = () => {
+          entity.sprites[0] = {
+            x: (card.suit % 12) * 1024 + cardSprite.spriteWidth * 3,
+            y: card.rank * cardSprite.spriteHeight,
+          };
+          this.setEntity(entity);
+          if (index === playerHand.length - 1) {
+            this.createActionText(Role.Player);
+          }
+        };
+      });
     }
   }
 
@@ -785,38 +783,49 @@ export class Renderer {
     }
   }
 
-  private createPlayerCards(turn: number) {
-    this.#players[turn - 1].hand.forEach((card) => {
-      const layer = this.getLayer(cardSprite.layer);
-      if (layer.has(card.id)) {
-        if (this.#players[turn - 1].hand.isBusted) {
-          // If bust, draw card with 50% opacity
-          const entity = layer.get(card.id) as Sprite;
-          entity.opacity = {
-            start: 1,
-            end: 0.5,
-          };
-          layer.set(card.id, entity);
-        } else if (this.#players[turn - 1].hand.isStand) {
-          // If stand, draw tinted sprite
-          const entity = layer.get(card.id) as Sprite;
-          entity.sprites[0] = {
-            x: entity.sprites[0].x + entity.spriteWidth,
-            y: entity.sprites[0].y,
-          };
-          layer.set(card.id, entity);
-        }
-        return;
+  private updateBustCard(card: Card) {
+    const entity = this.getEntityById<Sprite>(cardSprite.layer, card.id)!;
+    entity.opacity = {
+      start: 1,
+      end: 0.5,
+    };
+    this.setEntity(entity);
+  }
+
+  private updateStandCard(card: Card) {
+    const entity = this.getEntityById<Sprite | AnimatedSprite>(
+      cardSprite.layer,
+      card.id
+    )!;
+    if (entity.type === "sprite") {
+      entity.sprites[0] = {
+        x: entity.sprites[0].x + entity.spriteWidth,
+        y: entity.sprites[0].y,
+      };
+      this.setEntity(entity);
+    } else if (entity.type === "animated-sprite") {
+      entity.sprites[entity.spriteIndex] = {
+        x: entity.sprites[entity.spriteIndex].x + entity.spriteWidth,
+        y: entity.sprites[entity.spriteIndex].y,
+      };
+      this.setEntity(entity);
+    }
+  }
+
+  private updateHand(hand: Hand) {
+    hand.forEach((card) => {
+      if (this.hasEntityById(cardSprite.layer, card.id)) {
+        if (hand.isBusted) this.updateBustCard(card);
+        if (hand.isStand) this.updateStandCard(card);
+      } else {
+        this.createCard(card, 0, hand.status);
       }
-      this.createCard(card, 0, this.#players[turn - 1].hand.status);
     });
   }
 
   private updateHoleCard() {
     const holeCard = this.#dealer.hand[1];
-    const entity = this.getEntityById(holeCard.id, cardSprite.layer) as
-      | Sprite
-      | undefined;
+    const entity = this.getEntityById<Sprite>(cardSprite.layer, holeCard.id);
     if (!entity) {
       throw new Error("Cannot animate entity. Hole card not found");
     }
@@ -834,40 +843,6 @@ export class Renderer {
       ],
     };
     this.setEntity(newHoleCard);
-  }
-
-  private createDealerCards() {
-    this.#dealer.hand.forEach((card) => {
-      const layer = this.getLayer(cardSprite.layer);
-      console.log(card, this.#state);
-      if (layer.has(card.id)) {
-        if (this.#dealer.hand.isBusted) {
-          const entity = this.getEntityById(card.id, cardSprite.layer)!;
-          entity.opacity = {
-            start: 1,
-            end: this.#dealer.hand.isBusted ? 0.5 : 1,
-          };
-          this.setEntity(entity);
-        } else if (this.#dealer.hand.isStand) {
-          const entity = this.getEntityById(card.id, cardSprite.layer)!;
-          if (entity.type === "animated-sprite") {
-            entity.sprites[entity.spriteIndex] = {
-              x: entity.sprites[entity.spriteIndex].x + entity.spriteWidth,
-              y: entity.sprites[entity.spriteIndex].y,
-            };
-          } else if (entity.type === "sprite") {
-            entity.sprites[0] = {
-              x: entity.sprites[0].x + entity.spriteWidth,
-              y: entity.sprites[0].y,
-            };
-          }
-          this.setEntity(entity);
-        }
-        return;
-      }
-
-      this.createCard(card, 0, this.#dealer.hand.status);
-    });
   }
 
   private createGameoverText() {

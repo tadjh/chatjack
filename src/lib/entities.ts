@@ -172,7 +172,7 @@ export const gameoverText: [Text, Text, Text] = [
   {
     id: "restart",
     type: "text",
-    text: "!start",
+    text: "!restart",
     easing: "easeOutCubic",
     layer: LayerOrder.Foreground,
     delay: 32,
