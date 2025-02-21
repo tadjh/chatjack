@@ -99,11 +99,13 @@ export class Card extends Number {
 
   show() {
     this.#isHidden = false;
+    this.setId();
     return this;
   }
 
   hide() {
     this.#isHidden = true;
+    this.setId();
     return this;
   }
 
@@ -170,11 +172,12 @@ export class Card extends Number {
   }
 
   setId() {
-    const segments = [
-      this.owner && this.owner.replace(/\s/g, "").toLowerCase(),
-      this.#name.replace(/\s/g, "-").toLowerCase(),
-      this.handIndex > -1 && `slot-${this.handIndex}`,
-    ].filter(Boolean);
+    const owner = this.owner && this.owner.replace(/\s/g, "").toLowerCase();
+    const name = this.isHidden
+      ? "hole-card"
+      : this.#name.replace(/\s/g, "-").toLowerCase();
+    const slot = this.handIndex > -1 && `slot-${this.handIndex}`;
+    const segments = [owner, name, slot].filter(Boolean);
     this.id = segments.join("-");
     return this;
   }

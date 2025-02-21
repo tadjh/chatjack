@@ -2,7 +2,6 @@
 
 - TODO Cards have 1 pixel bleeding on sprite sheet, consider moving all sprites right 1 or 2 pixels
 - TODO Cards are a litte blurry? maybe Math.floor needed
-- TODO Dealer hole card id should be dealer-hole-card-slot-1
 
 ## Development
 

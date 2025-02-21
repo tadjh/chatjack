@@ -47,6 +47,7 @@ export class Renderer {
   #isGameover = false;
   #layers: Map<LayerOrder, Layer> = new Map();
   #padding = Math.floor(window.innerWidth * PADDING);
+  #holeCardId = "dealer-hole-card-slot-1";
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -685,13 +686,13 @@ export class Renderer {
     let count = 0;
     const playerHand = this.#players[0].hand;
     const dealerHand = this.#dealer.hand;
-    const isNaturalBlackjack = playerHand.status === "blackjack";
+    this.#holeCardId = this.#dealer.hand[1].id;
     for (let i = 0; i < this.#dealer.hand.length; i++) {
       this.createCard(playerHand[i], count++ * delay, "playing");
       this.createCard(dealerHand[i], count++ * delay, "playing");
     }
 
-    if (isNaturalBlackjack) {
+    if (playerHand.status === "blackjack") {
       playerHand.forEach((card, index) => {
         const entity = this.getEntityById<Sprite>(cardSprite.layer, card.id)!;
         entity.onEnd = () => {
@@ -825,7 +826,10 @@ export class Renderer {
 
   private updateHoleCard() {
     const holeCard = this.#dealer.hand[1];
-    const entity = this.getEntityById<Sprite>(cardSprite.layer, holeCard.id);
+    const entity = this.getEntityById<Sprite>(
+      cardSprite.layer,
+      this.#holeCardId
+    );
     if (!entity) {
       throw new Error("Cannot animate entity. Hole card not found");
     }
@@ -842,6 +846,7 @@ export class Renderer {
         { x: cardX + 512, y: cardY },
       ],
     };
+    this.clearEntity(entity);
     this.setEntity(newHoleCard);
   }
 
