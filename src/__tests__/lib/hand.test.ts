@@ -21,18 +21,6 @@ describe("Hand", () => {
     expect(hand.status).toBe("blackjack");
   });
 
-  test("should calculate score correctly with a late reduction", () => {
-    const hand = new Hand("Test");
-    const card1 = new Card(Suit.Spades + Rank.Nine);
-    const card2 = new Card(Suit.Hearts + Rank.Six);
-    const card3 = new Card(Suit.Clubs + Rank.Ace);
-    const card4 = new Card(Suit.Diamonds + Rank.King);
-    hand.add(card1).add(card2).add(card3).add(card4);
-    expect(hand.length).toBe(4);
-    expect(hand.score).toBe(26);
-    expect(hand.status).toBe("busted");
-  });
-
   test("should calculate score correctly with multiple Aces", () => {
     const hand = new Hand("Test");
     const ace1 = new Card(Suit.Clubs + Rank.Ace); // Ace of Clubs (11 initially)

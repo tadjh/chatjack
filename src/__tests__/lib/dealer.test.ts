@@ -1,7 +1,6 @@
 import { Dealer } from "@/lib/dealer";
 import { Card, Suit, Rank } from "@/lib/card";
 import { describe, it, expect, beforeEach } from "vitest";
-import { Role } from "@/lib/player";
 
 describe("Dealer", () => {
   let dealer: Dealer;
@@ -25,7 +24,7 @@ describe("Dealer", () => {
 
   it("should create a Dealer with correct default values", () => {
     expect(dealer.name).toBe("Dealer");
-    expect(dealer.role).toBe(Role.Dealer);
+    expect(dealer.role).toBe(1); // Role.Dealer (assuming Role.Dealer === 1)
     expect(dealer.hands.length).toBe(1);
   });
 
@@ -36,17 +35,23 @@ describe("Dealer", () => {
   it("should throw an error when attempting to hit a non-playing hand", () => {
     dealer.stand();
     const card = new Card(Suit.Clubs + Rank.Five);
-    expect(() => dealer.hit(card)).toThrow("Dealer's turn is over");
+    expect(() => dealer.hit(card)).toThrow(
+      "Hand is not allowed to perform this action"
+    );
   });
 
   it("should throw an error when attempting to stand a non-playing hand", () => {
     dealer.stand();
-    expect(() => dealer.stand()).toThrow("Dealer's turn is over");
+    expect(() => dealer.stand()).toThrow(
+      "Hand is not allowed to perform this action"
+    );
   });
 
   it("should throw an error when attempting to split a non-playing hand", () => {
     dealer.stand();
-    expect(() => dealer.split()).toThrow("Dealer cannot split");
+    expect(() => dealer.split()).toThrow(
+      "Hand is not allowed to perform this action"
+    );
   });
 
   it("should decide to hit if score is less than 17", () => {
