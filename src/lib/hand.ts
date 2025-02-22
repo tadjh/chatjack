@@ -9,7 +9,7 @@ export class Hand extends Deck {
   #owner: string;
 
   constructor(owner: string) {
-    super(0);
+    super({ shoeSize: 0 });
     this.#owner = owner;
   }
 
@@ -100,6 +100,7 @@ export class Hand extends Deck {
   }
 
   reset() {
+    console.log(`${this.#owner}'s hand is resetting`);
     super.empty();
     this.#score = 0;
     this.status = "playing";

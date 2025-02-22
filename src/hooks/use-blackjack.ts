@@ -2,72 +2,75 @@ import { Blackjack } from "@/lib/blackjack";
 import { Player } from "@/lib/player";
 import { useRef, useState } from "react";
 
-export function useBlackjack(deckCount = 1) {
-  const blackjack = useRef(new Blackjack(deckCount));
+const blackjack = new Blackjack({ shoeSize: 1 });
+
+export function useBlackjack() {
+  const blackjackRef = useRef<Blackjack>(blackjack);
+
   const [gameState, setGameState] = useState({
-    dealer: blackjack.current.dealer,
-    player: blackjack.current.player,
+    dealer: blackjackRef.current.dealer,
+    player: blackjackRef.current.player,
   });
 
   function updateSnapshot() {
     setGameState({
-      dealer: blackjack.current.dealer,
-      player: blackjack.current.player,
+      dealer: blackjackRef.current.dealer,
+      player: blackjackRef.current.player,
     });
   }
 
   function deal() {
-    blackjack.current.deal();
+    blackjackRef.current.deal();
     updateSnapshot();
   }
 
   function hit(player: Player) {
-    blackjack.current.hit(player);
+    blackjackRef.current.hit(player);
     updateSnapshot();
   }
 
   function stand(player: Player, i = 0) {
-    blackjack.current.stand(player, i);
+    blackjackRef.current.stand(player, i);
     updateSnapshot();
   }
 
   function split(player: Player) {
-    blackjack.current.split(player);
+    blackjackRef.current.split(player);
     updateSnapshot();
   }
 
   function reveal() {
-    blackjack.current.reveal();
+    blackjackRef.current.reveal();
     updateSnapshot();
   }
 
   function decide() {
-    if (blackjack.current.dealer.isDone) {
-      blackjack.current.judge();
+    if (blackjackRef.current.dealer.isDone) {
+      blackjackRef.current.judge();
     } else {
-      blackjack.current.decide();
+      blackjackRef.current.decide();
     }
     updateSnapshot();
   }
 
   function exit() {
-    blackjack.current.reset();
+    blackjackRef.current.reset();
     updateSnapshot();
   }
 
   function restart() {
-    blackjack.current.reset();
-    blackjack.current.deal();
+    blackjackRef.current.reset();
+    blackjackRef.current.deal();
     updateSnapshot();
   }
 
   return {
     dealer: gameState.dealer,
     player: gameState.player,
-    isDealt: blackjack.current.hasDealt,
-    isRevealed: blackjack.current.isRevealed,
-    isGameover: blackjack.current.isGameover,
-    state: blackjack.current.state,
+    isDealt: blackjackRef.current.hasDealt,
+    isRevealed: blackjackRef.current.isRevealed,
+    isGameover: blackjackRef.current.isGameover,
+    state: blackjackRef.current.state,
     deal,
     hit,
     stand,

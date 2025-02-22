@@ -43,7 +43,6 @@ export class Dealer extends Player {
       return "hit";
     }
 
-    this.hand.status = "stand";
     return "stand";
   }
 

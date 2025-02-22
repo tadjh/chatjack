@@ -39,15 +39,12 @@ export class Renderer {
   #widthMap: Map<string, number> = new Map();
   #centerX = Math.floor(window.innerWidth / 2);
   #centerY = Math.floor(window.innerHeight / 2);
-  #dealer = new Dealer();
-  #player: Player = new Player("Chat", 1);
-  #state: State = State.Dealing;
   #fontScaleFactor = window.innerWidth * BASE_FONT_SCALE;
   #showActionText: "in" | "out" | "done" = "done";
-  #isGameover = false;
   #layers: Map<LayerOrder, Layer> = new Map();
   #padding = Math.floor(window.innerWidth * PADDING);
-  #holeCardId = "dealer-hole-card-slot-1";
+  #holeCardId = "";
+  #hasDealt = false;
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -502,13 +499,11 @@ export class Renderer {
   }
 
   private reset() {
+    console.log("Canvas resetting");
     this.clearLayer(LayerOrder._ALL);
-    this.setEntities(this.titleEntities);
-    this.#dealer.reset();
-    this.#player.reset();
-    this.#state = State.Init;
-    this.#isGameover = false;
+    // this.setEntities(this.titleEntities);
     this.#showActionText = "done";
+    this.#hasDealt = false;
     // this.drawCanvas();
   }
 
@@ -523,67 +518,58 @@ export class Renderer {
     state: State;
     isGameover: boolean;
   }) {
-    console.log(dealer, player, state, isGameover);
-
-    // Restarted game
-    if (this.#isGameover && state === State.Dealing) {
-      this.reset();
-    }
-
-    this.#dealer = dealer;
-    this.#player = player;
-    this.#state = state;
-    this.#isGameover = isGameover;
-
     // TODO Remove
-    console.log("State:", State[state]);
+    console.log("Recieved State:", State[state]);
 
     if (isGameover) {
-      this.createGameoverText();
+      this.createGameoverText(state);
       return;
     }
 
-    switch (this.#state) {
+    switch (state) {
       case State.Init:
-        this.reset();
         break;
       case State.Dealing:
+        if (this.#hasDealt) {
+          this.reset();
+        }
+        this.#hasDealt = true;
         this.clearLayer(LayerOrder._ALL);
-        this.createHands();
-        this.createScores();
+        this.createHands(dealer, player);
+        this.createScores(dealer, player);
         break;
       case State.PlayerHit:
       case State.PlayerBust:
       case State.PlayerStand:
-      case State.PlayerBlackJack:
-        this.updateHand(this.#player.hand);
-        this.createActionText(Role.Player);
-        this.updateScores(Role.Player);
+      case State.PlayerBlackjack:
+        this.updateHand(player.hand);
+        this.createActionText(state, Role.Player);
+        this.updateScores(player);
         break;
       case State.RevealHoleCard:
-        this.updateHoleCard();
-        this.updateScores(Role.Dealer);
+        this.updateHoleCard(dealer);
+        this.updateScores(dealer);
         break;
       case State.DealerHit:
       case State.DealerStand:
       case State.DealerBust:
-      case State.DealerBlackJack:
-        this.updateHand(this.#dealer.hand);
-        this.createActionText(Role.Dealer);
-        this.updateScores(Role.Dealer);
+      case State.DealerBlackjack:
+        this.updateHand(dealer.hand);
+        this.createActionText(state, Role.Dealer);
+        this.updateScores(dealer);
         break;
       default:
         break;
     }
   }
 
-  private createScores() {
+  private createScores(dealer: Dealer, player: Player) {
     // TODO Handle split hands
 
     const dealerScoreText: Text = {
       ...scoreText,
       id: "dealer-score",
-      text: `${this.#dealer.score}`,
+      text: `${dealer.score}`,
       position: "top left",
       style: { ...scoreText.style },
       offsetY: 0.1,
@@ -594,7 +580,7 @@ export class Renderer {
     const dealerText: Text = {
       ...scoreText,
       id: "dealer-text",
-      text: this.#dealer.name,
+      text: dealer.name,
       position: "top left",
       style: { ...scoreText.style, fontSize: 20 },
     };
@@ -603,8 +589,8 @@ export class Renderer {
 
     const playerScoreText: Text = {
       ...scoreText,
-      id: `${this.#player.name.toLowerCase()}-score`,
-      text: this.#player.score.toString(),
+      id: `${player.name.toLowerCase()}-score`,
+      text: player.score.toString(),
       position: "bottom left",
       style: { ...scoreText.style },
       offsetY: -0.1,
@@ -614,8 +600,8 @@ export class Renderer {
 
     const playerText: Text = {
       ...scoreText,
-      id: `${this.#player.name.toLowerCase()}-text`,
-      text: this.#player.name,
+      id: `${player.name.toLowerCase()}-text`,
+      text: player.name,
       position: "bottom left",
       style: { ...scoreText.style, fontSize: 20 },
     };
@@ -630,9 +616,9 @@ export class Renderer {
     return Palette.White;
   }
 
-  private updateScores(role: Role) {
-    if (role === Role.Dealer) {
-      const dealerScore = this.#dealer.score;
+  private updateScores(player: Dealer | Player) {
+    if (player.role === Role.Dealer) {
+      const dealerScore = player.score;
       const dealerScoreText = this.getEntityById<Text>(
         scoreText.layer,
         "dealer-score"
@@ -646,11 +632,11 @@ export class Renderer {
       // TODO Handle split hands
       const playerScoreText = this.getEntityById<Text>(
         scoreText.layer,
-        `${this.#player.name.toLowerCase()}-score`
+        `${player.name.toLowerCase()}-score`
       );
       if (playerScoreText) {
-        playerScoreText.text = this.#player.score.toString();
-        playerScoreText.style.color = this.getColorScore(this.#player.score);
+        playerScoreText.text = player.score.toString();
+        playerScoreText.style.color = this.getColorScore(player.score);
         this.setEntity(playerScoreText);
       }
     }
@@ -693,15 +679,14 @@ export class Renderer {
     this.setEntity(entity);
   }
 
-  private createHands() {
+  private createHands(dealer: Dealer, player: Player) {
     const delay = 8;
     let count = 0;
-    const playerHand = this.#player.hand;
-    const dealerHand = this.#dealer.hand;
-    console.log(dealerHand);
+    const dealerHand = dealer.hand;
+    const playerHand = player.hand;
 
-    this.#holeCardId = this.#dealer.hand[1].id;
-    for (let i = 0; i < this.#dealer.hand.length; i++) {
+    this.#holeCardId = dealer.hand[1].id;
+    for (let i = 0; i < dealer.hand.length; i++) {
       this.createCard(playerHand[i], count++ * delay, "playing");
       this.createCard(dealerHand[i], count++ * delay, "playing");
     }
@@ -710,24 +695,22 @@ export class Renderer {
       playerHand.forEach((card, index) => {
         const entity = this.getEntityById<Sprite>(cardSprite.layer, card.id)!;
         entity.onEnd = () => {
-          console.log("Blackjack card animation done");
-
           entity.sprites[0] = {
             x: (card.suit % 12) * 1024 + cardSprite.spriteWidth * 3,
             y: card.rank * cardSprite.spriteHeight,
           };
           this.setEntity(entity);
           if (index === playerHand.length - 1) {
-            this.createActionText(Role.Player);
+            this.createActionText(State.PlayerBlackjack, Role.Player);
           }
         };
       });
     }
   }
 
-  private createActionText(role: Role) {
+  private createActionText(state: State, role: Role) {
     this.#showActionText = "in";
-    const entity = actionText;
+    const entity = { ...actionText };
     entity.progress = 0;
     entity.opacity = { start: 0, end: 1 };
     // entity.kerning = { start: 40, end: 0 };
@@ -744,27 +727,29 @@ export class Renderer {
       entity.offsetY = 0.15;
     }
 
-    if (this.#state === State.PlayerHit || this.#state === State.DealerHit) {
-      entity.text = "Hit!";
-      entity.style.color = Palette.White;
-    } else if (
-      this.#state === State.PlayerStand ||
-      this.#state === State.DealerStand
-    ) {
-      entity.style.color = Palette.LightestGrey;
-      entity.text = "Stand!";
-    } else if (
-      this.#state === State.PlayerBust ||
-      this.#state === State.DealerBust
-    ) {
-      entity.style.color = Palette.Red;
-      entity.text = "Bust!";
-    } else if (
-      this.#state === State.PlayerBlackJack ||
-      this.#state === State.DealerBlackJack
-    ) {
-      entity.style.color = Palette.Blue;
-      entity.text = "Blackjack!";
+    switch (state) {
+      case State.PlayerHit:
+      case State.DealerHit:
+        entity.text = "Hit!";
+        entity.style.color = Palette.White;
+        break;
+      case State.PlayerStand:
+      case State.DealerStand:
+        entity.text = "Stand!";
+        entity.style.color = Palette.LightestGrey;
+        break;
+      case State.PlayerBust:
+      case State.DealerBust:
+        entity.text = "Bust!";
+        entity.style.color = Palette.Red;
+        break;
+      case State.PlayerBlackjack:
+      case State.DealerBlackjack:
+        entity.text = "Blackjack!";
+        entity.style.color = Palette.Blue;
+        break;
+      default:
+        throw new Error(`Cannot create action text for state: ${state}`);
     }
 
     this.setEntity(entity);
@@ -830,6 +815,8 @@ export class Renderer {
   }
 
   private updateHand(hand: Hand) {
+    console.log("Status of hand:", hand.status);
+
     hand.forEach((card) => {
       if (this.hasEntityById(cardSprite.layer, card.id)) {
         if (hand.isBusted) this.updateBustCard(card);
@@ -840,8 +827,8 @@ export class Renderer {
     });
   }
 
-  private updateHoleCard() {
-    const holeCard = this.#dealer.hand[1];
+  private updateHoleCard(dealer: Dealer) {
+    const holeCard = dealer.hand[1];
     const entity = this.getEntityById<Sprite>(
       cardSprite.layer,
       this.#holeCardId
@@ -866,8 +853,8 @@ export class Renderer {
     this.setEntity(newHoleCard);
   }
 
-  private createGameoverText() {
-    const titles = gameoverTitles[this.#state as GameoverStates];
+  private createGameoverText(state: State) {
+    const titles = gameoverTitles[state as GameoverStates];
 
     if (!titles) {
       throw new Error("Gameover title not found");

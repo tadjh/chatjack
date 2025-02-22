@@ -52,10 +52,6 @@ export class Player {
     }
     this.#hands[index].add(card);
 
-    if (this.#hands[index].isBlackjack) {
-      this.stand(index);
-    }
-
     return this;
   }
 
@@ -94,6 +90,7 @@ export class Player {
   }
 
   reset() {
+    console.log(`${this.name} is resetting`);
     this.#hands.forEach((hand) => hand.reset());
     this.#hands = [new Hand(this.name)];
     this.#hasSplit = false;

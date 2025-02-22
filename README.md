@@ -1,8 +1,7 @@
 ## Bugs
 
 - TODO Cards have 1 pixel bleeding on sprite sheet, consider moving all sprites right 1 or 2 pixels
-- TODO Cards are a litte blurry? maybe Math.floor needed
-- TODO Natural Blackjack callbacks not firing?
+- TODO Natural blackjack tint needs to happen AFTER action text (callback)
 
 ## Development
 
@@ -13,5 +12,5 @@
 ## Quality of life
 
 - TODO Bust and opacity drop should happen AFTER card finishes animating
-- TODO Stack the deck for testing purposes
+- TODO Bust opacity could be lower
 

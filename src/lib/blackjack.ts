@@ -1,6 +1,6 @@
 import { Dealer } from "./dealer";
 import { Deck } from "./deck";
-import { Player } from "./player";
+import { Player, Role } from "./player";
 import { State } from "./types";
 
 export class Blackjack {
@@ -10,12 +10,20 @@ export class Blackjack {
   isGameover = false;
   isRevealed = false;
 
-  constructor(deckCount = 1) {
-    this.init(deckCount);
+  constructor({
+    shoeSize = 1,
+    fixedDeck = undefined,
+  }: { shoeSize?: number; fixedDeck?: number[] } = {}) {
+    if (fixedDeck) {
+      this.fixDeck(fixedDeck);
+    } else {
+      console.log("Constructing a new shoe");
+      this.init(shoeSize);
+    }
   }
 
-  get table() {
-    return this.#table;
+  get numberOfPlayers() {
+    return this.#table.length;
   }
 
   get dealer() {
@@ -38,7 +46,7 @@ export class Blackjack {
     return this.#state === State.RevealHoleCard;
   }
 
-  get remaining() {
+  get cardsRemaining() {
     return this.#deck.length;
   }
 
@@ -50,9 +58,14 @@ export class Blackjack {
     this.#state = state;
   }
 
-  init(deckCount: number) {
+  init(shoeSize: number) {
     this.#state = State.Init;
-    this.#deck.init(deckCount);
+    this.#deck.init(shoeSize);
+    return this;
+  }
+
+  fixDeck(fixedDeck: number[]) {
+    this.#deck.fix(fixedDeck);
     return this;
   }
 
@@ -82,12 +95,17 @@ export class Blackjack {
     // TODO Support hitting a split hand
     if (player.hand.isBusted) {
       player.isDone = true;
-      this.#state = State.PlayerBust;
+      this.#state =
+        player.role === Role.Dealer ? State.DealerBust : State.PlayerBust;
     } else if (player.hand.isBlackjack) {
       player.isDone = true;
-      this.#state = State.PlayerBlackJack;
+      this.#state =
+        player.role === Role.Dealer
+          ? State.DealerBlackjack
+          : State.PlayerBlackjack;
     } else {
-      this.#state = State.PlayerHit;
+      this.#state =
+        player.role === Role.Dealer ? State.DealerHit : State.PlayerHit;
     }
     return this;
   }
@@ -122,36 +140,26 @@ export class Blackjack {
       console.log("No more cards in the deck");
     }
 
+    if (this.dealer.hand.isBlackjack) {
+      this.#state = State.DealerBlackjack;
+      this.dealer.isDone = true;
+      return this;
+    }
+
     const decision = this.dealer.decide(this.#deck);
 
     if (decision === "stand") {
-      if (this.dealer.hand.isBlackjack) {
-        this.#state = State.DealerBlackJack;
-      } else {
-        this.#state = State.DealerStand;
-      }
-      this.dealer.isDone = true;
+      this.dealer.stand();
+      this.#state = State.DealerStand;
       return this;
     }
 
-    const card = this.#deck.shift()!;
+    this.hit(this.dealer);
 
-    this.dealer.hit(card);
-
-    if (this.dealer.isBusted) {
-      this.#state = State.DealerBust;
-      this.dealer.isDone = true;
-      return this;
-    }
-
-    this.#state = State.DealerHit;
-    return this.#state;
+    return this;
   }
 
   public judge() {
-    console.log("Judging the game", this.dealer.hand, this.player.hand);
-
-    // TODO Support multiple players
     // TODO Support player with a split hand
     if (this.player.hand.status === "busted") {
       this.#state = State.PlayerBust;
@@ -160,27 +168,30 @@ export class Blackjack {
     } else if (this.player.hand.score === this.dealer.hand.score) {
       this.#state = State.Push;
     } else if (this.player.hand.status === "blackjack") {
-      this.#state = State.PlayerBlackJack;
+      this.#state = State.PlayerBlackjack;
     } else if (this.dealer.hand.status === "blackjack") {
-      this.#state = State.DealerBlackJack;
+      this.#state = State.DealerBlackjack;
     } else if (this.player.hand.score > this.dealer.hand.score) {
       this.#state = State.PlayerWin;
     } else if (this.dealer.hand.score > this.player.hand.score) {
       this.#state = State.DealerWin;
     }
 
+    console.log("Judging:", State[this.#state]);
+
     this.isGameover = true;
 
     return this;
   }
 
-  reset(deckCount = 1) {
+  reset(shoeSize = 1) {
+    console.log("Resetting game");
     this.#table.forEach((player) => player.reset());
     this.#table = [new Dealer(), new Player("Chat", 1)];
     this.isGameover = false;
     this.isRevealed = false;
     this.#deck.empty();
-    this.init(deckCount);
+    this.init(shoeSize);
     return this;
   }
 }

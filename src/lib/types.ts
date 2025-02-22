@@ -112,8 +112,8 @@ export enum State {
   PlayerBust,
   DealerBust,
   Push,
-  PlayerBlackJack,
-  DealerBlackJack,
+  PlayerBlackjack,
+  DealerBlackjack,
   PlayerWin,
   DealerWin,
 }
@@ -122,8 +122,8 @@ export type GameoverStates =
   | State.PlayerBust
   | State.DealerBust
   | State.Push
-  | State.PlayerBlackJack
-  | State.DealerBlackJack
+  | State.PlayerBlackjack
+  | State.DealerBlackjack
   | State.PlayerWin
   | State.DealerWin;
 

@@ -100,6 +100,7 @@ export class Card extends Number {
   show() {
     this.#isHidden = false;
     this.setId();
+    console.log("Revealing card:", this.name);
     return this;
   }
 
@@ -182,7 +183,7 @@ export class Card extends Number {
     return this;
   }
 
-  public static toFace(card: number) {
+  public static toRank(card: number) {
     if (card < 0 || card > 52) {
       throw new Error("Invalid card");
     }

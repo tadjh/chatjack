@@ -106,7 +106,7 @@ export const titleScreen: [AnimatedSprite, Text, Text, Text] = [
     easing: "easeOutCubic",
     layer: LayerOrder.Foreground,
     delay: 32,
-    offsetY: -50,
+    offsetY: -0.05,
     style: {
       color: Palette.Yellow,
       maxWidth: "full",
@@ -176,7 +176,7 @@ export const gameoverText: [Text, Text, Text] = [
     easing: "easeOutCubic",
     layer: LayerOrder.Foreground,
     delay: 32,
-    offsetY: 0.1,
+    offsetY: -0.05,
     style: {
       color: Palette.Yellow,
       maxWidth: "full",

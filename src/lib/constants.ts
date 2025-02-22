@@ -79,11 +79,11 @@ export const gameoverTitles: Record<
     title: "Push!",
     subtitle: "No winner...",
   },
-  [State.PlayerBlackJack]: {
+  [State.PlayerBlackjack]: {
     title: "Blackjack!",
     subtitle: "Chat Wins!",
   },
-  [State.DealerBlackJack]: {
+  [State.DealerBlackjack]: {
     title: "Dealer hit 21!",
     subtitle: "Better luck next time!",
   },
