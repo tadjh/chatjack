@@ -1,10 +1,11 @@
 import { Blackjack } from "@/lib/blackjack";
 import { Player } from "@/lib/player";
+import { Renderer } from "@/lib/renderer";
 import { useRef, useState } from "react";
 
 const blackjack = new Blackjack({ shoeSize: 1 });
 
-export function useBlackjack() {
+export function useBlackjack(renderer: Renderer) {
   const blackjackRef = useRef<Blackjack>(blackjack);
 
   const [gameState, setGameState] = useState({
@@ -16,6 +17,12 @@ export function useBlackjack() {
     setGameState({
       dealer: blackjackRef.current.dealer,
       player: blackjackRef.current.player,
+    });
+    renderer.update({
+      dealer: blackjackRef.current.dealer,
+      player: blackjackRef.current.player,
+      state: blackjackRef.current.state,
+      isGameover: blackjackRef.current.isGameover,
     });
   }
 

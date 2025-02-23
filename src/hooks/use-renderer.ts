@@ -1,20 +1,12 @@
-import { Dealer } from "@/lib/dealer";
-import { Player } from "@/lib/player";
 import { Renderer } from "@/lib/renderer";
-import { State } from "@/lib/types";
 import { useEffect, useRef } from "react";
 
 const renderer = new Renderer();
 
-export function useRenderer(
-  bgRef: React.RefObject<HTMLCanvasElement | null>,
-  gameRef: React.RefObject<HTMLCanvasElement | null>,
-  uiRef: React.RefObject<HTMLCanvasElement | null>,
-  dealer: Dealer,
-  player: Player,
-  state: State,
-  isGameover: boolean
-) {
+export function useRenderer() {
+  const bgRef = useRef<HTMLCanvasElement>(null);
+  const gameRef = useRef<HTMLCanvasElement>(null);
+  const uiRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<Renderer>(renderer);
 
   useEffect(() => {
@@ -25,12 +17,5 @@ export function useRenderer(
     };
   }, [bgRef, gameRef, uiRef]);
 
-  useEffect(() => {
-    rendererRef.current.update({
-      dealer,
-      player,
-      state,
-      isGameover,
-    });
-  }, [dealer, player, state, isGameover]);
+  return { bgRef, gameRef, uiRef, rendererRef };
 }

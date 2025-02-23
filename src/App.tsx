@@ -1,19 +1,15 @@
 import { Button } from "@/components/ui/button";
 import { useBlackjack } from "@/hooks/use-blackjack";
 import { useRenderer } from "@/hooks/use-renderer";
-import { useRef } from "react";
 
 function App() {
-  const bgRef = useRef<HTMLCanvasElement>(null);
-  const gameRef = useRef<HTMLCanvasElement>(null);
-  const uiRef = useRef<HTMLCanvasElement>(null);
+  const { bgRef, gameRef, uiRef, rendererRef } = useRenderer();
   const {
     dealer,
     player,
     isDealt,
     isRevealed,
     isGameover,
-    state,
     deal,
     hit,
     stand,
@@ -21,8 +17,7 @@ function App() {
     decide,
     restart,
     exit,
-  } = useBlackjack();
-  useRenderer(bgRef, gameRef, uiRef, dealer, player, state, isGameover);
+  } = useBlackjack(rendererRef.current);
 
   return (
     <>

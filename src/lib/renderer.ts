@@ -36,7 +36,6 @@ export class Renderer {
   #layers: Map<LAYER, Layer> = new Map();
   #lastTick = 0;
   #time = 0;
-  #showActionText: "in" | "out" | "done" = "done";
   #holeCardId = "";
   #hasDealt = false;
   #spritesheets: Map<string, HTMLImageElement> = new Map();
@@ -226,7 +225,6 @@ export class Renderer {
   private reset() {
     this.debug.log("Canvas resetting");
     this.clearAllLayers();
-    this.#showActionText = "done";
     this.#hasDealt = false;
   }
 
@@ -452,8 +450,9 @@ export class Renderer {
   }
 
   private createActionText(state: State, role: Role) {
-    this.#showActionText = "in";
-    const entity = { ...actionText };
+    const entity: TextEntity = {
+      ...actionText,
+    };
     entity.progress = 0;
     entity.opacity = { start: 0, end: 1 };
     // entity.kerning = { start: 40, end: 0 };
@@ -495,39 +494,27 @@ export class Renderer {
         throw new Error(`Cannot create action text for state: ${state}`);
     }
 
+    entity.onEnd = () => this.updateActionText();
     this.debug.log(`Creating ${entity.id}:`, entity.text);
     this.setEntity(entity);
   }
 
   private updateActionText() {
-    switch (this.#showActionText) {
-      case "in": {
-        const entity = this.getEntity(actionText);
-        if (!entity) return;
-        this.#showActionText = "out";
-        entity.progress = 0;
-        entity.opacity = { start: 1, end: 0 };
-        if (entity.position === "bottom") {
-          entity.translateY = { start: 0, end: 50 };
-        } else if (entity.position === "top") {
-          entity.translateY = { start: 0, end: -50 };
-        }
-        // entity.kerning = { start: 0, end: 40 };
-        this.debug.log(`Creating ${entity.id}:`, entity.text);
-        this.setEntity(entity);
-        break;
-      }
-      case "out":
-        this.#showActionText = "done";
-        break;
-      case "done":
-        this.clearEntity(actionText);
-        break;
-      default:
-        throw new Error(
-          `Cannot update step: ${this.#showActionText} for action text`
-        );
+    const entity = this.getEntity(actionText);
+    if (!entity) return;
+    entity.progress = 0;
+    entity.opacity = { start: 1, end: 0 };
+    if (entity.position === "bottom") {
+      entity.translateY = { start: 0, end: 50 };
+    } else if (entity.position === "top") {
+      entity.translateY = { start: 0, end: -50 };
     }
+    entity.onEnd = () => {
+      this.clearEntity(actionText);
+    };
+    // entity.kerning = { start: 0, end: 40 };
+    this.debug.log(`Updating ${entity.id}:`, entity.text);
+    this.setEntity(entity);
   }
 
   private updateBustCard(card: Card) {
