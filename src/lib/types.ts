@@ -142,4 +142,3 @@ export type GameoverStates =
   | State.DealerBlackjack
   | State.PlayerWin
   | State.DealerWin;
-

@@ -26,27 +26,9 @@ function App() {
 
   return (
     <>
-      <canvas
-        ref={bgRef}
-        width={window.innerWidth}
-        height={window.innerHeight}
-        className="fixed top-0 left-0 z-1"
-        style={{ width: window.innerWidth, height: window.innerHeight }}
-      />
-      <canvas
-        ref={gameRef}
-        width={window.innerWidth}
-        height={window.innerHeight}
-        className="fixed top-0 left-0 z-2"
-        style={{ width: window.innerWidth, height: window.innerHeight }}
-      />
-      <canvas
-        ref={uiRef}
-        width={window.innerWidth}
-        height={window.innerHeight}
-        className="fixed top-0 left-0 z-3"
-        style={{ width: window.innerWidth, height: window.innerHeight }}
-      />
+      <canvas ref={bgRef} />
+      <canvas ref={gameRef} />
+      <canvas ref={uiRef} />
       <div className="p-4 flex gap-2 flex-col justify-between h-full absolute top-1/2 -translate-y-1/2 right-0 z-10">
         <div className="grid gap-2">
           <div className="flex gap-2">
@@ -111,4 +93,3 @@ function App() {
 }
 
 export default App;
-

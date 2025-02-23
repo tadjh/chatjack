@@ -20,7 +20,7 @@ export class Layer extends Map<string, Entity> {
     string,
     { width: number; height: number; x: number; y: number }
   > = new Map();
-  #cache = new Map<string, OffscreenCanvas>();
+  #cache = new Map<string, ImageBitmap>();
 
   constructor(
     private id: LAYER,
@@ -35,6 +35,11 @@ export class Layer extends Map<string, Entity> {
     }
     this.#ctx = ctx;
     this.#ctx.imageSmoothingEnabled = false;
+    this.canvas.style.position = "absolute";
+    this.canvas.style.top = "0";
+    this.canvas.style.left = "0";
+    this.canvas.style.zIndex = id;
+    this.resize();
   }
 
   render(time: number) {
@@ -219,9 +224,9 @@ export class Layer extends Map<string, Entity> {
       entity.spriteWidth,
       entity.spriteHeight
     );
-    // const bitmap = offscreenCanvas.transferToImageBitmap();
-    this.#cache.set(id, offscreenCanvas);
-    return offscreenCanvas;
+    const bitmap = offscreenCanvas.transferToImageBitmap();
+    this.#cache.set(id, bitmap);
+    return bitmap;
   }
 
   getSpriteId(entity: SpriteEntity | AnimatedSpriteEntity) {
@@ -229,10 +234,6 @@ export class Layer extends Map<string, Entity> {
   }
 
   renderSprite(entity: SpriteEntity | AnimatedSpriteEntity, time: number) {
-    // const scaleFactor = this.#scaleFactor * (entity.scale ?? 1);
-    // entity.x = (entity.x ?? 0) - entity.spriteWidth / 2;
-    // entity.y = (entity.y ?? 0) - entity.spriteHeight / 2;
-
     let easing = 1;
     let translateX = entity.translateX?.end ?? 0;
     let translateY = entity.translateY?.end ?? 0;
@@ -302,10 +303,6 @@ export class Layer extends Map<string, Entity> {
     );
 
     if (coords.flipX || coords.flipY) {
-      // this.#ctx.translate(
-      //   coords.flipX ? scaledWidth : 0,
-      //   coords.flipY ? scaledHeight : 0
-      // );
       this.#ctx.scale(coords.flipX ? -1 : 1, coords.flipY ? -1 : 1);
     }
 
@@ -331,53 +328,8 @@ export class Layer extends Map<string, Entity> {
     this.#ctx.restore();
   }
 
-  // renderAnimatedSprite(entity: Entity) {
-  //   const img = new Image();
-  //   img.src = entity.src;
-  //   img.onload = () => {
-  //     const sprite = entity.sprites[entity.spriteIndex];
-  //     const flipX = sprite.flipX ? -1 : 1;
-  //     this.#ctx.save();
-  //     this.#ctx.translate(entity.x, entity.y);
-  //     this.#ctx.scale(flipX, 1);
-  //     this.#ctx.drawImage(
-  //       img,
-  //       sprite.x,
-  //       sprite.y,
-  //       entity.spriteWidth,
-  //       entity.spriteHeight,
-  //       0,
-  //       0,
-  //       entity.spriteWidth,
-  //       entity.spriteHeight
-  //     );
-  //     this.#ctx.restore();
-  //   };
-  // }
-
-  // update(time:number) {
-  //   this.forEach((entity) => {
-  //     switch (entity.type) {
-  //       case "animated-sprite":
-  //         this.updateAnimatedSprite(entity, time);
-  //         break;
-  //     }
-  //   });
-  // }
-
-  // updateAnimatedSprite(entity: Entity) {
-  //   entity.spriteElapsed += 1;
-  //   if (entity.spriteElapsed >= entity.spriteDuration) {
-  //     entity.spriteElapsed = 0;
-  //     entity.spriteIndex += 1;
-  //     if (entity.spriteIndex >= entity.sprites.length) {
-  //       entity.spriteIndex = 0;
-  //     }
-  //   }
-  // }
-
   clearRect() {
-    this.#ctx.clearRect(0, 0, this.#ctx.canvas.width, this.#ctx.canvas.height);
+    this.#ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
   }
 
   getTextDimensions(

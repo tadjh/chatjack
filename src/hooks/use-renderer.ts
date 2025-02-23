@@ -34,4 +34,3 @@ export function useRenderer(
     });
   }, [dealer, player, state, isGameover]);
 }
-
