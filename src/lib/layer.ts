@@ -45,7 +45,13 @@ export class Layer extends Map<string, Entity> {
   render(time: number) {
     this.clearRect();
 
+    let action;
+
     this.forEach((entity) => {
+      if (entity.id === "action") {
+        action = entity;
+        return;
+      }
       switch (entity.type) {
         case "text":
           this.renderText(entity, time);
@@ -56,6 +62,10 @@ export class Layer extends Map<string, Entity> {
           break;
       }
     });
+
+    if (action) {
+      this.renderText(action, time);
+    }
   }
 
   getFontSize(entity: TextEntity) {
@@ -366,7 +376,7 @@ export class Layer extends Map<string, Entity> {
           y: window.innerHeight / 3 - entityHeight,
         };
       case "top":
-        return { x: (window.innerWidth - entityWidth) / 2, y: entityHeight };
+        return { x: (window.innerWidth - entityWidth) / 2, y: 0 };
       case "right":
         return {
           x: window.innerWidth - entityWidth / 2,
