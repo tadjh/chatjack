@@ -9,10 +9,6 @@ export const FLOAT_SPEED = 1 / 6;
 export const FLOAT_AMPLITUDE = 3;
 export const SPRITE_WIDTH = 256;
 export const SPRITE_HEIGHT = 384;
-export const BASE_FONT_SCALE = 1 / 800;
-export const PADDING = 1 / 72;
-export const FONT_DISPLAY = "Jacquard24";
-export const FONT_SANS_SERIF = "PressStart2P";
 const isDevelopment = import.meta.env.MODE === "development";
 
 export const Palette: Record<string, Vector3> = {
@@ -50,18 +46,30 @@ export const Palette: Record<string, Vector3> = {
   Orange: [247, 118, 34], // "#f77622"
 } as const;
 
-export const fonts: Map<string, string> = new Map([
+export enum FONT {
+  DISPLAY = "Jacquard24",
+  SANS_SERIF = "PressStart2P",
+}
+
+export const Fonts: Map<FONT, string> = new Map([
   [
-    FONT_DISPLAY,
-    `${isDevelopment ? "/src" : ""}/assets/fonts/${FONT_DISPLAY}-Regular.ttf`,
+    FONT.DISPLAY,
+    `${isDevelopment ? "/src" : ""}/assets/fonts/${FONT.DISPLAY}-Regular.ttf`,
   ],
   [
-    FONT_SANS_SERIF,
-    `${isDevelopment ? "/src" : ""}/assets/fonts/${FONT_SANS_SERIF}-Regular.ttf`,
+    FONT.SANS_SERIF,
+    `${isDevelopment ? "/src" : ""}/assets/fonts/${FONT.SANS_SERIF}-Regular.ttf`,
   ],
 ]);
 
-export const spriteSheet = `${isDevelopment ? "/src" : ""}/assets/sprites/cards.png`;
+export enum IMAGE {
+  CARDS = "cards",
+  UI = "ui",
+}
+
+export const Images: Map<IMAGE, string> = new Map([
+  [IMAGE.CARDS, `${isDevelopment ? "/src" : ""}/assets/sprites/cards.png`],
+]);
 
 export const gameoverTitles: Record<
   GameoverStates,

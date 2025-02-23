@@ -9,71 +9,61 @@ import {
 import { Card } from "./card";
 import {
   ANIMATION_SPEED,
-  BASE_FONT_SCALE,
+  Fonts,
   gameoverTitles,
-  PADDING,
   Palette,
+  Images,
   TICK_RATE,
 } from "./constants";
 import { Dealer } from "./dealer";
 import { Layer } from "./layer";
 import { Player, Role } from "./player";
 import {
-  AnimatedSprite,
+  AnimatedSpriteEntity,
+  Canvases,
   Entity,
   GameoverStates,
-  LayerOrder,
-  Sprite,
+  LAYER,
+  SpriteEntity,
   State,
-  Text,
+  TextEntity,
 } from "./types";
-import { clamp, easeOut, font, lerp, rgb, rgba } from "./utils";
+import { rgb } from "./utils";
 import { Hand, Status } from "./hand";
 import { Debug } from "./debug";
 
 export class Renderer {
-  #canvas: HTMLCanvasElement;
-  #ctx: CanvasRenderingContext2D;
+  #layers: Map<LAYER, Layer> = new Map();
   #lastTick = 0;
   #time = 0;
-  #spriteSheet: CanvasImageSource | null = null;
-  #widthMap: Map<string, number> = new Map();
-  #centerX = Math.floor(window.innerWidth / 2);
-  #centerY = Math.floor(window.innerHeight / 2);
-  #fontScaleFactor = window.innerWidth * BASE_FONT_SCALE;
   #showActionText: "in" | "out" | "done" = "done";
-  #layers: Map<LayerOrder, Layer> = new Map();
-  #padding = Math.floor(window.innerWidth * PADDING);
   #holeCardId = "";
   #hasDealt = false;
+  #spritesheets: Map<string, HTMLImageElement> = new Map();
 
   constructor(
-    canvas: HTMLCanvasElement,
     private tickRate = TICK_RATE,
     private baseAnimSpeed = ANIMATION_SPEED,
-    private titleEntities = titleScreen,
-    private debug = new Debug("Canvas", rgb(Palette.Orange))
-  ) {
-    this.#canvas = canvas;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      throw new Error("Unable to get canvas context");
-    }
-    ctx.imageSmoothingEnabled = false;
-    this.#ctx = ctx;
-    this.setEntities(this.titleEntities);
-    // this.resizeCanvas();
-  }
+    private debug = new Debug("Renderer", rgb(Palette.Orange))
+  ) {}
 
-  public async loadFont(fontName: string, fontUrl: string): Promise<void> {
-    const fontFace = new FontFace(fontName, `url("${fontUrl}")`);
+  public async loadFont(family: string, url: string): Promise<void> {
+    const fontFace = new FontFace(family, `url("${url}")`);
+
     if (!document.fonts.has(fontFace)) {
-      await fontFace.load();
       document.fonts.add(fontFace);
+      await fontFace.load();
     }
   }
 
-  private loadSpriteSheet(url: string): Promise<HTMLImageElement> {
+  public async loadFonts(): Promise<void> {
+    for (const [family, url] of Fonts) {
+      this.debug.log("Loading font:", family);
+      await this.loadFont(family, url);
+    }
+  }
+
+  private loadImage(url: string): Promise<HTMLImageElement> {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.src = url;
@@ -82,37 +72,67 @@ export class Renderer {
     });
   }
 
-  public async createSpriteSheet(url: string): Promise<void> {
-    const spriteSheet = await this.loadSpriteSheet(url);
-    this.#spriteSheet = spriteSheet;
+  public async loadImages(): Promise<void> {
+    // TODO scale multiple sizes of the sprite sheet for player and dealer
+    for (const [name, url] of Images) {
+      this.debug.log("Loading image:", name);
+      const spritesheet = await this.loadImage(url);
+      this.#spritesheets.set(name, spritesheet);
+    }
   }
 
-  private getLayer(layer: LayerOrder) {
-    if (!this.#layers.has(layer)) {
-      this.#layers.set(layer, new Layer(layer));
+  public loadLayers(canvases: Canvases) {
+    const layers = Object.values(LAYER);
+    for (let i = 0; i < layers.length; i++) {
+      const layer = layers[i];
+      const canvas = canvases[i];
+
+      if (!canvas) {
+        throw new Error(`Canvas not found for layer: ${layer}`);
+      }
+
+      this.#layers.set(layer, new Layer(layer, canvas, this.#spritesheets));
     }
+  }
+
+  public loadTitleScreen() {
+    titleScreen.forEach((entity) => {
+      this.setEntity(entity);
+    });
+  }
+
+  public loadAssets(canvases: Canvases): Promise<void[]> {
+    return Promise.all([
+      this.loadFonts(),
+      this.loadImages(),
+      this.loadLayers(canvases),
+      this.loadTitleScreen(),
+    ]);
+  }
+
+  private getLayer(layer: LAYER) {
     return this.#layers.get(layer)!;
   }
 
-  private clearLayer(layer: LayerOrder) {
-    if (layer === LayerOrder._ALL) {
-      this.debug.log("Clearing all layers");
-      this.#layers.forEach((layer) => layer.clear());
-      return;
-    }
-    this.debug.log("Clearing layer:", LayerOrder[layer]);
-    this.#layers.get(layer)?.clear();
+  // private clearLayer(layer: LAYER) {
+  //   this.debug.log("Clearing layer:", layer);
+  //   this.#layers.get(layer)?.clear();
+  // }
+
+  private clearAllLayers() {
+    this.debug.log("Clearing all layers");
+    this.#layers.forEach((layer) => layer.clear());
   }
 
   private getEntity<T extends Entity>(entity: T) {
     return this.getLayer(entity.layer).get(entity.id) as T | undefined;
   }
 
-  private getEntityById<T extends Entity>(layer: LayerOrder, id: string) {
+  private getEntityById<T extends Entity>(layer: LAYER, id: string) {
     return this.getLayer(layer).get(id) as T | undefined;
   }
 
-  private hasEntityById(layer: LayerOrder, id: string) {
+  private hasEntityById(layer: LAYER, id: string) {
     return this.getLayer(layer).has(id);
   }
 
@@ -120,329 +140,27 @@ export class Renderer {
     this.getLayer(entity.layer).set(entity.id, entity);
   }
 
-  private setEntities(entities: Entity[]) {
-    for (const entity of entities) {
-      this.setEntity(entity);
-    }
-  }
-
   private clearEntity(entity: Entity) {
     this.getLayer(entity.layer).delete(entity.id);
   }
 
-  private drawBackground() {
-    // this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-    this.#ctx.fillStyle = rgb(Palette.DarkGreen);
-    this.#ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
-  }
+  private render() {
+    this.getLayer(LAYER.GAME).render(this.#time);
 
-  private drawText(entity: Text) {
-    this.#ctx.textAlign = "center";
-    this.#ctx.fillStyle = rgb(Palette.White);
-
-    entity.progress = entity.progress ?? 0;
-
-    if (entity.type !== "text") return;
-    let fontSize = this.#fontScaleFactor * entity.style.fontSize;
-    this.#ctx.font = font(fontSize, entity.style.fontFamily);
-    let textWidth = this.#ctx.measureText(entity.text).width;
-    let maxWidth = window.innerWidth - this.#padding * 2;
-    if (entity.style.maxWidth !== "full") {
-      maxWidth = this.#widthMap.get(entity.style.maxWidth) || maxWidth;
-    }
-    if (textWidth > maxWidth) {
-      fontSize *= maxWidth / textWidth;
-      this.#ctx.font = font(fontSize, entity.style.fontFamily);
-    }
-
-    textWidth = this.#ctx.measureText(entity.text).width;
-
-    let easing = 1;
-    let opacity = entity.opacity?.end ?? 1;
-    let translateX = entity.translateX?.end ?? 0;
-    let translateY = entity.translateY?.end ?? 0;
-    let kerning = entity.kerning?.end ?? 0;
-
-    if (entity.progress < 1) {
-      if (entity.easing === "linear") {
-        easing = entity.progress;
-      } else if (entity.easing === "easeOutCubic") {
-        easing = easeOut(entity.progress, 3);
-      } else if (entity.easing === "easeOutQuint") {
-        easing = easeOut(entity.progress, 5);
-      }
-
-      if (entity.translateX) {
-        translateX = lerp(
-          entity.translateX.start,
-          entity.translateX.end,
-          easing
-        );
-      }
-
-      if (entity.translateY) {
-        translateY = lerp(
-          entity.translateY.start,
-          entity.translateY.end,
-          easing
-        );
-      }
-
-      if (entity.opacity) {
-        opacity = lerp(entity.opacity.start, entity.opacity.end, easing);
-      }
-
-      if (entity.kerning) {
-        kerning = lerp(entity.kerning.start, entity.kerning.end, easing);
-      }
-    }
-
-    if (entity.float && entity.float.x !== 0) {
-      translateX += Math.sin(this.#time * entity.float.speed) * entity.float.x;
-    }
-
-    if (entity.float && entity.float.y !== 0) {
-      translateY += Math.sin(this.#time * entity.float.speed) * entity.float.y;
-    }
-
-    const lineHeight = fontSize * entity.style.lineHeight;
-    let originX = this.#centerX;
-    let originY = this.#centerY;
-    if (entity.position) {
-      if (entity.position.includes("top")) {
-        originY = this.#padding + lineHeight;
-      } else if (entity.position.includes("bottom")) {
-        originY = window.innerHeight - this.#padding;
-      }
-
-      if (entity.position.includes("right")) {
-        originX = window.innerWidth - textWidth / 2 - this.#padding;
-      } else if (entity.position.includes("left")) {
-        originX = this.#padding + textWidth / 2;
-      }
-
-      if (entity.position === "center") {
-        originY =
-          Math.floor(window.innerHeight / 3) +
-          translateY +
-          (entity.index ?? 0) * lineHeight;
-      }
-    }
-
-    originX += translateX + (entity.offsetX ?? 0) * window.innerWidth;
-    originY += translateY + (entity.offsetY ?? 0) * window.innerHeight;
-
-    if (entity.clamp) {
-      originX = clamp(
-        originX,
-        textWidth / 2,
-        window.innerWidth - textWidth / 2
-      );
-      originY = clamp(
-        originY,
-        lineHeight / 2,
-        window.innerHeight - lineHeight / 2
-      );
-    }
-
-    this.#ctx.letterSpacing = `${kerning}px`;
-
-    this.#widthMap.set(entity.id, this.#ctx.measureText(entity.text).width);
-
-    if (entity.style.shadow) {
-      const shadowOffset = entity.progress >= 1 ? translateY : 0;
-
-      this.#ctx.strokeStyle = rgba(entity.style.shadow.color, opacity);
-      this.#ctx.lineWidth = fontSize / entity.style.shadow.size;
-      this.#ctx.fillStyle = rgba(entity.style.shadow.color, opacity);
-      this.#ctx.fillText(
-        entity.text,
-        originX + entity.style.shadow.x,
-        originY + entity.style.shadow.y - shadowOffset
-      );
-      this.#ctx.strokeText(
-        entity.text,
-        originX + entity.style.shadow.x,
-        originY + entity.style.shadow.y - shadowOffset
-      );
-    }
-
-    if (entity.style.stroke) {
-      this.#ctx.strokeStyle = rgba(entity.style.stroke.color, opacity);
-      this.#ctx.lineWidth = fontSize / entity.style.stroke.width;
-      this.#ctx.strokeText(entity.text, originX, originY);
-    }
-
-    this.#ctx.fillStyle = rgba(entity.style.color, opacity);
-    this.#ctx.fillText(entity.text, originX, originY);
-  }
-
-  drawSprite(entity: Sprite | AnimatedSprite) {
-    if (!this.#spriteSheet) return;
-
-    let easing = 1;
-    let translateX = entity.translateX?.end ?? 0;
-    let translateY = entity.translateY?.end ?? 0;
-    let opacity = entity.opacity?.end ?? 1;
-    entity.progress = entity.progress ?? 0;
-
-    if (entity.progress < 1) {
-      if (entity.easing === "linear") {
-        easing = entity.progress;
-      } else if (entity.easing === "easeOutCubic") {
-        easing = easeOut(entity.progress, 3);
-      } else if (entity.easing === "easeOutQuint") {
-        easing = easeOut(entity.progress, 5);
-      }
-
-      if (entity.translateX) {
-        translateX = lerp(
-          entity.translateX.start,
-          entity.translateX.end,
-          easing
-        );
-      }
-
-      if (entity.translateY) {
-        translateY = lerp(
-          entity.translateY.start,
-          entity.translateY.end,
-          easing
-        );
-      }
-
-      if (entity.opacity) {
-        opacity = lerp(entity.opacity.start, entity.opacity.end, easing);
-      }
-    }
-
-    let index = 0;
-
-    if (entity.type === "animated-sprite") {
-      index = entity.spriteIndex ?? 0;
-    }
-    const sprite = entity.sprites[index];
-
-    const sourceX = sprite.x;
-    const sourceY = sprite.y;
-
-    const scale =
-      ((entity.scale ?? 1) * (window.innerWidth * 0.2)) / entity.spriteWidth;
-
-    const destWidth = entity.spriteWidth * scale;
-    const destHeight = entity.spriteHeight * scale;
-    const halfWidth = destWidth / 2;
-    const halfHeight = destHeight / 2;
-
-    if (entity.float) {
-      if (entity.float.x !== 0) {
-        translateX +=
-          Math.sin(this.#time * entity.float.speed) * entity.float.x;
-      }
-
-      if (entity.float.y !== 0) {
-        translateY +=
-          Math.sin(this.#time * entity.float.speed) * entity.float.y;
-      }
-    }
-
-    let originX = this.#centerX;
-    let originY = this.#centerY;
-
-    if (entity.position) {
-      if (entity.position.includes("top")) {
-        originY = this.#padding; // + halfHeight;
-      } else if (entity.position.includes("bottom")) {
-        originY = window.innerHeight - this.#padding;
-      }
-
-      if (entity.position.includes("right")) {
-        originX = window.innerWidth - destWidth - this.#padding;
-      } else if (entity.position.includes("left")) {
-        originX = this.#padding;
-      }
-    }
-
-    originX += translateX + (entity.offsetX ?? 0) * scale;
-    originY += translateY + (entity.offsetY ?? 0) * scale;
-
-    let destX = originX - halfWidth;
-    let destY = originY - halfHeight;
-
-    this.#ctx.save();
-
-    this.#ctx.globalAlpha = opacity;
-
-    if (sprite.flipX) {
-      this.#ctx.scale(-1, 1);
-      destX = translateX - originX - halfWidth;
-    } else if (sprite.flipY) {
-      this.#ctx.scale(1, -1);
-      destY = translateY - originY - halfHeight;
-    }
-
-    if (entity.angle) {
-      this.#ctx.translate(destX + halfWidth, destY + halfHeight);
-      this.#ctx.rotate(entity.angle);
-      destX = -halfWidth;
-      destY = -halfHeight;
-    }
-
-    if (entity.shadow) {
-      this.#ctx.shadowColor = rgba(entity.shadow.color, entity.shadow.opacity);
-      this.#ctx.shadowBlur = entity.shadow.blur;
-      this.#ctx.shadowOffsetX = entity.shadow.offsetX;
-      this.#ctx.shadowOffsetY = entity.shadow.offsetY;
-    }
-
-    this.#ctx.drawImage(
-      this.#spriteSheet,
-      sourceX,
-      sourceY,
-      entity.spriteWidth - 1, // TODO 1 px bleeding
-      entity.spriteHeight,
-      destX,
-      destY,
-      destWidth,
-      destHeight
-    );
-
-    this.#ctx.restore();
-  }
-
-  private drawCanvas() {
-    this.drawBackground();
-
-    for (const [, layer] of this.#layers) {
-      // TODO Find a way to mathmetically determine when to reverse action text animation
-      if (layer.has(actionText.id)) {
-        const action = layer.get(actionText.id)! as Text;
-        if (action.progress === 1 && this.#showActionText !== "done") {
-          this.updateActionText();
-        }
-      }
-      for (const [, entity] of layer) {
-        if (entity.type === "text") {
-          this.drawText(entity);
-        } else {
-          this.drawSprite(entity);
-        }
-      }
-    }
+    //   // TODO Find a way to mathmetically determine when to reverse action text animation
+    //   if (layer.has(actionText.id)) {
+    //     const action = layer.get(actionText.id)! as TextEntity;
+    //     if (action.progress === 1 && this.#showActionText !== "done") {
+    //       this.updateActionText();
+    //     }
+    //   }
   }
 
   public resizeCanvas = () => {
-    const dpr = window.devicePixelRatio || 1;
-    this.#canvas.width = window.innerWidth * dpr;
-    this.#canvas.height = window.innerHeight * dpr;
-    this.#canvas.style.width = `${window.innerWidth}px`;
-    this.#canvas.style.height = `${window.innerHeight}px`;
-    this.#centerX = Math.floor(window.innerWidth / 2);
-    this.#centerY = Math.floor(window.innerHeight / 2);
-    this.#fontScaleFactor = window.innerWidth * BASE_FONT_SCALE;
-    this.#padding = Math.floor(window.innerWidth * PADDING);
-    this.#ctx.scale(dpr, dpr);
-    this.drawCanvas();
+    for (const layer of this.#layers.values()) {
+      layer.resize();
+    }
+    // this.drawCanvas();
   };
 
   // The game loop updates animation progress and redraws the canvas.
@@ -451,48 +169,49 @@ export class Renderer {
       this.#lastTick = timestamp;
       this.#time += 1;
 
-      for (const [, layer] of this.#layers) {
-        for (const [, entity] of layer) {
-          if (entity.delay && entity.delay > 0) {
-            entity.delay -= 1;
+      const layer = this.getLayer(LAYER.GAME);
+
+      for (const [, entity] of layer) {
+        if (entity.delay && entity.delay > 0) {
+          entity.delay -= 1;
+          continue;
+        }
+
+        entity.progress = entity.progress ?? 0;
+
+        if (entity.progress < 1) {
+          entity.progress += entity.speed ?? this.baseAnimSpeed;
+          if (entity.progress > 1) entity.progress = 1;
+        } else if (entity.onEnd) {
+          entity.onEnd();
+          entity.onEnd = undefined;
+        }
+
+        if (entity.type === "animated-sprite") {
+          if (
+            entity.playback === "once" &&
+            entity.spriteIndex === entity.sprites.length - 1
+          ) {
             continue;
           }
 
-          entity.progress = entity.progress ?? 0;
-
-          if (entity.progress < 1) {
-            entity.progress += entity.speed ?? this.baseAnimSpeed;
-            if (entity.progress > 1) entity.progress = 1;
-          } else if (entity.onEnd) {
-            entity.onEnd();
-            entity.onEnd = undefined;
-          }
-
-          if (entity.type === "animated-sprite") {
-            if (
-              entity.playback === "once" &&
-              entity.spriteIndex === entity.sprites.length - 1
-            ) {
-              continue;
-            }
-
-            entity.spriteElapsed = entity.spriteElapsed ?? 0;
-            entity.spriteElapsed += 1;
-            if (entity.spriteElapsed >= entity.spriteDuration) {
-              entity.spriteElapsed = 0;
-              entity.spriteIndex =
-                (entity.spriteIndex + 1) % entity.sprites.length;
-            }
+          entity.spriteElapsed = entity.spriteElapsed ?? 0;
+          entity.spriteElapsed += 1;
+          if (entity.spriteElapsed >= entity.spriteDuration) {
+            entity.spriteElapsed = 0;
+            entity.spriteIndex =
+              (entity.spriteIndex + 1) % entity.sprites.length;
           }
         }
       }
 
-      this.drawCanvas();
+      this.render();
     }
     requestAnimationFrame(this.step);
   };
 
-  public start() {
+  public async start(canvases: Canvases) {
+    await this.loadAssets(canvases);
     this.#lastTick = performance.now();
     this.debug.log("Canvas mounting");
     requestAnimationFrame(this.step);
@@ -506,7 +225,7 @@ export class Renderer {
 
   private reset() {
     this.debug.log("Canvas resetting");
-    this.clearLayer(LayerOrder._ALL);
+    this.clearAllLayers();
     this.#showActionText = "done";
     this.#hasDealt = false;
   }
@@ -538,7 +257,7 @@ export class Renderer {
           this.reset();
         }
         this.#hasDealt = true;
-        this.clearLayer(LayerOrder._ALL);
+        this.clearAllLayers();
         this.createHands(dealer, player);
         this.createScores(dealer, player);
         break;
@@ -565,47 +284,38 @@ export class Renderer {
       default:
         break;
     }
+
+    this.getLayer(LAYER.UI).render(this.#time);
   }
 
   private createScores(dealer: Dealer, player: Player) {
     // TODO Handle split hands
 
-    const dealerScoreText: Text = {
-      ...scoreText,
-      id: "dealer-score",
-      text: `${dealer.score}`,
-      position: "top left",
-      style: { ...scoreText.style },
-      offsetY: 0.1,
-    };
-
-    this.debug.log(`Creating ${dealerScoreText.id}:`, dealerScoreText.text);
-    this.setEntity(dealerScoreText);
-
-    const dealerText: Text = {
+    const dealerText: TextEntity = {
       ...scoreText,
       id: "dealer-text",
       text: dealer.name,
       position: "top left",
       style: { ...scoreText.style, fontSize: 20 },
+      offsetY: -0.025,
     };
 
     this.debug.log(`Creating ${dealerText.id}:`, dealerText.text);
     this.setEntity(dealerText);
 
-    const playerScoreText: Text = {
+    const dealerScoreText: TextEntity = {
       ...scoreText,
-      id: `${player.name.toLowerCase()}-score`,
-      text: player.score.toString(),
-      position: "bottom left",
-      style: { ...scoreText.style },
-      offsetY: -0.1,
+      id: "dealer-score",
+      text: `${dealer.score}`,
+      position: "top left",
+      style: { ...scoreText.style, maxWidth: "dealer-text" },
+      offsetY: 0.03,
     };
 
-    this.debug.log(`Creating ${playerScoreText.id}:`, playerScoreText.text);
-    this.setEntity(playerScoreText);
+    this.debug.log(`Creating ${dealerScoreText.id}:`, dealerScoreText.text);
+    this.setEntity(dealerScoreText);
 
-    const playerText: Text = {
+    const playerText: TextEntity = {
       ...scoreText,
       id: `${player.name.toLowerCase()}-text`,
       text: player.name,
@@ -615,6 +325,21 @@ export class Renderer {
 
     this.debug.log(`Creating ${playerText.id}:`, playerText.text);
     this.setEntity(playerText);
+
+    const playerScoreText: TextEntity = {
+      ...scoreText,
+      id: `${player.name.toLowerCase()}-score`,
+      text: player.score.toString(),
+      position: "bottom left",
+      style: {
+        ...scoreText.style,
+        maxWidth: `${player.name.toLowerCase()}-text`,
+        lineHeight: -2.4,
+      },
+    };
+
+    this.debug.log(`Creating ${playerScoreText.id}:`, playerScoreText.text);
+    this.setEntity(playerScoreText);
   }
 
   private getColorScore(score: number) {
@@ -627,7 +352,7 @@ export class Renderer {
   private updateScores(player: Dealer | Player) {
     if (player.role === Role.Dealer) {
       const dealerScore = player.score;
-      const dealerScoreText = this.getEntityById<Text>(
+      const dealerScoreText = this.getEntityById<TextEntity>(
         scoreText.layer,
         "dealer-score"
       );
@@ -639,7 +364,7 @@ export class Renderer {
       }
     } else {
       // TODO Handle split hands
-      const playerScoreText = this.getEntityById<Text>(
+      const playerScoreText = this.getEntityById<TextEntity>(
         scoreText.layer,
         `${player.name.toLowerCase()}-score`
       );
@@ -654,7 +379,7 @@ export class Renderer {
 
   private createCard(card: Card, delay = 0, status: Status) {
     const isDealer = card.owner === "Dealer";
-    const entity: Sprite = {
+    const entity: SpriteEntity = {
       ...cardSprite,
       id: card.id,
       progress: 0,
@@ -705,7 +430,10 @@ export class Renderer {
 
     if (playerHand.status === "blackjack") {
       playerHand.forEach((card, index) => {
-        const entity = this.getEntityById<Sprite>(cardSprite.layer, card.id)!;
+        const entity = this.getEntityById<SpriteEntity>(
+          cardSprite.layer,
+          card.id
+        )!;
         entity.onEnd = () => {
           entity.sprites[0] = {
             x: (card.suit % 12) * 1024 + cardSprite.spriteWidth * 3,
@@ -803,7 +531,7 @@ export class Renderer {
   }
 
   private updateBustCard(card: Card) {
-    const entity = this.getEntityById<Sprite>(cardSprite.layer, card.id)!;
+    const entity = this.getEntityById<SpriteEntity>(cardSprite.layer, card.id)!;
     entity.opacity = {
       start: 1,
       end: 0.5,
@@ -813,7 +541,7 @@ export class Renderer {
   }
 
   private updateStandCard(card: Card) {
-    const entity = this.getEntityById<Sprite | AnimatedSprite>(
+    const entity = this.getEntityById<SpriteEntity | AnimatedSpriteEntity>(
       cardSprite.layer,
       card.id
     )!;
@@ -851,7 +579,7 @@ export class Renderer {
 
   private updateHoleCard(dealer: Dealer) {
     const holeCard = dealer.hand[1];
-    const entity = this.getEntityById<Sprite>(
+    const entity = this.getEntityById<SpriteEntity>(
       cardSprite.layer,
       this.#holeCardId
     );
@@ -860,7 +588,7 @@ export class Renderer {
     }
     const cardX = (holeCard.suit % 12) * 1024;
     const cardY = holeCard.rank * entity.spriteHeight;
-    const newHoleCard: AnimatedSprite = {
+    const newHoleCard: AnimatedSpriteEntity = {
       ...entity,
       ...animatedCardSprite,
       id: holeCard.id,

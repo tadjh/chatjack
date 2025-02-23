@@ -1,17 +1,37 @@
+import { IMAGE } from "./constants";
+
 export type Vector3 = [number, number, number];
 
-export enum LayerOrder {
-  Background,
-  Foreground,
-  _ALL,
+export enum LAYER {
+  BG = "Background",
+  GAME = "Game",
+  UI = "Ui",
 }
+
+export type Canvases = [
+  HTMLCanvasElement | null,
+  HTMLCanvasElement | null,
+  HTMLCanvasElement | null,
+];
+
+export type Position =
+  | "center"
+  | "eyeline"
+  | "left"
+  | "right"
+  | "top"
+  | "bottom"
+  | "top left"
+  | "top right"
+  | "bottom left"
+  | "bottom right";
 
 interface BaseEntity {
   id: string;
   type: "text" | "sprite" | "animated-sprite";
   progress?: number;
   easing: "linear" | "easeOutCubic" | "easeOutQuint";
-  layer: LayerOrder;
+  layer: LAYER;
   speed?: number;
   delay?: number;
   offsetX?: number;
@@ -26,24 +46,16 @@ interface BaseEntity {
     y: number;
     speed: number;
   };
-  position?:
-    | "center"
-    | "left"
-    | "right"
-    | "top"
-    | "bottom"
-    | "top left"
-    | "top right"
-    | "bottom left"
-    | "bottom right";
+  position?: Position;
   onBeing?: () => void;
   onEnd?: () => void;
 }
 
-export interface Text extends BaseEntity {
+export interface TextEntity extends BaseEntity {
   type: "text";
   text: string;
   style: {
+    textAlign?: CanvasTextAlign;
     color: [number, number, number];
     maxWidth: string;
     fontSize: number;
@@ -70,9 +82,13 @@ interface SpriteCoordinates {
 }
 
 interface BaseSprite extends BaseEntity {
+  src: IMAGE;
   sprites: [SpriteCoordinates, ...SpriteCoordinates[]];
+  x?: number;
+  y?: number;
   spriteWidth: number;
   spriteHeight: number;
+  spriteIndex?: number;
   scale?: number;
   angle?: number;
   shadow?: {
@@ -84,13 +100,13 @@ interface BaseSprite extends BaseEntity {
   };
 }
 
-export interface Sprite extends BaseSprite {
+export interface SpriteEntity extends BaseSprite {
   type: "sprite";
 }
 
 export type Playback = "once" | "loop";
 
-export interface AnimatedSprite extends BaseSprite {
+export interface AnimatedSpriteEntity extends BaseSprite {
   type: "animated-sprite";
   playback: Playback;
   spriteElapsed?: number;
@@ -98,7 +114,7 @@ export interface AnimatedSprite extends BaseSprite {
   spriteIndex: number;
 }
 
-export type Entity = Text | Sprite | AnimatedSprite;
+export type Entity = TextEntity | SpriteEntity | AnimatedSpriteEntity;
 
 export enum State {
   Init,

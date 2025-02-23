@@ -1,13 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { useBlackjack } from "@/hooks/use-blackjack";
-import { useRef, useEffect } from "react";
-import { fonts, spriteSheet } from "./lib/constants";
-import { Renderer } from "./lib/renderer";
+import { useRenderer } from "@/hooks/use-renderer";
+import { useRef } from "react";
 
 function App() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rendererRef = useRef<Renderer>(null);
-
+  const bgRef = useRef<HTMLCanvasElement>(null);
+  const gameRef = useRef<HTMLCanvasElement>(null);
+  const uiRef = useRef<HTMLCanvasElement>(null);
   const {
     dealer,
     player,
@@ -23,53 +22,31 @@ function App() {
     restart,
     exit,
   } = useBlackjack();
-
-  useEffect(() => {
-    if (!canvasRef.current) return;
-
-    // TODO Simplify this asset loading api.
-    rendererRef.current = new Renderer(canvasRef.current);
-
-    if (!rendererRef.current) return;
-
-    const loadAssets = async () => {
-      [...fonts.entries()].forEach(async ([name, url]) => {
-        await rendererRef.current!.loadFont(name, url);
-      });
-      await rendererRef.current!.createSpriteSheet(spriteSheet);
-    };
-
-    loadAssets().then(() => {
-      rendererRef.current!.start();
-    });
-
-    return () => {
-      rendererRef.current!.stop();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!rendererRef.current) return;
-
-    rendererRef.current.update({
-      dealer,
-      player,
-      state,
-      isGameover,
-    });
-
-    rendererRef.current.resizeCanvas();
-  }, [dealer, player, state, isGameover]);
+  useRenderer(bgRef, gameRef, uiRef, dealer, player, state, isGameover);
 
   return (
     <>
       <canvas
-        id="canvas"
-        ref={canvasRef}
+        ref={bgRef}
         width={window.innerWidth}
         height={window.innerHeight}
+        className="fixed top-0 left-0 z-1"
         style={{ width: window.innerWidth, height: window.innerHeight }}
-      ></canvas>
+      />
+      <canvas
+        ref={gameRef}
+        width={window.innerWidth}
+        height={window.innerHeight}
+        className="fixed top-0 left-0 z-2"
+        style={{ width: window.innerWidth, height: window.innerHeight }}
+      />
+      <canvas
+        ref={uiRef}
+        width={window.innerWidth}
+        height={window.innerHeight}
+        className="fixed top-0 left-0 z-3"
+        style={{ width: window.innerWidth, height: window.innerHeight }}
+      />
       <div className="p-4 flex gap-2 flex-col justify-between h-full absolute top-1/2 -translate-y-1/2 right-0 z-10">
         <div className="grid gap-2">
           <div className="flex gap-2">
