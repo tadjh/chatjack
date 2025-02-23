@@ -29,6 +29,7 @@ import {
 } from "./types";
 import { clamp, easeOut, font, lerp, rgb, rgba } from "./utils";
 import { Hand, Status } from "./hand";
+import { Debug } from "./debug";
 
 export class Renderer {
   #canvas: HTMLCanvasElement;
@@ -50,7 +51,8 @@ export class Renderer {
     canvas: HTMLCanvasElement,
     private tickRate = TICK_RATE,
     private baseAnimSpeed = ANIMATION_SPEED,
-    private titleEntities = titleScreen
+    private titleEntities = titleScreen,
+    private debug = new Debug("Canvas", rgb(Palette.Orange))
   ) {
     this.#canvas = canvas;
     const ctx = canvas.getContext("2d");
@@ -94,9 +96,11 @@ export class Renderer {
 
   private clearLayer(layer: LayerOrder) {
     if (layer === LayerOrder._ALL) {
+      this.debug.log("Clearing all layers");
       this.#layers.forEach((layer) => layer.clear());
       return;
     }
+    this.debug.log("Clearing layer:", LayerOrder[layer]);
     this.#layers.get(layer)?.clear();
   }
 
@@ -490,21 +494,21 @@ export class Renderer {
 
   public start() {
     this.#lastTick = performance.now();
+    this.debug.log("Canvas mounting");
     requestAnimationFrame(this.step);
     window.addEventListener("resize", this.resizeCanvas);
   }
 
   public stop() {
+    this.debug.log("Canvas unmounting");
     window.removeEventListener("resize", this.resizeCanvas);
   }
 
   private reset() {
-    console.log("Canvas resetting");
+    this.debug.log("Canvas resetting");
     this.clearLayer(LayerOrder._ALL);
-    // this.setEntities(this.titleEntities);
     this.#showActionText = "done";
     this.#hasDealt = false;
-    // this.drawCanvas();
   }
 
   public update({
@@ -519,7 +523,7 @@ export class Renderer {
     isGameover: boolean;
   }) {
     // TODO Remove
-    console.log("Recieved State:", State[state]);
+    this.debug.log("Animating State:", State[state]);
 
     if (isGameover) {
       this.createGameoverText(state);
@@ -575,6 +579,7 @@ export class Renderer {
       offsetY: 0.1,
     };
 
+    this.debug.log(`Creating ${dealerScoreText.id}:`, dealerScoreText.text);
     this.setEntity(dealerScoreText);
 
     const dealerText: Text = {
@@ -585,6 +590,7 @@ export class Renderer {
       style: { ...scoreText.style, fontSize: 20 },
     };
 
+    this.debug.log(`Creating ${dealerText.id}:`, dealerText.text);
     this.setEntity(dealerText);
 
     const playerScoreText: Text = {
@@ -596,6 +602,7 @@ export class Renderer {
       offsetY: -0.1,
     };
 
+    this.debug.log(`Creating ${playerScoreText.id}:`, playerScoreText.text);
     this.setEntity(playerScoreText);
 
     const playerText: Text = {
@@ -606,6 +613,7 @@ export class Renderer {
       style: { ...scoreText.style, fontSize: 20 },
     };
 
+    this.debug.log(`Creating ${playerText.id}:`, playerText.text);
     this.setEntity(playerText);
   }
 
@@ -626,6 +634,7 @@ export class Renderer {
       if (dealerScoreText) {
         dealerScoreText.text = dealerScore.toString();
         dealerScoreText.style.color = this.getColorScore(dealerScore);
+        this.debug.log(`Updating ${dealerScoreText.id}:`, dealerScoreText.text);
         this.setEntity(dealerScoreText);
       }
     } else {
@@ -637,6 +646,7 @@ export class Renderer {
       if (playerScoreText) {
         playerScoreText.text = player.score.toString();
         playerScoreText.style.color = this.getColorScore(player.score);
+        this.debug.log(`Updating ${playerScoreText.id}:`, playerScoreText.text);
         this.setEntity(playerScoreText);
       }
     }
@@ -675,7 +685,9 @@ export class Renderer {
       },
     };
 
-    console.log("Card entity created:", entity.id);
+    this.debug.log(
+      `Creating ${entity.id}: { x: ${entity.sprites[0].x}, y: ${entity.sprites[0].y} }`
+    );
     this.setEntity(entity);
   }
 
@@ -699,6 +711,9 @@ export class Renderer {
             x: (card.suit % 12) * 1024 + cardSprite.spriteWidth * 3,
             y: card.rank * cardSprite.spriteHeight,
           };
+          this.debug.log(
+            `Updating ${entity.id}: { x: ${entity.sprites[0].x}, y: ${entity.sprites[0].y} }`
+          );
           this.setEntity(entity);
           if (index === playerHand.length - 1) {
             this.createActionText(State.PlayerBlackjack, Role.Player);
@@ -752,6 +767,7 @@ export class Renderer {
         throw new Error(`Cannot create action text for state: ${state}`);
     }
 
+    this.debug.log(`Creating ${entity.id}:`, entity.text);
     this.setEntity(entity);
   }
 
@@ -769,6 +785,7 @@ export class Renderer {
           entity.translateY = { start: 0, end: -50 };
         }
         // entity.kerning = { start: 0, end: 40 };
+        this.debug.log(`Creating ${entity.id}:`, entity.text);
         this.setEntity(entity);
         break;
       }
@@ -791,6 +808,7 @@ export class Renderer {
       start: 1,
       end: 0.5,
     };
+    this.debug.log(`Updating ${entity.id}: { opacity: ${entity.opacity.end} }`);
     this.setEntity(entity);
   }
 
@@ -804,19 +822,23 @@ export class Renderer {
         x: entity.sprites[0].x + entity.spriteWidth,
         y: entity.sprites[0].y,
       };
+      this.debug.log(
+        `Updating ${entity.id}: { x: ${entity.sprites[0].x}, y: ${entity.sprites[0].y} }`
+      );
       this.setEntity(entity);
     } else if (entity.type === "animated-sprite") {
       entity.sprites[entity.spriteIndex] = {
         x: entity.sprites[entity.spriteIndex].x + entity.spriteWidth,
         y: entity.sprites[entity.spriteIndex].y,
       };
+      this.debug.log(
+        `Updating ${entity.id}: { x: ${entity.sprites[entity.spriteIndex].x}, y: ${entity.sprites[entity.spriteIndex].y} }`
+      );
       this.setEntity(entity);
     }
   }
 
   private updateHand(hand: Hand) {
-    console.log("Status of hand:", hand.status);
-
     hand.forEach((card) => {
       if (this.hasEntityById(cardSprite.layer, card.id)) {
         if (hand.isBusted) this.updateBustCard(card);
@@ -850,6 +872,9 @@ export class Renderer {
       ],
     };
     this.clearEntity(entity);
+    this.debug.log(
+      `Creating ${newHoleCard.id}: { x: ${cardX + 512}, y: ${cardY} }`
+    );
     this.setEntity(newHoleCard);
   }
 
@@ -869,6 +894,7 @@ export class Renderer {
         entity.text = subtitle;
       }
       entity.progress = 0;
+      this.debug.log(`Creating ${entity.id}`, entity.text);
       this.setEntity(entity);
     }
   }

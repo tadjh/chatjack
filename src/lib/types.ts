@@ -62,7 +62,7 @@ export interface Text extends BaseEntity {
   clamp?: boolean;
 }
 
-interface Spritesheet {
+interface SpriteCoordinates {
   x: number;
   y: number;
   flipX?: boolean;
@@ -70,7 +70,7 @@ interface Spritesheet {
 }
 
 interface BaseSprite extends BaseEntity {
-  sprites: [Spritesheet, ...Spritesheet[]];
+  sprites: [SpriteCoordinates, ...SpriteCoordinates[]];
   spriteWidth: number;
   spriteHeight: number;
   scale?: number;

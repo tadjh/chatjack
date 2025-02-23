@@ -1,9 +1,12 @@
 import { Card } from "./card";
+import { Palette } from "./constants";
+import { Debug } from "./debug";
 import { Player, Role } from "./player";
+import { rgb } from "./utils";
 
 export class Dealer extends Player {
-  constructor() {
-    super("Dealer", 0, Role.Dealer);
+  constructor(debug = new Debug("Dealer", rgb(Palette.Red))) {
+    super("Dealer", 0, Role.Dealer, debug);
   }
 
   get isBusted() {
@@ -19,6 +22,7 @@ export class Dealer extends Player {
   }
 
   reveal() {
+    this.debug.log("Revealing hole card");
     this.hand[1].show();
   }
 
@@ -47,7 +51,8 @@ export class Dealer extends Player {
   }
 
   split(): this {
-    throw new Error("Dealer cannot split");
+    this.debug.log("Dealer cannot split");
+    return this;
   }
 }
 

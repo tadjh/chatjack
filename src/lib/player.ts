@@ -1,5 +1,8 @@
 import { Card } from "./card";
+import { Palette } from "./constants";
+import { Debug } from "./debug";
 import { Hand } from "./hand";
+import { rgb } from "./utils";
 
 export class Player {
   #hasSplit = false;
@@ -9,7 +12,8 @@ export class Player {
   constructor(
     public readonly name = "Player",
     public readonly seat = 1,
-    public readonly role = Role.Player
+    public readonly role = Role.Player,
+    public debug = new Debug(name, rgb(Palette.Red))
   ) {
     this.#hands = [new Hand(this.name)];
   }
@@ -90,7 +94,7 @@ export class Player {
   }
 
   reset() {
-    console.log(`${this.name} is resetting`);
+    this.debug.log(`${this.name} is resetting`);
     this.#hands.forEach((hand) => hand.reset());
     this.#hands = [new Hand(this.name)];
     this.#hasSplit = false;

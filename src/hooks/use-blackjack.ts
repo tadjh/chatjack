@@ -59,6 +59,7 @@ export function useBlackjack() {
   }
 
   function restart() {
+    console.clear();
     blackjackRef.current.reset();
     blackjackRef.current.deal();
     updateSnapshot();

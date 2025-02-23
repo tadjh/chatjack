@@ -1,16 +1,24 @@
-import { Card } from "./card";
-import { Deck } from "./deck";
+import { Card, Rank } from "./card";
+import { Palette } from "./constants";
+import { Debug } from "./debug";
+import { rgb } from "./utils";
 
 export type Status = "playing" | "busted" | "blackjack" | "stand" | "split";
 
-export class Hand extends Deck {
+export class Hand extends Array<Card> {
   #score: number = 0;
   status: Status = "playing";
   #owner: string;
+  #name: string;
 
-  constructor(owner: string) {
-    super({ shoeSize: 0 });
+  constructor(
+    owner: string,
+    name = `${owner}'s Hand`,
+    private debug = new Debug(name, rgb(Palette.Yellow))
+  ) {
+    super();
     this.#owner = owner;
+    this.#name = name;
   }
 
   get score() {
@@ -46,7 +54,7 @@ export class Hand extends Deck {
     this.protect();
     let aces = 0;
     this.#score = this.reduce((score, card) => {
-      if (card.isAce && card.points === 11) {
+      if (card.rank === Rank.Ace && card.points === 11) {
         aces++;
       }
       score += card.points;
@@ -99,9 +107,18 @@ export class Hand extends Deck {
     return [hand1, hand2];
   }
 
+  print() {
+    let output = "";
+    for (const card of this) {
+      output += "\t" + card.name + "\n";
+    }
+
+    this.debug.log(output);
+  }
+
   reset() {
-    console.log(`${this.#owner}'s hand is resetting`);
-    super.empty();
+    this.debug.log(`${this.#name} is resetting`);
+    this.length = 0;
     this.#score = 0;
     this.status = "playing";
     return this;

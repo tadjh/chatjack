@@ -1,13 +1,22 @@
 import { Card, Rank, Suit } from "./card";
+import { Palette } from "./constants";
+import { Debug } from "./debug";
+import { rgb } from "./utils";
 
 export class Deck extends Array<Card> {
-  constructor({
-    shoeSize = 0,
-    cards,
-  }:
-    | { shoeSize?: number; cards?: never }
-    | { shoeSize?: never; cards: number[] } = {}) {
+  #name: string;
+  constructor(
+    {
+      name = "Deck",
+      shoeSize = 0,
+      cards,
+    }:
+      | { name?: string; shoeSize?: number; cards?: never }
+      | { name?: string; shoeSize?: never; cards: number[] } = {},
+    public debug = new Debug(name, rgb(Palette.Blue))
+  ) {
     super();
+    this.#name = name;
     if (cards) {
       this.fix(cards);
     } else {
@@ -23,6 +32,7 @@ export class Deck extends Array<Card> {
     if (shoeSize === 0) return this;
 
     for (let i = 0; i < shoeSize; i++) {
+      this.debug.log("Adding a 52 card deck");
       const deck = Deck.create();
       this.push(...deck);
     }
@@ -32,7 +42,7 @@ export class Deck extends Array<Card> {
 
   // Fisher–Yates shuffle
   shuffle() {
-    console.log("Shuffling cards");
+    this.debug.log("Shuffling cards");
     for (let i = this.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [this[i], this[j]] = [this[j], this[i]]; // Swap elements
@@ -45,13 +55,13 @@ export class Deck extends Array<Card> {
     if (this.length > 0) {
       throw new Error("Deck is not empty");
     }
-    console.log("Reshuffling empty deck");
+    this.debug.log("Reshuffling empty deck");
     this.init(count);
     return this;
   }
 
   fix(fixedDeck: number[]) {
-    console.log("Fixing deck with cards:", fixedDeck);
+    this.debug.log("Fixing deck with cards:", fixedDeck);
     for (let i = fixedDeck.length - 1; i >= 0; i--) {
       this.push(new Card(fixedDeck[i]));
     }
@@ -62,7 +72,7 @@ export class Deck extends Array<Card> {
     if (!this.length) {
       throw new Error("No cards left");
     }
-    console.log("Peeking at the top card:", this[this.length - 1].name);
+    this.debug.log("Peeking at the top card:", this[this.length - 1].name);
     return this[this.length - 1];
   }
 
@@ -75,16 +85,19 @@ export class Deck extends Array<Card> {
 
     if (isHidden) {
       card.hide();
-      console.log("Hole card drawn 🂠");
+      this.debug.log("🂠 Drawing Hole card");
     } else {
-      console.log("Card drawn:", card.name);
+      this.debug.log(
+        `${Card.toUnicode(card.valueOf())} Drawing Card:`,
+        card.name
+      );
     }
 
     return card;
   }
 
   empty() {
-    console.log("Emptying deck");
+    this.debug.log(`Emptying ${this.#name}`);
     this.length = 0;
     return this;
   }
@@ -95,11 +108,10 @@ export class Deck extends Array<Card> {
       output += "\t" + card.name + "\n";
     }
 
-    console.log(output);
+    this.debug.log(output);
   }
 
   public static create() {
-    console.log("Adding a fresh deck");
     const deck: Card[] = [];
     const suits = Object.values(Suit).filter((s) => typeof s === "number");
     const faces = Object.values(Rank).filter((f) => typeof f === "number");

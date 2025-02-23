@@ -52,13 +52,6 @@ describe("Card", () => {
     expect(() => card.setAce("low")).toThrow("Card is not an Ace");
   });
 
-  it("should correctly identify an Ace", () => {
-    const aceCard = new Card(Suit.Clubs + Rank.Ace);
-    const tenCard = new Card(Suit.Clubs + Rank.Ten);
-    expect(aceCard.isAce).toBe(true);
-    expect(tenCard.isAce).toBe(false);
-  });
-
   it("should correctly convert a card number to its face", () => {
     const card = new Card(Suit.Clubs + Rank.Ace);
     // The face of the card is determined by card.rank, which should equal Rank.Ace.

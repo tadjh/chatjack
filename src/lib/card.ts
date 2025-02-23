@@ -45,13 +45,12 @@ const Letter: Map<number, string> = new Map([
 ]);
 
 export class Card extends Number {
-  id: string = "";
   readonly suit: number;
   readonly rank: number;
-  #icon: string;
+  #id: string = "";
   #name: string;
+  #icon: string;
   #points: number = 0;
-  #isAce: boolean;
   #isHidden: boolean;
   owner: string = "";
   handIndex: number = -1;
@@ -64,19 +63,18 @@ export class Card extends Number {
     this.suit = Card.toSuit(card);
     this.rank = card - this.suit;
     this.#isHidden = hidden;
-    this.#isAce = this.rank === Rank.Ace;
     this.#name = `${Rank[this.rank]} of ${Suit[this.suit]}`;
     this.#icon = `${Letter.get(this.rank)} ${Icon.get(this.suit)}`;
     this.setId();
     this.setPoints();
   }
 
-  get points() {
-    return this.#points;
+  public get id(): string {
+    return this.#id;
   }
 
-  get isAce() {
-    return this.#isAce;
+  get points() {
+    return this.#points;
   }
 
   get isHidden() {
@@ -159,7 +157,7 @@ export class Card extends Number {
   }
 
   setAce(type: "high" | "low") {
-    if (!this.#isAce) {
+    if (this.rank !== Rank.Ace) {
       throw new Error("Card is not an Ace");
     }
 
@@ -179,7 +177,7 @@ export class Card extends Number {
       : this.#name.replace(/\s/g, "-").toLowerCase();
     const slot = this.handIndex > -1 && `slot-${this.handIndex}`;
     const segments = [owner, name, slot].filter(Boolean);
-    this.id = segments.join("-");
+    this.#id = segments.join("-");
     return this;
   }
 
@@ -195,6 +193,62 @@ export class Card extends Number {
       throw new Error("Invalid card");
     }
     return (Math.floor(card / 13) * 13) as number;
+  }
+
+  /**
+   * Returns the Unicode playing card character for a card number.
+   *
+   * A card number should be between 0 and 51 (inclusive), where:
+   * - The suit is determined by flooring the number divided by 13:
+   *   Clubs:   0–12
+   *   Diamonds:13–25
+   *   Hearts:  26–38
+   *   Spades:  39–51
+   *
+   * For Unicode, each suit has a base code point:
+   * - Spades:   U+1F0A1 (for Ace) to U+1F0AE (for King)
+   * - Hearts:   U+1F0B1 to U+1F0BE
+   * - Diamonds: U+1F0C1 to U+1F0CE
+   * - Clubs:    U+1F0D1 to U+1F0DE
+   *
+   * Note: The Knight card (C) is omitted from a standard 52-card deck.
+   * If the rank is Queen or higher (i.e. Queen, or King),
+   * we add 1 to skip the Knight’s code point.
+   *
+   * @param card - The numerical representation of the card.
+   * @returns The Unicode character for the card.
+   */
+  static toUnicode(card: number): string {
+    if (card < 0 || card > 51) {
+      throw new Error("Invalid card number, must be between 0 and 51.");
+    }
+
+    // Determine suit and rank.
+    const suit = Card.toSuit(card);
+    const rank = card - suit;
+
+    // Determine the base code point based on suit.
+    let base: number;
+    switch (suit) {
+      case Suit.Clubs:
+        base = 0x1f0d1;
+        break;
+      case Suit.Diamonds:
+        base = 0x1f0c1;
+        break;
+      case Suit.Hearts:
+        base = 0x1f0b1;
+        break;
+      case Suit.Spades:
+        base = 0x1f0a1;
+        break;
+      default:
+        throw new Error("Invalid suit");
+    }
+    // For ranks 0 (Ace) to 10 (Jack), no adjustment is needed.
+    // For Queen (11), and King (12) adjust by +1 (skip the Knight).
+    const offset = rank < 11 ? rank : rank + 1;
+    return String.fromCodePoint(base + offset);
   }
 }
 
