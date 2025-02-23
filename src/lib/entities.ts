@@ -70,6 +70,7 @@ export const titleScreen: [
     layer: LAYER.GAME,
     position: "eyeline",
     style: {
+      textAlign: "center",
       color: Palette.Yellow,
       maxWidth: "full",
       fontSize: 128,
@@ -93,6 +94,7 @@ export const titleScreen: [
     delay: 12,
     offsetY: 0.025,
     style: {
+      textAlign: "center",
       color: Palette.Yellow,
       maxWidth: "title",
       fontSize: 48,
@@ -233,7 +235,7 @@ export const scoreText: TextEntity = {
   layer: LAYER.UI,
   easing: "linear",
   style: {
-    textAlign: "center",
+    textAlign: "left",
     color: Palette.White,
     maxWidth: "full",
     fontSize: 32,
@@ -283,4 +285,3 @@ export const animatedCardSprite: AnimatedSpriteEntity = {
     { x: 512, y: 4992 },
   ],
 };
-

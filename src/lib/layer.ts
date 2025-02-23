@@ -20,7 +20,7 @@ export class Layer extends Map<string, Entity> {
     string,
     { width: number; height: number; x: number; y: number }
   > = new Map();
-  #cache = new Map<string, ImageBitmap>();
+  #cache = new Map<string, OffscreenCanvas>();
 
   constructor(
     private id: LAYER,
@@ -70,7 +70,7 @@ export class Layer extends Map<string, Entity> {
 
   renderText(entity: TextEntity, time: number) {
     this.#ctx.textBaseline = "top";
-    this.#ctx.textAlign = entity.style.textAlign || "start";
+    this.#ctx.textAlign = "center";
     this.#ctx.fillStyle = rgb(Palette.White);
 
     const fontSize = this.getFontSize(entity);
@@ -81,7 +81,7 @@ export class Layer extends Map<string, Entity> {
     let opacity = entity.opacity?.end ?? 1;
     let translateX = entity.translateX?.end ?? 0;
     let translateY = entity.translateY?.end ?? 0;
-    // let kerning = entity.kerning?.end ?? 0;
+    let kerning = entity.kerning?.end ?? 0;
 
     if (entity.progress < 1) {
       if (entity.easing === "linear") {
@@ -108,9 +108,9 @@ export class Layer extends Map<string, Entity> {
       if (entity.opacity) {
         opacity = lerp(entity.opacity.start, entity.opacity.end, easing);
       }
-      // if (entity.kerning) {
-      //   kerning = lerp(entity.kerning.start, entity.kerning.end, easing);
-      // }
+      if (entity.kerning) {
+        kerning = lerp(entity.kerning.start, entity.kerning.end, easing);
+      }
     }
 
     const { width, height } = this.getTextDimensions(entity.text, this.#ctx);
@@ -123,6 +123,10 @@ export class Layer extends Map<string, Entity> {
 
     entity.x = pos.x;
     entity.y = pos.y;
+
+    if (entity.style.textAlign !== "left") {
+      entity.x += width / 2;
+    }
 
     if (entity.float && entity.float.x !== 0) {
       translateX += Math.sin(time * entity.float.speed) * entity.float.x;
@@ -152,6 +156,8 @@ export class Layer extends Map<string, Entity> {
     entity.x += translateX;
     entity.y += translateY;
 
+    this.#ctx.letterSpacing = `${kerning}px`;
+
     if (entity.style.shadow) {
       const shadowOffset = entity.progress < 1 ? 0 : translateY;
       this.#ctx.strokeStyle = rgba(entity.style.shadow.color, opacity);
@@ -169,18 +175,17 @@ export class Layer extends Map<string, Entity> {
       );
     }
 
-    // this.#ctx.letterSpacing = `${kerning}px`;
-
     if (entity.style.stroke) {
       this.#ctx.strokeStyle = rgba(entity.style.stroke.color, opacity);
       this.#ctx.lineWidth = fontSize / entity.style.stroke.width;
       this.#ctx.strokeText(entity.text, entity.x, entity.y);
     }
+
     this.#ctx.fillStyle = rgba(entity.style.color, opacity);
     this.#ctx.fillText(entity.text, entity.x, entity.y);
   }
 
-  getCachedSprite(entity: SpriteEntity | AnimatedSpriteEntity): ImageBitmap {
+  getCachedSprite(entity: SpriteEntity | AnimatedSpriteEntity) {
     const image = this.spritesheets.get(entity.src);
     if (!image) {
       throw new Error(`Image not found: ${entity.src}`);
@@ -214,9 +219,9 @@ export class Layer extends Map<string, Entity> {
       entity.spriteWidth,
       entity.spriteHeight
     );
-    const bitmap = offscreenCanvas.transferToImageBitmap();
-    this.#cache.set(id, bitmap);
-    return bitmap;
+    // const bitmap = offscreenCanvas.transferToImageBitmap();
+    this.#cache.set(id, offscreenCanvas);
+    return offscreenCanvas;
   }
 
   getSpriteId(entity: SpriteEntity | AnimatedSpriteEntity) {
@@ -453,4 +458,3 @@ export class Layer extends Map<string, Entity> {
     this.#ctx.scale(ratio, ratio);
   }
 }
-
