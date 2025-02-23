@@ -386,7 +386,7 @@ export class Renderer {
         card.handIndex * (isDealer ? -128 : 128),
       offsetY: isDealer
         ? -cardSprite.spriteHeight / 2 + Math.random() * 64
-        : cardSprite.spriteHeight / 2 + Math.random() * -128,
+        : cardSprite.spriteHeight / 2 + -64 + Math.random() * -64,
       sprites: [
         {
           x: card.isHidden
