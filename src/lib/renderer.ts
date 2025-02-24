@@ -22,7 +22,6 @@ import {
   TextEntity,
   TimerEntityProps,
 } from "./types";
-import { rgb } from "./utils";
 import { Hand, Status } from "./hand";
 import { Debug } from "./debug";
 import { Counter } from "./counter";
@@ -45,7 +44,7 @@ export class Renderer {
   constructor(
     private tickRate = TICK_RATE,
     private baseAnimSpeed = ANIMATION_SPEED,
-    private debug = new Debug("Renderer", rgb(Palette.Orange))
+    private debug = new Debug("Renderer", Palette.Orange)
   ) {}
 
   public async loadFont(family: string, url: string): Promise<void> {

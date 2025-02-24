@@ -28,7 +28,7 @@ export class TimerEntity extends Entity<
   constructor(
     entity: TimerEntityProps,
     scaleFactor: number,
-    debug = new Debug("TimerEntity", rgb(Palette.LightGrey))
+    debug = new Debug("TimerEntity", Palette.LightGrey)
   ) {
     super(
       {

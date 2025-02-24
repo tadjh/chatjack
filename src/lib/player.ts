@@ -2,7 +2,6 @@ import { Card } from "./card";
 import { Palette } from "./constants";
 import { Debug } from "./debug";
 import { Hand } from "./hand";
-import { rgb } from "./utils";
 
 export class Player {
   #hasSplit = false;
@@ -13,7 +12,7 @@ export class Player {
     public readonly name = "Player",
     public readonly seat = 1,
     public readonly role = Role.Player,
-    public debug = new Debug(name, rgb(Palette.Red))
+    public debug = new Debug(name, Palette.Red)
   ) {
     this.#hands = [new Hand(this.name)];
   }

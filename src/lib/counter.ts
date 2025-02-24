@@ -1,6 +1,5 @@
 import { Palette } from "./constants";
 import { Debug } from "./debug";
-import { rgb } from "./utils";
 
 export class Counter {
   #current = 0;
@@ -9,7 +8,7 @@ export class Counter {
     private name: string,
     private targetCount: number,
     private callback: () => void,
-    private debug = new Debug("Counter", rgb(Palette.DarkGrey))
+    private debug = new Debug("Counter", Palette.DarkGrey)
   ) {}
 
   get current() {

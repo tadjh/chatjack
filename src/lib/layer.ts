@@ -23,7 +23,7 @@ export class Layer extends Map<string, EntityInterface> {
     private id: LAYER,
     private canvas: HTMLCanvasElement,
     private spritesheets: Map<string, HTMLImageElement>,
-    private debug = new Debug(id, rgb(Palette.Tan))
+    private debug = new Debug(id, Palette.Tan)
   ) {
     super();
     const ctx = canvas.getContext("2d");

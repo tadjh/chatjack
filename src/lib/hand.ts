@@ -1,7 +1,6 @@
 import { Card, Rank } from "./card";
 import { Palette } from "./constants";
 import { Debug } from "./debug";
-import { rgb } from "./utils";
 
 export type Status = "playing" | "busted" | "blackjack" | "stand" | "split";
 
@@ -14,7 +13,7 @@ export class Hand extends Array<Card> {
   constructor(
     owner: string,
     name = `${owner}'s Hand`,
-    private debug = new Debug(name, rgb(Palette.Yellow))
+    private debug = new Debug(name, Palette.Yellow)
   ) {
     super();
     this.#owner = owner;

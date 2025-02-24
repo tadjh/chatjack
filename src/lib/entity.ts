@@ -2,7 +2,6 @@ import { Palette } from "./constants";
 import { Debug } from "./debug";
 import { FPS } from "./renderer";
 import { AnimationPhase, AnimationSpec, LAYER, Position } from "./types";
-import { clamp, rgb } from "./utils";
 
 type EntityType = "text" | "sprite" | "animated-sprite" | "timer";
 
@@ -15,6 +14,7 @@ interface EntityProps<
   layer: LAYER;
   position?: Position;
 }
+import { clamp } from "./utils";
 
 export abstract class Entity<
   Phase extends string,
@@ -45,7 +45,7 @@ export abstract class Entity<
 
   constructor(
     entity: EntityProps<Phase, Props>,
-    debug = new Debug("Entity", rgb(Palette.Black))
+    debug = new Debug("Entity", Palette.Black)
   ) {
     this.id = entity.id;
     this.type = entity.type;
