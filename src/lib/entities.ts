@@ -1,5 +1,11 @@
 import { Palette, IMAGE, FONT } from "./constants";
-import { TextEntity, AnimatedSpriteEntity, SpriteEntity, LAYER } from "./types";
+import {
+  TextEntity,
+  AnimatedSpriteEntity,
+  SpriteEntity,
+  LAYER,
+  TimerEntity,
+} from "./types";
 
 const SPRITE_WIDTH = 256;
 const SPRITE_HEIGHT = 384;
@@ -278,4 +284,18 @@ export const animatedCardSprite: AnimatedSpriteEntity = {
     { x: 256, y: 4992 },
     { x: 512, y: 4992 },
   ],
+};
+export const timerEntity: TimerEntity = {
+  id: "turn-timer",
+  type: "timer",
+  layer: LAYER.GAME,
+  easing: "linear",
+  position: "top right",
+  color: Palette.White,
+  background: Palette.DarkestGreen,
+  radius: 24,
+  duration: 10,
+  delay: 2,
+  angle: { start: 0, end: 360 },
+  opacity: { start: 0, end: 1 },
 };

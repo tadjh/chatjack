@@ -5,6 +5,7 @@ import {
   animatedCardSprite,
   titleScreen,
   scoreText,
+  timerEntity,
 } from "./entities";
 import { Card } from "./card";
 import { Fonts, Palette, Images } from "./constants";
@@ -19,10 +20,12 @@ import {
   SpriteEntity,
   State,
   TextEntity,
+  TimerEntity,
 } from "./types";
 import { isGameroverState, rgb } from "./utils";
 import { Hand, Status } from "./hand";
 import { Debug } from "./debug";
+import { Counter } from "./counter";
 
 const FPS = 12;
 const TICK_RATE = 1000 / FPS;
@@ -35,6 +38,7 @@ export class Renderer {
   #holeCardId = "";
   #hasDealt = false;
   #spritesheets: Map<string, HTMLImageElement> = new Map();
+  #counter: Counter | null = null;
 
   constructor(
     private tickRate = TICK_RATE,
@@ -141,21 +145,12 @@ export class Renderer {
 
   private render() {
     this.getLayer(LAYER.GAME).render(this.#time);
-
-    //   // TODO Find a way to mathmetically determine when to reverse action text animation
-    //   if (layer.has(actionText.id)) {
-    //     const action = layer.get(actionText.id)! as TextEntity;
-    //     if (action.progress === 1 && this.#showActionText !== "done") {
-    //       this.updateActionText();
-    //     }
-    //   }
   }
 
   public resizeCanvas = () => {
     for (const layer of this.#layers.values()) {
-      layer.resize();
+      layer.resize(this.#time);
     }
-    // this.drawCanvas();
   };
 
   // The game loop updates animation progress and redraws the canvas.
@@ -166,7 +161,7 @@ export class Renderer {
 
       const layer = this.getLayer(LAYER.GAME);
 
-      for (const [, entity] of layer) {
+      for (const entity of layer.values()) {
         if (entity.delay && entity.delay > 0) {
           entity.delay -= 1;
           continue;
@@ -222,6 +217,9 @@ export class Renderer {
     this.debug.log("Canvas resetting");
     this.clearAllLayers();
     this.#hasDealt = false;
+    if (this.#counter) {
+      this.clearTimer();
+    }
   }
 
   public update({
@@ -252,8 +250,8 @@ export class Renderer {
         }
         this.#hasDealt = true;
         this.clearAllLayers();
-        this.createHands(dealer, player);
         this.createScores(dealer, player);
+        this.createHands(dealer, player);
         break;
       case State.PlayerHit:
       case State.PlayerBust:
@@ -280,6 +278,31 @@ export class Renderer {
     }
 
     this.getLayer(LAYER.UI).render(this.#time);
+  }
+
+  private createTimer = () => {
+    console.log("Creating timer");
+
+    const entity: TimerEntity = {
+      ...timerEntity,
+      progress: 0,
+      opacity: { start: 1, end: 0 },
+      speed: 1 / (FPS * timerEntity.duration),
+      onEnd: () => {
+        console.log("Timer has finished animating");
+        // this.clearEntity(timerEntity);
+      },
+    };
+
+    setTimeout(() => {
+      this.debug.log(`Creating timer: ${entity.id}`);
+      this.setEntity(entity);
+    }, entity.delay * 1000);
+  };
+
+  private clearTimer() {
+    this.#counter?.destroy();
+    this.clearEntity(timerEntity);
   }
 
   private createScores(dealer: Dealer, player: Player) {
@@ -371,7 +394,12 @@ export class Renderer {
     }
   }
 
-  private createCard(card: Card, delay = 0, status: Status) {
+  private createCard(
+    card: Card,
+    delay = 0,
+    status: Status,
+    callback?: () => void
+  ) {
     const isDealer = card.owner === "Dealer";
     const entity: SpriteEntity = {
       ...cardSprite,
@@ -404,6 +432,10 @@ export class Renderer {
           : cardSprite.spriteHeight * 2,
         end: 0,
       },
+      onEnd: () => {
+        this.debug.log(`Card ${card.id} has finished animating`);
+        if (callback) callback();
+      },
     };
 
     this.debug.log(
@@ -418,10 +450,20 @@ export class Renderer {
     const dealerHand = dealer.hand;
     const playerHand = player.hand;
 
+    const counter = new Counter(
+      "create-hands",
+      dealerHand.length + playerHand.length,
+      this.createTimer
+    );
+
+    const onEnd = counter.tick;
+
+    this.#counter = counter;
+
     this.#holeCardId = dealer.hand[1].id;
     for (let i = 0; i < dealer.hand.length; i++) {
-      this.createCard(playerHand[i], count++ * delay, "playing");
-      this.createCard(dealerHand[i], count++ * delay, "playing");
+      this.createCard(playerHand[i], count++ * delay, "playing", onEnd);
+      this.createCard(dealerHand[i], count++ * delay, "playing", onEnd);
     }
 
     if (playerHand.status === "blackjack") {

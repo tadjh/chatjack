@@ -28,7 +28,7 @@ export type Position =
 
 interface BaseEntity {
   id: string;
-  type: "text" | "sprite" | "animated-sprite";
+  type: "text" | "sprite" | "animated-sprite" | "timer";
   progress?: number;
   easing: "linear" | "easeOutCubic" | "easeOutQuint";
   layer: LAYER;
@@ -114,7 +114,32 @@ export interface AnimatedSpriteEntity extends BaseSprite {
   spriteIndex: number;
 }
 
-export type Entity = TextEntity | SpriteEntity | AnimatedSpriteEntity;
+export interface TimerEntity extends BaseEntity {
+  type: "timer";
+  radius: number;
+  angle: {
+    start: number;
+    end: number;
+  };
+  color: Vector3;
+  background: Vector3;
+  duration: number;
+  speed?: number;
+  delay: number;
+  counterclockwise?: boolean;
+  // anticlockwise: boolean;
+  // fill: boolean;
+  // stroke: {
+  //   color: [number, number, number];
+  //   width: number;
+  // };
+}
+
+export type Entity =
+  | TextEntity
+  | SpriteEntity
+  | AnimatedSpriteEntity
+  | TimerEntity;
 
 export enum State {
   Init,
