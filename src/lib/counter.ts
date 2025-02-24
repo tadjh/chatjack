@@ -9,7 +9,7 @@ export class Counter {
     private name: string,
     private targetCount: number,
     private callback: () => void,
-    private debug = new Debug(name, rgb(Palette.DarkGrey))
+    private debug = new Debug("Counter", rgb(Palette.DarkGrey))
   ) {}
 
   get current() {

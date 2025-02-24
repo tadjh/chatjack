@@ -1,20 +1,15 @@
-import { Palette } from "./constants";
+import { BASELINE_WIDTH, PADDING, Palette } from "./constants";
 import { Debug } from "./debug";
 import {
   AnimatedSpriteEntity,
-  Entity,
+  EntityInterface,
   LAYER,
-  Position,
   SpriteEntity,
   TextEntity,
-  TimerEntity,
 } from "./types";
-import { rgb, font, easeOut, lerp, clamp, rgba } from "./utils";
+import { rgb, font, easeOut, lerp, clamp, rgba, getPosition } from "./utils";
 
-const BASELINE_WIDTH = 800;
-const PADDING = 0.02;
-
-export class Layer extends Map<string, Entity> {
+export class Layer extends Map<string, EntityInterface> {
   #ctx: CanvasRenderingContext2D;
   #scaleFactor = window.innerWidth / BASELINE_WIDTH;
   #padding = window.innerWidth * PADDING;
@@ -63,7 +58,7 @@ export class Layer extends Map<string, Entity> {
           this.renderSprite(entity, time);
           break;
         case "timer":
-          this.renderTimer(entity);
+          entity.render(this.#ctx);
           break;
         default:
           break;
@@ -136,7 +131,7 @@ export class Layer extends Map<string, Entity> {
     }
 
     const { width, height } = this.getTextDimensions(entity.text, this.#ctx);
-    const pos = Layer.getPosition(entity.position, width, height);
+    const pos = getPosition(entity.position, width, height);
 
     if (entity.style.maxWidth !== "full") {
       const dimensions = this.#sizeMap.get(entity.style.maxWidth)!;
@@ -303,7 +298,7 @@ export class Layer extends Map<string, Entity> {
     const scaledWidth = entity.spriteWidth * scaleFactor;
     const scaledHeight = entity.spriteHeight * scaleFactor;
 
-    const pos = Layer.getPosition(entity.position, scaledWidth, scaledHeight);
+    const pos = getPosition(entity.position, scaledWidth, scaledHeight);
     entity.x = pos.x + translateX + (entity.offsetX ?? 0) * scaleFactor;
     entity.y = pos.y + translateY + (entity.offsetY ?? 0) * scaleFactor;
 
@@ -345,56 +340,6 @@ export class Layer extends Map<string, Entity> {
     this.#ctx.restore();
   }
 
-  renderTimer(entity: TimerEntity) {
-    const radius = entity.radius * this.#scaleFactor;
-    const pos = Layer.getPosition(
-      entity.position,
-      radius * 2,
-      radius * 2,
-      this.#padding
-    );
-    entity.x = pos.x;
-    entity.y = pos.y + radius;
-    entity.progress = entity.progress ?? 0;
-
-    if (entity.background) {
-      this.#ctx.beginPath();
-      this.#ctx.moveTo(entity.x, entity.y);
-      this.#ctx.arc(entity.x, entity.y, radius * 1.15, 0, 2 * Math.PI, false);
-      this.#ctx.closePath();
-      this.#ctx.fillStyle = rgba(entity.background, 1);
-      this.#ctx.fill();
-    }
-
-    this.#ctx.beginPath();
-    this.#ctx.moveTo(entity.x, entity.y);
-    this.#ctx.arc(
-      entity.x,
-      entity.y,
-      radius * 1.05,
-      entity.angle.start - Math.PI / 2,
-      entity.angle.start + entity.progress * 2 * Math.PI - Math.PI / 2,
-      entity.counterclockwise || false
-    );
-    this.#ctx.closePath();
-    this.#ctx.fillStyle = rgba(Palette.Black, 1);
-    this.#ctx.fill();
-
-    this.#ctx.beginPath();
-    this.#ctx.moveTo(entity.x, entity.y);
-    this.#ctx.arc(
-      entity.x,
-      entity.y,
-      radius,
-      entity.angle.start - Math.PI / 2,
-      entity.angle.start + entity.progress * 2 * Math.PI - Math.PI / 2,
-      entity.counterclockwise || false
-    );
-    this.#ctx.closePath();
-    this.#ctx.fillStyle = rgba(entity.color, 1);
-    this.#ctx.fill();
-  }
-
   clearRect() {
     this.#ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
   }
@@ -411,65 +356,6 @@ export class Layer extends Map<string, Entity> {
         ? metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent
         : parseInt(ctx.font, 10); // fallback to using the font size as an approximation
     return { width, height };
-  }
-
-  static getPosition(
-    position: Position | undefined,
-    entityWidth: number,
-    entityHeight: number,
-    padding: number = 0
-  ): {
-    x: number;
-    y: number;
-  } {
-    switch (position) {
-      case "center":
-        return {
-          x: (window.innerWidth - entityWidth) / 2,
-          y: (window.innerHeight - entityHeight) / 2,
-        };
-      case "eyeline":
-        return {
-          x: (window.innerWidth - entityWidth) / 2,
-          y: window.innerHeight / 3 - entityHeight,
-        };
-      case "top":
-        return { x: (window.innerWidth - entityWidth) / 2, y: padding };
-      case "right":
-        return {
-          x: window.innerWidth - entityWidth / 2 - padding,
-          y: (window.innerHeight - entityHeight) / 2,
-        };
-      case "bottom":
-        return {
-          x: (window.innerWidth - entityWidth) / 2,
-          y: window.innerHeight - entityHeight - padding,
-        };
-      case "left":
-        return {
-          x: entityWidth / 2 + padding,
-          y: (window.innerHeight - entityHeight) / 2,
-        };
-      case "top left":
-        return { x: entityWidth / 2 + padding, y: padding };
-      case "top right":
-        return {
-          x: window.innerWidth - entityWidth / 2 - padding,
-          y: padding,
-        };
-      case "bottom left":
-        return {
-          x: entityWidth / 2 + padding,
-          y: window.innerHeight - entityHeight - padding,
-        };
-      case "bottom right":
-        return {
-          x: window.innerWidth - entityWidth / 2 - padding,
-          y: window.innerHeight - entityHeight - padding,
-        };
-      default:
-        return { x: padding, y: padding };
-    }
   }
 
   resize(time: number) {

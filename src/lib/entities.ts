@@ -4,7 +4,7 @@ import {
   AnimatedSpriteEntity,
   SpriteEntity,
   LAYER,
-  TimerEntity,
+  TimerEntityProps,
 } from "./types";
 
 const SPRITE_WIDTH = 256;
@@ -285,17 +285,28 @@ export const animatedCardSprite: AnimatedSpriteEntity = {
     { x: 512, y: 4992 },
   ],
 };
-export const timerEntity: TimerEntity = {
+
+export const turnTimer: TimerEntityProps = {
   id: "turn-timer",
-  type: "timer",
   layer: LAYER.GAME,
-  easing: "linear",
   position: "top right",
   color: Palette.White,
-  background: Palette.DarkestGreen,
+  backgroundColor: Palette.DarkestGreen,
   radius: 24,
-  duration: 10,
-  delay: 2,
-  angle: { start: 0, end: 360 },
-  opacity: { start: 0, end: 1 },
+  startAngle: 0,
+  rotation: -90,
+  phases: [
+    {
+      name: "zoom-in",
+      duration: 1,
+    },
+    {
+      name: "countdown",
+      duration: 30,
+    },
+    {
+      name: "zoom-out",
+      duration: 0.5,
+    },
+  ],
 };

@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { GameoverStates, State, Vector3 } from "./types";
+import { Position, Vector3 } from "./types";
 
 /**
  * Merges conditional class names.
@@ -33,18 +33,18 @@ export function font(size: number, font: string): string {
  * @param alpha - The alpha (opacity) value.
  * @returns A string usable in CSS representing an RGBA color.
  */
-export function rgba(color: Vector3, alpha: number): string {
+export function rgba(color: Vector3, alpha: number = 1): string {
   return `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${alpha})`;
 }
 
 /**
- * Returns an RGB color value with full opacity.
+ * Converts an RGB vector to an RGB string.
  *
  * @param color - A Vector3 representing the red, green, and blue components.
  * @returns A string usable in CSS representing an RGB color.
  */
 export function rgb(color: Vector3): string {
-  return rgba(color, 1);
+  return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
 }
 
 /**
@@ -58,6 +58,22 @@ export function rgb(color: Vector3): string {
  */
 export function easeOut(x: number, y: number): number {
   return 1 - Math.pow(1 - x, y);
+}
+
+/**
+ * Applies an "ease out back" easing function to the given normalized value.
+ *
+ * This function creates an animation effect where the transition overshoots slightly
+ * before smoothly easing into the final state.
+ *
+ * @param x - The normalized input value (typically between 0 and 1).
+ * @returns The eased output value.
+ */
+export function easeOutBack(x: number): number {
+  const c1 = 1.70158;
+  const c3 = c1 + 1;
+
+  return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
 }
 
 /**
@@ -95,19 +111,74 @@ export function clamp(value: number, min: number, max: number): number {
 }
 
 /**
- * Checks if a state is a gameover state.
+ * Converts degrees to radians.
  *
- * @param state - The state to check.
- * @returns `true` if the state is a gameover state, `false` otherwise.
+ * @param degrees - The angle in degrees.
+ * @returns The angle in radians.
  */
-export function isGameroverState(state: State): state is GameoverStates {
-  return (
-    state === State.PlayerBust ||
-    state === State.DealerBust ||
-    state === State.Push ||
-    state === State.PlayerBlackjack ||
-    state === State.DealerBlackjack ||
-    state === State.PlayerWin ||
-    state === State.DealerWin
-  );
+export function radians(degrees: number): number {
+  return (degrees * Math.PI) / 180;
+}
+
+export function getPadding(): number {
+  return window.innerWidth / 50;
+}
+
+export function getPosition(
+  position: Position | undefined,
+  entityWidth: number,
+  entityHeight: number
+): {
+  x: number;
+  y: number;
+} {
+  const padding = getPadding();
+  switch (position) {
+    case "center":
+      return {
+        x: (window.innerWidth - entityWidth) / 2,
+        y: (window.innerHeight - entityHeight) / 2,
+      };
+    case "eyeline":
+      return {
+        x: (window.innerWidth - entityWidth) / 2,
+        y: window.innerHeight / 3 - entityHeight,
+      };
+    case "top":
+      return { x: (window.innerWidth - entityWidth) / 2, y: padding };
+    case "right":
+      return {
+        x: window.innerWidth - entityWidth / 2 - padding,
+        y: (window.innerHeight - entityHeight) / 2,
+      };
+    case "bottom":
+      return {
+        x: (window.innerWidth - entityWidth) / 2,
+        y: window.innerHeight - entityHeight - padding,
+      };
+    case "left":
+      return {
+        x: entityWidth / 2 + padding,
+        y: (window.innerHeight - entityHeight) / 2,
+      };
+    case "top left":
+      return { x: entityWidth / 2 + padding, y: padding };
+    case "top right":
+      return {
+        x: window.innerWidth - entityWidth / 2 - padding,
+        y: padding,
+      };
+    case "bottom left":
+      return {
+        x: entityWidth / 2 + padding,
+        y: window.innerHeight - entityHeight - padding,
+      };
+    case "bottom right":
+      return {
+        x: window.innerWidth - entityWidth / 2 - padding,
+        y: window.innerHeight - entityHeight - padding,
+      };
+    default:
+      return { x: padding, y: padding };
+  }
 }

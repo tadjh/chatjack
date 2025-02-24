@@ -5,29 +5,30 @@ import {
   animatedCardSprite,
   titleScreen,
   scoreText,
-  timerEntity,
+  turnTimer,
 } from "./entities";
 import { Card } from "./card";
-import { Fonts, Palette, Images } from "./constants";
+import { Fonts, Palette, Images, BASELINE_WIDTH } from "./constants";
 import { Dealer } from "./dealer";
 import { Layer } from "./layer";
 import { Player, Role } from "./player";
 import {
   AnimatedSpriteEntity,
   Canvases,
-  Entity,
+  EntityInterface,
   LAYER,
   SpriteEntity,
   State,
   TextEntity,
-  TimerEntity,
+  TimerEntityProps,
 } from "./types";
-import { isGameroverState, rgb } from "./utils";
+import { rgb } from "./utils";
 import { Hand, Status } from "./hand";
 import { Debug } from "./debug";
 import { Counter } from "./counter";
+import { TimerEntity } from "./entity.timer";
 
-const FPS = 12;
+export const FPS = 12;
 const TICK_RATE = 1000 / FPS;
 const ANIMATION_SPEED = 1 / 12;
 
@@ -39,6 +40,7 @@ export class Renderer {
   #hasDealt = false;
   #spritesheets: Map<string, HTMLImageElement> = new Map();
   #counter: Counter | null = null;
+  #scaleFactor = window.innerWidth / BASELINE_WIDTH;
 
   constructor(
     private tickRate = TICK_RATE,
@@ -123,11 +125,11 @@ export class Renderer {
     this.#layers.forEach((layer) => layer.clear());
   }
 
-  private getEntity<T extends Entity>(entity: T) {
+  private getEntity<T extends EntityInterface>(entity: T) {
     return this.getLayer(entity.layer).get(entity.id) as T | undefined;
   }
 
-  private getEntityById<T extends Entity>(layer: LAYER, id: string) {
+  private getEntityById<T extends EntityInterface>(layer: LAYER, id: string) {
     return this.getLayer(layer).get(id) as T | undefined;
   }
 
@@ -135,22 +137,24 @@ export class Renderer {
     return this.getLayer(layer).has(id);
   }
 
-  private setEntity(entity: Entity) {
+  private setEntity(entity: EntityInterface) {
     this.getLayer(entity.layer).set(entity.id, entity);
   }
 
-  private clearEntity(entity: Entity) {
-    this.getLayer(entity.layer).delete(entity.id);
+  private clearEntity(layer: LAYER, id: string) {
+    this.getLayer(layer).delete(id);
   }
 
   private render() {
     this.getLayer(LAYER.GAME).render(this.#time);
   }
 
-  public resizeCanvas = () => {
+  public resize = () => {
     for (const layer of this.#layers.values()) {
       layer.resize(this.#time);
     }
+
+    this.#scaleFactor = window.innerWidth / BASELINE_WIDTH;
   };
 
   // The game loop updates animation progress and redraws the canvas.
@@ -162,6 +166,11 @@ export class Renderer {
       const layer = this.getLayer(LAYER.GAME);
 
       for (const entity of layer.values()) {
+        if (entity.type === "timer") {
+          entity.update();
+          continue;
+        }
+
         if (entity.delay && entity.delay > 0) {
           entity.delay -= 1;
           continue;
@@ -205,12 +214,12 @@ export class Renderer {
     this.#lastTick = performance.now();
     this.debug.log("Canvas mounting");
     requestAnimationFrame(this.step);
-    window.addEventListener("resize", this.resizeCanvas);
+    window.addEventListener("resize", this.resize);
   }
 
   public stop() {
     this.debug.log("Canvas unmounting");
-    window.removeEventListener("resize", this.resizeCanvas);
+    window.removeEventListener("resize", this.resize);
   }
 
   private reset() {
@@ -218,7 +227,8 @@ export class Renderer {
     this.clearAllLayers();
     this.#hasDealt = false;
     if (this.#counter) {
-      this.clearTimer();
+      this.#counter.destroy();
+      this.#counter = null;
     }
   }
 
@@ -233,7 +243,6 @@ export class Renderer {
     state: State;
     isGameover: boolean;
   }) {
-    // TODO Remove
     this.debug.log("Animating State:", State[state]);
 
     if (isGameover) {
@@ -280,30 +289,11 @@ export class Renderer {
     this.getLayer(LAYER.UI).render(this.#time);
   }
 
-  private createTimer = () => {
-    console.log("Creating timer");
-
-    const entity: TimerEntity = {
-      ...timerEntity,
-      progress: 0,
-      opacity: { start: 1, end: 0 },
-      speed: 1 / (FPS * timerEntity.duration),
-      onEnd: () => {
-        console.log("Timer has finished animating");
-        // this.clearEntity(timerEntity);
-      },
-    };
-
-    setTimeout(() => {
-      this.debug.log(`Creating timer: ${entity.id}`);
-      this.setEntity(entity);
-    }, entity.delay * 1000);
+  private createTimer = (timer: TimerEntityProps) => {
+    this.debug.log(`Creating timer: ${timer.id}`);
+    const entity = new TimerEntity(timer, this.#scaleFactor);
+    this.setEntity(entity);
   };
-
-  private clearTimer() {
-    this.#counter?.destroy();
-    this.clearEntity(timerEntity);
-  }
 
   private createScores(dealer: Dealer, player: Player) {
     // TODO Handle split hands
@@ -433,14 +423,12 @@ export class Renderer {
         end: 0,
       },
       onEnd: () => {
-        this.debug.log(`Card ${card.id} has finished animating`);
+        this.debug.log(`Finishing animation: ${card.id}`);
         if (callback) callback();
       },
     };
 
-    this.debug.log(
-      `Creating ${entity.id}: { x: ${entity.sprites[0].x}, y: ${entity.sprites[0].y} }`
-    );
+    this.debug.log(`Creating ${entity.id}`);
     this.setEntity(entity);
   }
 
@@ -453,7 +441,15 @@ export class Renderer {
     const counter = new Counter(
       "create-hands",
       dealerHand.length + playerHand.length,
-      this.createTimer
+      () =>
+        this.createTimer({
+          ...turnTimer,
+          onEnd: (layer: LAYER, id: string) => {
+            this.#counter?.destroy();
+            this.#counter = null;
+            this.clearEntity(layer, id);
+          },
+        })
     );
 
     const onEnd = counter.tick;
@@ -550,7 +546,7 @@ export class Renderer {
       entity.translateY = { start: 0, end: -50 };
     }
     entity.onEnd = () => {
-      this.clearEntity(actionText);
+      this.clearEntity(actionText.layer, actionText.id);
     };
     // entity.kerning = { start: 0, end: 40 };
     this.debug.log(`Updating ${entity.id}:`, entity.text);
@@ -626,7 +622,7 @@ export class Renderer {
         { x: cardX + 512, y: cardY },
       ],
     };
-    this.clearEntity(entity);
+    this.clearEntity(entity.layer, entity.id);
     this.debug.log(
       `Creating ${newHoleCard.id}: { x: ${cardX + 512}, y: ${cardY} }`
     );
@@ -634,10 +630,6 @@ export class Renderer {
   }
 
   private createGameoverText(state: State) {
-    if (!isGameroverState(state)) {
-      throw new Error(`State ${state} is not a gameover state`);
-    }
-
     let title;
     let subtitle;
     switch (state) {

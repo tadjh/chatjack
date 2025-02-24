@@ -1,6 +1,8 @@
 import { Vector3 } from "./types";
 
 const isDevelopment = import.meta.env.MODE === "development";
+export const PADDING = 2 / 100;
+export const BASELINE_WIDTH = 800;
 
 export const Palette: Record<string, Vector3> = {
   White: [255, 255, 255], // "#ffffff"

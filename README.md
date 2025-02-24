@@ -8,6 +8,8 @@
 - TODO Create render order list
 - TODO show chat actions on the opposite side of the scores "!hit or !stand", hide when no longer chat's turn
 - TODO Split ui into dynamic-ui and static-ui
+- TODO Tests for utils.ts
+- TODO Timer duration from query parameters
 
 ## Quality of life
 

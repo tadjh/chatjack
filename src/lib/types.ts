@@ -1,4 +1,5 @@
 import { IMAGE } from "./constants";
+import { TimerEntity } from "./entity.timer";
 
 export type Vector3 = [number, number, number];
 
@@ -114,28 +115,7 @@ export interface AnimatedSpriteEntity extends BaseSprite {
   spriteIndex: number;
 }
 
-export interface TimerEntity extends BaseEntity {
-  type: "timer";
-  radius: number;
-  angle: {
-    start: number;
-    end: number;
-  };
-  color: Vector3;
-  background: Vector3;
-  duration: number;
-  speed?: number;
-  delay: number;
-  counterclockwise?: boolean;
-  // anticlockwise: boolean;
-  // fill: boolean;
-  // stroke: {
-  //   color: [number, number, number];
-  //   width: number;
-  // };
-}
-
-export type Entity =
+export type EntityInterface =
   | TextEntity
   | SpriteEntity
   | AnimatedSpriteEntity
@@ -159,11 +139,54 @@ export enum State {
   DealerWin,
 }
 
-export type GameoverStates =
-  | State.PlayerBust
-  | State.DealerBust
-  | State.Push
-  | State.PlayerBlackjack
-  | State.DealerBlackjack
-  | State.PlayerWin
-  | State.DealerWin;
+export interface AnimationPhase<
+  Phase extends string,
+  Props extends Record<string, number>,
+> {
+  name: Phase;
+  duration: number; // in seconds or ticks
+  easing?: (t: number) => Props;
+  // Function to compute the property value from a local progress (0 to 1)
+  interpolate?: (t: number) => Props;
+}
+
+export interface AnimationSpec<
+  Phase extends string,
+  Props extends Record<string, number>,
+> {
+  phases: AnimationPhase<Phase, Props>[];
+  props: Props;
+  // Optional overall callbacks:
+  onBegin?: (layer: LAYER, id: string) => void;
+  onEnd?: (layer: LAYER, id: string) => void;
+}
+export type TimerEntityPhaseTypes = "zoom-in" | "countdown" | "zoom-out";
+
+export type TimerEntityPhaseProps = {
+  angle: number;
+  radius: number;
+};
+
+interface AnimationPhases<T extends string, P extends Record<string, number>> {
+  phases: AnimationPhase<T, P>[];
+  props?: P;
+  // Optional overall callbacks:
+  onBegin?: (layer: LAYER, id: string) => void;
+  onEnd?: (layer: LAYER, id: string) => void;
+}
+
+export interface TimerEntityProps
+  extends AnimationPhases<TimerEntityPhaseTypes, TimerEntityPhaseProps> {
+  id: string;
+  layer: LAYER;
+  position: Position;
+  color: Vector3;
+  backgroundColor?: Vector3;
+  backgroundScale?: number;
+  strokeColor?: Vector3;
+  strokeScale?: number;
+  counterclockwise?: boolean;
+  radius: number;
+  startAngle: number;
+  rotation: number;
+}
