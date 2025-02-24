@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { Vector3 } from "./types";
+import { GameoverStates, State, Vector3 } from "./types";
 
 /**
  * Merges conditional class names.
@@ -92,4 +92,22 @@ export function lerp(start: number, end: number, t: number): number {
  */
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
+}
+
+/**
+ * Checks if a state is a gameover state.
+ *
+ * @param state - The state to check.
+ * @returns `true` if the state is a gameover state, `false` otherwise.
+ */
+export function isGameroverState(state: State): state is GameoverStates {
+  return (
+    state === State.PlayerBust ||
+    state === State.DealerBust ||
+    state === State.Push ||
+    state === State.PlayerBlackjack ||
+    state === State.DealerBlackjack ||
+    state === State.PlayerWin ||
+    state === State.DealerWin
+  );
 }

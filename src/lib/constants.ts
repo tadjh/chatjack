@@ -1,18 +1,9 @@
-import { GameoverStates, State, Vector3 } from "./types";
+import { Vector3 } from "./types";
 
-export const TITLE_TEXT = "ChatJack";
-export const SUBTITLE_TEXT = "Twitch Chat Plays Blackjack";
-const FPS = 12;
-export const TICK_RATE = 1000 / FPS;
-export const ANIMATION_SPEED = 1 / 24;
-export const FLOAT_SPEED = 1 / 6;
-export const FLOAT_AMPLITUDE = 3;
-export const SPRITE_WIDTH = 256;
-export const SPRITE_HEIGHT = 384;
 const isDevelopment = import.meta.env.MODE === "development";
 
 export const Palette: Record<string, Vector3> = {
-  White: [255, 255, 255],
+  White: [255, 255, 255], // "#ffffff"
   LightestGrey: [192, 203, 220], // "#c0cbdc"
   LightGrey: [139, 155, 180], // "#8b9bb4"
   Grey: [90, 105, 136], // "#5a6988"
@@ -70,37 +61,3 @@ export enum IMAGE {
 export const Images: Map<IMAGE, string> = new Map([
   [IMAGE.CARDS, `${isDevelopment ? "/src" : ""}/assets/sprites/cards.png`],
 ]);
-
-export const gameoverTitles: Record<
-  GameoverStates,
-  { title: string; subtitle: string }
-> = {
-  [State.PlayerBust]: {
-    title: "Chat Bust!",
-    subtitle: "Better luck next time!",
-  },
-  [State.DealerBust]: {
-    title: "Dealer Bust!",
-    subtitle: "How unfortunate...",
-  },
-  [State.Push]: {
-    title: "Push!",
-    subtitle: "No winner...",
-  },
-  [State.PlayerBlackjack]: {
-    title: "Blackjack!",
-    subtitle: "Chat Wins!",
-  },
-  [State.DealerBlackjack]: {
-    title: "Dealer hit 21!",
-    subtitle: "Better luck next time!",
-  },
-  [State.PlayerWin]: {
-    title: "Chat Wins!",
-    subtitle: "Your hand is stronger!",
-  },
-  [State.DealerWin]: {
-    title: "Dealer Wins!",
-    subtitle: "Better luck next time!",
-  },
-};

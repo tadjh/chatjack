@@ -7,14 +7,7 @@ import {
   scoreText,
 } from "./entities";
 import { Card } from "./card";
-import {
-  ANIMATION_SPEED,
-  Fonts,
-  gameoverTitles,
-  Palette,
-  Images,
-  TICK_RATE,
-} from "./constants";
+import { Fonts, Palette, Images } from "./constants";
 import { Dealer } from "./dealer";
 import { Layer } from "./layer";
 import { Player, Role } from "./player";
@@ -22,15 +15,18 @@ import {
   AnimatedSpriteEntity,
   Canvases,
   Entity,
-  GameoverStates,
   LAYER,
   SpriteEntity,
   State,
   TextEntity,
 } from "./types";
-import { rgb } from "./utils";
+import { isGameroverState, rgb } from "./utils";
 import { Hand, Status } from "./hand";
 import { Debug } from "./debug";
+
+const FPS = 12;
+const TICK_RATE = 1000 / FPS;
+const ANIMATION_SPEED = 1 / 12;
 
 export class Renderer {
   #layers: Map<LAYER, Layer> = new Map();
@@ -596,13 +592,44 @@ export class Renderer {
   }
 
   private createGameoverText(state: State) {
-    const titles = gameoverTitles[state as GameoverStates];
-
-    if (!titles) {
-      throw new Error("Gameover title not found");
+    if (!isGameroverState(state)) {
+      throw new Error(`State ${state} is not a gameover state`);
     }
 
-    const { title, subtitle } = titles;
+    let title;
+    let subtitle;
+    switch (state) {
+      case State.PlayerBust:
+        title = "Chat Bust!";
+        subtitle = "Better luck next time!";
+        break;
+      case State.DealerBust:
+        title = "Dealer Bust!";
+        subtitle = "How unfortunate...";
+        break;
+      case State.Push:
+        title = "Push!";
+        subtitle = "No winner...";
+        break;
+      case State.PlayerBlackjack:
+        title = "Blackjack!";
+        subtitle = "Chat Wins!";
+        break;
+      case State.DealerBlackjack:
+        title = "Dealer hit 21!";
+        subtitle = "Better luck next time!";
+        break;
+      case State.PlayerWin:
+        title = "Chat Wins!";
+        subtitle = "Your hand is stronger!";
+        break;
+      case State.DealerWin:
+        title = "Dealer Wins!";
+        subtitle = "Better luck next time!";
+        break;
+      default:
+        throw new Error(`Cannot create gameover text for state: ${state}`);
+    }
 
     for (const entity of gameoverText) {
       if (entity.id === "title") {

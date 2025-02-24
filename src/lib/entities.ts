@@ -1,13 +1,8 @@
-import {
-  TITLE_TEXT,
-  SUBTITLE_TEXT,
-  Palette,
-  SPRITE_HEIGHT,
-  SPRITE_WIDTH,
-  IMAGE,
-  FONT,
-} from "./constants";
+import { Palette, IMAGE, FONT } from "./constants";
 import { TextEntity, AnimatedSpriteEntity, SpriteEntity, LAYER } from "./types";
+
+const SPRITE_WIDTH = 256;
+const SPRITE_HEIGHT = 384;
 
 export const titleScreen: [
   AnimatedSpriteEntity,
@@ -65,7 +60,7 @@ export const titleScreen: [
   {
     id: "title",
     type: "text",
-    text: TITLE_TEXT,
+    text: "ChatJack",
     easing: "easeOutCubic",
     layer: LAYER.GAME,
     position: "eyeline",
@@ -88,7 +83,7 @@ export const titleScreen: [
   {
     id: "subtitle",
     type: "text",
-    text: SUBTITLE_TEXT,
+    text: "Twitch Chat Plays Blackjack",
     easing: "easeOutCubic",
     layer: LAYER.GAME,
     delay: 12,
@@ -211,7 +206,7 @@ export const actionText: TextEntity = {
   text: "",
   layer: LAYER.GAME,
   easing: "easeOutCubic",
-  speed: 1 / 12,
+  speed: 1 / 6,
   style: {
     color: Palette.Yellow,
     maxWidth: "full",
@@ -225,7 +220,6 @@ export const actionText: TextEntity = {
   opacity: { start: 0, end: 1 },
   translateY: { start: 50, end: 0 },
   // kerning: { start: 40, end: 0 },
-  float: { x: 0, y: 3, speed: 1 / 6 },
 };
 
 export const scoreText: TextEntity = {
