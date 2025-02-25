@@ -1,6 +1,5 @@
-import { BASELINE_WIDTH, PADDING, Palette } from "./constants";
+import { BASELINE_WIDTH, FPS, PADDING, Palette } from "./constants";
 import { Debug } from "./debug";
-import { FPS } from "./renderer";
 import {
   AnimationPhase,
   AnimationSpec,

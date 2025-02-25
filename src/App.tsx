@@ -1,9 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { useBlackjack } from "@/hooks/use-blackjack";
-import { useRenderer } from "@/hooks/use-renderer";
+import { useEngine } from "@/hooks/use-engine";
 
 function App() {
-  const { bgRef, gameRef, uiRef, rendererRef } = useRenderer();
+  const { bgRef, gameRef, uiRef, engineRef } = useEngine();
   const {
     dealer,
     player,
@@ -17,7 +17,7 @@ function App() {
     decide,
     restart,
     exit,
-  } = useBlackjack(rendererRef.current);
+  } = useBlackjack(engineRef.current);
 
   return (
     <>

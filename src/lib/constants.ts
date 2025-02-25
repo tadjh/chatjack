@@ -1,6 +1,7 @@
 import { Vector3 } from "./types";
 
 const isDevelopment = import.meta.env.MODE === "development";
+export const FPS = 12;
 export const PADDING = 2 / 100;
 export const BASELINE_WIDTH = 800;
 

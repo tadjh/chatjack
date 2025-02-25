@@ -8,7 +8,7 @@ import {
   turnTimer,
 } from "./entities";
 import { Card } from "./card";
-import { Fonts, Palette, Images } from "./constants";
+import { Fonts, Palette, Images, FPS } from "./constants";
 import { Dealer } from "./dealer";
 import { Layer } from "./layer";
 import { Player, Role } from "./player";
@@ -30,9 +30,7 @@ import { TextEntity } from "./entity.text";
 import { rgb } from "./utils";
 import { LayoutManager } from "./layout-manager";
 
-export const FPS = 12;
-
-export class Renderer {
+export class Engine {
   readonly fps: number;
   readonly tickRate: number;
   readonly baseAnimSpeed: number;
