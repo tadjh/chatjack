@@ -245,6 +245,7 @@ export class Engine {
   private reset() {
     this.debug.log("Canvas resetting");
     this.clearAllLayers();
+    this.loadTitleScreen();
     this.#hasDealt = false;
     if (this.#counter) {
       this.#counter.destroy();
@@ -272,6 +273,7 @@ export class Engine {
 
     switch (state) {
       case State.Init:
+        this.reset();
         break;
       case State.Dealing:
         if (this.#hasDealt) {

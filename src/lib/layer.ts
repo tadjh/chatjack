@@ -381,4 +381,9 @@ export class Layer extends Map<string, EntityInterface> {
     this.#ctx.scale(ratio, ratio);
     this.render(time);
   }
+
+  clear() {
+    super.clear();
+    this.clearRect();
+  }
 }

@@ -2,7 +2,6 @@
 
 - TODO Action text is not end of queue sometimes
 - TODO Natural blackjack tint needs to happen AFTER action text (callback)
-- TODO Exit doesn't return to title screen
 
 ## Development
 
