@@ -3,7 +3,7 @@ import { useBlackjack } from "@/hooks/use-blackjack";
 import { useEngine } from "@/hooks/use-engine";
 
 function App() {
-  const { bgRef, gameRef, uiRef, engineRef } = useEngine();
+  const { bgRef, gameRef, uiRef, engine } = useEngine();
   const {
     dealer,
     player,
@@ -17,7 +17,7 @@ function App() {
     decide,
     restart,
     exit,
-  } = useBlackjack(engineRef.current);
+  } = useBlackjack(engine);
 
   return (
     <>

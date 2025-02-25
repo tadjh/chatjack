@@ -1,10 +1,4 @@
-import {
-  BASELINE_HEIGHT,
-  BASELINE_WIDTH,
-  FPS,
-  PADDING,
-  Palette,
-} from "./constants";
+import { BASELINE_PADDING, FPS, Palette } from "./constants";
 import { Debug } from "./debug";
 import {
   AnimationPhase,
@@ -12,9 +6,9 @@ import {
   EntityProps,
   EntityType,
   LAYER,
-  Position,
+  POSITION,
 } from "./types";
-import { clamp } from "./utils";
+import { clamp, getHorizontalScaleFactor, getScaleFactor } from "./utils";
 
 export abstract class Entity<
   Phase extends string,
@@ -24,7 +18,7 @@ export abstract class Entity<
   readonly id: string;
   readonly type: EntityType;
   readonly layer: LAYER;
-  readonly position: Position;
+  readonly position: POSITION;
   readonly speed: number;
   readonly offsetX: number;
   readonly offsetY: number;
@@ -40,12 +34,11 @@ export abstract class Entity<
   protected phaseStart: number = 0;
   protected localProgress: number = 0;
   protected current: AnimationPhase<Phase, Props> | null = null;
-  protected padding: number = window.innerWidth * PADDING;
-  protected scaleFactor: number = Math.min(
-    window.innerWidth / BASELINE_WIDTH,
-    window.innerHeight / BASELINE_HEIGHT
-  );
+  protected padding: number = getScaleFactor() * BASELINE_PADDING;
+  protected scaleFactor: number = getScaleFactor();
   protected debug: Debug;
+  public startTime: number = 0;
+  protected lastTime: number = performance.now();
 
   constructor(
     entity: EntityProps<Phase, Props>,
@@ -54,7 +47,7 @@ export abstract class Entity<
     this.id = entity.id;
     this.type = entity.type;
     this.layer = entity.layer;
-    this.position = entity.position || "top left";
+    this.position = entity.position || POSITION.TOP_LEFT;
     this.offsetX = entity.offsetX ?? 0;
     this.offsetY = entity.offsetY ?? 0;
     this.delay = entity.delay ?? 0;
@@ -97,12 +90,14 @@ export abstract class Entity<
 
     const elapsedInPhase = this.progress * this.totalDuration - this.phaseStart;
     if (this.current.loop) {
+      // For looping animations, use performance.now() to keep progressing after progress hits 1
+      const now = (performance.now() - this.startTime) / 1000; // Convert to seconds
       this.localProgress =
-        (elapsedInPhase % this.current.duration) / this.current.duration;
+        (now % this.current.duration) / this.current.duration;
     } else {
       this.localProgress = elapsedInPhase / this.current.duration;
+      this.localProgress = clamp(this.localProgress, 0, 1);
     }
-    this.localProgress = clamp(this.localProgress, 0, 1);
     return this;
   }
 
@@ -111,46 +106,46 @@ export abstract class Entity<
     y: number;
   } {
     switch (this.position) {
-      case "center":
+      case POSITION.CENTER:
         return {
           x: (window.innerWidth - this.width) / 2,
           y: (window.innerHeight - this.height) / 2,
         };
-      case "eyeline":
+      case POSITION.EYELINE:
         return {
           x: (window.innerWidth - this.width) / 2,
-          y: window.innerHeight / 3 - this.height,
+          y: window.innerHeight / 4 - this.height / 2,
         };
-      case "top":
+      case POSITION.TOP:
         return { x: (window.innerWidth - this.width) / 2, y: this.padding };
-      case "right":
+      case POSITION.RIGHT:
         return {
           x: window.innerWidth - this.width - this.padding,
           y: (window.innerHeight - this.height) / 2,
         };
-      case "bottom":
+      case POSITION.BOTTOM:
         return {
           x: (window.innerWidth - this.width) / 2,
           y: window.innerHeight - this.height - this.padding,
         };
-      case "left":
+      case POSITION.LEFT:
         return {
           x: this.padding,
           y: (window.innerHeight - this.height) / 2,
         };
-      case "top left":
+      case POSITION.TOP_LEFT:
         return { x: this.padding, y: this.padding };
-      case "top right":
+      case POSITION.TOP_RIGHT:
         return {
           x: window.innerWidth - this.width - this.padding,
           y: this.padding,
         };
-      case "bottom left":
+      case POSITION.BOTTOM_LEFT:
         return {
           x: this.padding,
           y: window.innerHeight - this.height - this.padding,
         };
-      case "bottom right":
+      case POSITION.BOTTOM_RIGHT:
         return {
           x: window.innerWidth - this.width - this.padding,
           y: window.innerHeight - this.height - this.padding,
@@ -160,8 +155,7 @@ export abstract class Entity<
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public update(_time?: number): this {
+  public update(): this {
     this.progress = Math.min(this.progress + this.speed, 1);
     this.setPhase();
     this.setLocalProgress();
@@ -169,10 +163,14 @@ export abstract class Entity<
   }
 
   public resize(): this {
-    this.scaleFactor = Math.min(
-      window.innerWidth / BASELINE_WIDTH,
-      window.innerHeight / BASELINE_HEIGHT
-    );
+    this.debug.log("Resizing", this.id);
+    this.scaleFactor = getScaleFactor();
+    this.padding = getHorizontalScaleFactor() * BASELINE_PADDING;
+    return this;
+  }
+
+  public destroy(): this {
+    this.debug.log("Destroying", this.id);
     return this;
   }
 

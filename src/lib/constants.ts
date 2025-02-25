@@ -2,7 +2,9 @@ import { Vector3 } from "./types";
 
 const isDevelopment = import.meta.env.MODE === "development";
 export const FPS = 12;
-export const PADDING = 2 / 100;
+export const PADDING_MULTIPLIER = 2 / 100;
+export const BASELINE_PADDING = 16;
+export const BASELINE_GUTTER = 8;
 export const BASELINE_WIDTH = 800;
 export const BASELINE_HEIGHT = 400;
 
@@ -46,15 +48,15 @@ export enum FONT {
   SANS_SERIF = "PressStart2P",
 }
 
-export const Fonts: Map<FONT, string> = new Map([
-  [
+export const Fonts: Set<FontFace> = new Set([
+  new FontFace(
     FONT.DISPLAY,
-    `${isDevelopment ? "/src" : ""}/assets/fonts/${FONT.DISPLAY}-Regular.ttf`,
-  ],
-  [
+    `url(${isDevelopment ? "/src" : ""}/assets/fonts/${FONT.DISPLAY}-Regular.ttf)`
+  ),
+  new FontFace(
     FONT.SANS_SERIF,
-    `${isDevelopment ? "/src" : ""}/assets/fonts/${FONT.SANS_SERIF}-Regular.ttf`,
-  ],
+    `url(${isDevelopment ? "/src" : ""}/assets/fonts/${FONT.SANS_SERIF}-Regular.ttf)`
+  ),
 ]);
 
 export enum IMAGE {

@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { Position, Vector3 } from "./types";
+import { POSITION, Vector3 } from "./types";
+import { BASELINE_WIDTH, BASELINE_HEIGHT } from "./constants";
 
 /**
  * Merges conditional class names.
@@ -138,7 +139,7 @@ export function getPadding(): number {
 }
 // TODO Deprecate
 export function getPosition(
-  position: Position | undefined,
+  position: POSITION | undefined,
   entityWidth: number,
   entityHeight: number
 ): {
@@ -147,46 +148,46 @@ export function getPosition(
 } {
   const padding = getPadding();
   switch (position) {
-    case "center":
+    case POSITION.CENTER:
       return {
         x: (window.innerWidth - entityWidth) / 2,
         y: (window.innerHeight - entityHeight) / 2,
       };
-    case "eyeline":
+    case POSITION.EYELINE:
       return {
         x: (window.innerWidth - entityWidth) / 2,
         y: window.innerHeight / 3 - entityHeight,
       };
-    case "top":
+    case POSITION.TOP:
       return { x: (window.innerWidth - entityWidth) / 2, y: padding };
-    case "right":
+    case POSITION.RIGHT:
       return {
         x: window.innerWidth - entityWidth / 2 - padding,
         y: (window.innerHeight - entityHeight) / 2,
       };
-    case "bottom":
+    case POSITION.BOTTOM:
       return {
         x: (window.innerWidth - entityWidth) / 2,
         y: window.innerHeight - entityHeight - padding,
       };
-    case "left":
+    case POSITION.LEFT:
       return {
         x: entityWidth / 2 + padding,
         y: (window.innerHeight - entityHeight) / 2,
       };
-    case "top left":
+    case POSITION.TOP_LEFT:
       return { x: entityWidth / 2 + padding, y: padding };
-    case "top right":
+    case POSITION.TOP_RIGHT:
       return {
         x: window.innerWidth - entityWidth / 2 - padding,
         y: padding,
       };
-    case "bottom left":
+    case POSITION.BOTTOM_LEFT:
       return {
         x: entityWidth / 2 + padding,
         y: window.innerHeight - entityHeight - padding,
       };
-    case "bottom right":
+    case POSITION.BOTTOM_RIGHT:
       return {
         x: window.innerWidth - entityWidth / 2 - padding,
         y: window.innerHeight - entityHeight - padding,
@@ -194,4 +195,41 @@ export function getPosition(
     default:
       return { x: padding, y: padding };
   }
+}
+
+/**
+ * Calculates the scale factor based on the window dimensions.
+ *
+ * This function determines the scale factor by comparing the window's width and height
+ * to the baseline dimensions. It returns the smaller of the two ratios, ensuring that
+ * the canvas is not scaled beyond the available space.
+ *
+ * @returns The scale factor.
+ */
+export function getScaleFactor(): number {
+  return Math.min(getHorizontalScaleFactor(), getVerticalScaleFactor());
+}
+
+/**
+ * Calculates the vertical scale factor based on the window dimensions.
+ *
+ * This function determines the vertical scale factor by comparing the window's height
+ * to the baseline height.
+ *
+ * @returns The vertical scale factor.
+ */
+export function getVerticalScaleFactor(): number {
+  return window.innerHeight / BASELINE_HEIGHT;
+}
+
+/**
+ * Calculates the horizontal scale factor based on the window dimensions.
+ *
+ * This function determines the horizontal scale factor by comparing the window's width
+ * to the baseline width.
+ *
+ * @returns The horizontal scale factor.
+ */
+export function getHorizontalScaleFactor(): number {
+  return window.innerWidth / BASELINE_WIDTH;
 }

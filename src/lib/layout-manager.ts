@@ -1,6 +1,8 @@
-import { PADDING } from "./constants";
+import { BASELINE_GUTTER, BASELINE_PADDING, Palette } from "./constants";
+import { Debug } from "./debug";
 import { TextEntity } from "./entity.text";
-import { Position } from "./types";
+import { POSITION } from "./types";
+import { getHorizontalScaleFactor, getVerticalScaleFactor } from "./utils";
 
 enum DIRECTION {
   UP = -1,
@@ -8,51 +10,90 @@ enum DIRECTION {
 }
 
 export class LayoutManager {
-  #layouts: Map<Position, Generator<number, number, number>> = new Map();
+  #shouldUpdate: boolean = false;
+  #layouts: Map<POSITION, Generator<number, number, number>> = new Map();
   #padding: number;
   #gutter: number;
+  debug: Debug;
 
   constructor(
-    padding: number = window.innerWidth * PADDING,
-    gutter: number = (window.innerWidth * PADDING) / 4
+    padding: number = getHorizontalScaleFactor() * BASELINE_PADDING,
+    gutter: number = getVerticalScaleFactor() * BASELINE_GUTTER,
+    debug = new Debug("LayoutManager", Palette.DarkTan)
   ) {
     this.#padding = padding;
     this.#gutter = gutter;
-    this.init();
+    this.#shouldUpdate = true;
+    this.debug = debug;
   }
 
-  resize(entities: TextEntity[]) {
-    this.#padding = window.innerWidth * PADDING;
-    this.#gutter = (window.innerWidth * PADDING) / 4;
+  get shouldUpdate() {
+    return this.#shouldUpdate;
+  }
+
+  update(entities: TextEntity[]) {
+    if (!this.#shouldUpdate) {
+      throw new Error("Request an update before calling update");
+    }
+
+    this.debug.log("Refreshing layouts");
     this.reset();
-    this.update(entities);
+    this.init();
+    this.place(entities);
   }
 
   init() {
-    this.#layouts.set(
-      "top left",
-      verticalLayoutGenerator(this.#padding, this.#gutter, DIRECTION.DOWN)
-    );
-    this.#layouts.set(
-      "bottom left",
-      verticalLayoutGenerator(
-        window.innerHeight - this.#padding,
-        this.#gutter,
-        DIRECTION.UP
-      )
-    );
-    this.#layouts.set(
-      "eyeline",
-      verticalLayoutGenerator(
-        window.innerHeight / 3,
-        this.#gutter * 6,
-        DIRECTION.DOWN
-      )
-    );
+    this.debug.log("Creating new layouts");
+    this.#padding = getHorizontalScaleFactor() * BASELINE_PADDING;
+    this.#gutter = getVerticalScaleFactor() * BASELINE_GUTTER;
+    for (const position of Object.values(POSITION)) {
+      let initialY: number;
+      let direction = DIRECTION.DOWN;
+      let gutterMultiplier = 1;
+
+      switch (position) {
+        case POSITION.TOP:
+        case POSITION.TOP_LEFT:
+        case POSITION.TOP_RIGHT:
+          initialY = this.#padding;
+          break;
+        case POSITION.BOTTOM:
+        case POSITION.BOTTOM_LEFT:
+        case POSITION.BOTTOM_RIGHT:
+          initialY = window.innerHeight - this.#padding;
+          direction = DIRECTION.UP;
+          break;
+        case POSITION.EYELINE:
+          initialY = window.innerHeight / 4;
+          gutterMultiplier = 4;
+          break;
+        case POSITION.CENTER:
+        case POSITION.LEFT:
+        case POSITION.RIGHT:
+          initialY = window.innerHeight / 2;
+          break;
+        default:
+          initialY = this.#padding;
+      }
+
+      this.#layouts.set(
+        position,
+        verticalLayoutGenerator(
+          initialY,
+          this.#gutter * gutterMultiplier,
+          direction
+        )
+      );
+    }
+  }
+
+  requestUpdate() {
+    this.#shouldUpdate = true;
   }
 
   // TODO Extend for non-text entities.
-  update(entities: TextEntity[]) {
+  place(entities: TextEntity[]) {
+    this.debug.log("Placing entities");
     for (const entity of entities) {
       if (!this.#layouts.has(entity.position)) {
         throw new Error(`No layout for ${entity.position}`);
@@ -60,20 +101,43 @@ export class LayoutManager {
       const nextY = this.#layouts
         .get(entity.position)!
         .next(entity.height).value;
-      if (entity.position.includes("bottom")) {
-        entity.y = nextY - entity.height;
-      } else if (entity.position.includes("eyeline")) {
-        entity.y = nextY - entity.height;
-      } else {
-        entity.y = nextY;
+
+      let offsetY = 0;
+
+      switch (entity.position) {
+        case POSITION.TOP:
+        case POSITION.TOP_LEFT:
+        case POSITION.TOP_RIGHT:
+          break;
+        case POSITION.BOTTOM:
+        case POSITION.BOTTOM_LEFT:
+        case POSITION.BOTTOM_RIGHT:
+          offsetY = entity.height;
+          break;
+        case POSITION.EYELINE:
+        case POSITION.CENTER:
+        case POSITION.LEFT:
+        case POSITION.RIGHT:
+          offsetY = entity.height / 2;
+          break;
+        default:
+          offsetY = 0;
       }
+
+      entity.y = nextY - offsetY;
+
+      this.debug.log(
+        `Adding ${entity.id} to layout ${entity.position} at ${entity.y}`
+      );
     }
+
+    this.#shouldUpdate = false;
   }
 
   reset() {
+    this.debug.log("Pruning old layouts");
     this.#layouts.forEach((layout) => layout.return(0));
     this.#layouts.clear();
-    this.init();
   }
 }
 

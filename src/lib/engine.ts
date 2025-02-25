@@ -18,9 +18,12 @@ import {
   EntityInterface,
   EntityType,
   LAYER,
+  POSITION,
   SpriteEntity,
   State,
   TextEntityOld,
+  TextEntityProps,
+  TimerEntityProps,
 } from "./types";
 import { Hand, Status } from "./hand";
 import { Debug } from "./debug";
@@ -29,7 +32,12 @@ import { TimerEntity } from "./entity.timer";
 import { TextEntity } from "./entity.text";
 import { rgb } from "./utils";
 import { LayoutManager } from "./layout-manager";
-
+enum ASSETS_LOADED {
+  FONTS,
+  IMAGES,
+  LAYERS,
+  TITLE_SCREEN,
+}
 export class Engine {
   readonly fps: number;
   readonly tickRate: number;
@@ -42,9 +50,20 @@ export class Engine {
   #spritesheets: Map<string, HTMLImageElement> = new Map();
   #counter: Counter | null = null;
   #layoutManager: LayoutManager;
-  #shouldUpdateLayout: boolean = false;
+  #isLoading = false;
+  #isRunning = false;
+  #isReady = false;
+  #assetsLoaded = new Map<ASSETS_LOADED, boolean>();
+  private static instance: Engine | null = null;
 
-  constructor(
+  public static getInstance(): Engine {
+    if (!Engine.instance) {
+      Engine.instance = new Engine();
+    }
+    return Engine.instance;
+  }
+
+  private constructor(
     fps = FPS,
     tickRate = 1000 / fps,
     animationSpeed = 1 / fps,
@@ -55,83 +74,148 @@ export class Engine {
     this.tickRate = tickRate;
     this.baseAnimSpeed = animationSpeed;
     this.#layoutManager = layoutManager;
+    this.init();
   }
 
-  public async loadFont(family: string, url: string): Promise<void> {
-    const fontFace = new FontFace(family, `url("${url}")`);
+  get isLoading() {
+    return this.#isLoading;
+  }
 
-    if (!document.fonts.has(fontFace)) {
-      document.fonts.add(fontFace);
-      await fontFace.load();
+  get isReady() {
+    return this.#isReady;
+  }
+
+  get isRunning() {
+    return this.#isRunning;
+  }
+
+  get isLayersLoaded() {
+    return this.#assetsLoaded.get(ASSETS_LOADED.LAYERS);
+  }
+
+  async init() {
+    this.#isLoading = true;
+    await this.loadAssets();
+  }
+
+  checkIsReady() {
+    if (
+      this.#assetsLoaded.get(ASSETS_LOADED.FONTS) &&
+      this.#assetsLoaded.get(ASSETS_LOADED.IMAGES) &&
+      this.#assetsLoaded.get(ASSETS_LOADED.LAYERS) &&
+      this.#assetsLoaded.get(ASSETS_LOADED.TITLE_SCREEN)
+    ) {
+      this.#isReady = true;
+    } else {
+      this.#isReady = false;
     }
   }
 
-  public async loadFonts(): Promise<void> {
-    for (const [family, url] of Fonts) {
-      this.debug.log("Loading font:", family);
-      await this.loadFont(family, url);
+  private async loadFonts(): Promise<void> {
+    for (const fontFace of Fonts) {
+      this.debug.log("Loading font:", fontFace.family);
+      if (!document.fonts.has(fontFace)) {
+        document.fonts.add(fontFace);
+        await fontFace.load();
+      }
     }
+    this.#assetsLoaded.set(ASSETS_LOADED.FONTS, true);
+    this.checkIsReady();
   }
 
-  private loadImage(url: string): Promise<HTMLImageElement> {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.src = url;
-      img.onload = () => resolve(img);
-      img.onerror = (error) => reject(error);
-    });
+  private async unloadFonts(): Promise<void> {
+    for (const fontFace of Fonts) {
+      this.debug.log("Unloading font:", fontFace.family);
+      if (document.fonts.has(fontFace)) {
+        document.fonts.delete(fontFace);
+      }
+    }
+    this.#assetsLoaded.set(ASSETS_LOADED.FONTS, false);
+    this.checkIsReady();
   }
 
-  public async loadImages(): Promise<void> {
+  private async loadImages(): Promise<void> {
     // TODO scale multiple sizes of the sprite sheet for player and dealer
     for (const [name, url] of Images) {
       this.debug.log("Loading image:", name);
-      const spritesheet = await this.loadImage(url);
-      this.#spritesheets.set(name, spritesheet);
+      const image = new Image();
+      image.src = url;
+      await new Promise((resolve, reject) => {
+        image.onload = resolve;
+        image.onerror = reject;
+      });
+      this.#spritesheets.set(name, image);
     }
+    this.#assetsLoaded.set(ASSETS_LOADED.IMAGES, true);
+    this.checkIsReady();
+  }
+
+  private async unloadImages(): Promise<void> {
+    for (const [name] of this.#spritesheets) {
+      this.debug.log("Unloading image:", name);
+      this.#spritesheets.delete(name);
+    }
+    this.#assetsLoaded.set(ASSETS_LOADED.IMAGES, false);
+    this.checkIsReady();
   }
 
   public loadLayers(canvases: Canvases) {
+    if (this.#assetsLoaded.get(ASSETS_LOADED.LAYERS)) {
+      this.debug.log("Layers already loaded");
+      return;
+    }
+    this.debug.log("Loading layers");
+    this.#isLoading = true;
     const layers = Object.values(LAYER);
     for (let i = 0; i < layers.length; i++) {
       const layer = layers[i];
       const canvas = canvases[i];
-
       if (!canvas) {
         throw new Error(`Canvas not found for layer: ${layer}`);
       }
-
       this.#layers.set(layer, new Layer(layer, canvas, this.#spritesheets));
     }
+    this.loadTitleScreen();
+    this.#assetsLoaded.set(ASSETS_LOADED.LAYERS, true);
+    this.checkIsReady();
   }
 
-  public loadTitleScreen() {
+  public unloadLayers() {
+    this.debug.log("Unloading layers");
+    this.#layers.clear();
+    this.#assetsLoaded.set(ASSETS_LOADED.LAYERS, false);
+    this.checkIsReady();
+  }
+
+  private loadTitleScreen() {
+    this.debug.log("Loading title screen");
     titleScreen.forEach((entity) => {
-      if (entity.type === "text") {
-        this.setEntity(new TextEntity(entity));
-      } else {
-        this.setEntity(entity);
-      }
+      this.setEntity(this.createEntity(entity));
     });
+    this.#assetsLoaded.set(ASSETS_LOADED.TITLE_SCREEN, true);
+    this.checkIsReady();
   }
 
-  public loadAssets(canvases: Canvases): Promise<void[]> {
-    return Promise.all([
-      this.loadFonts(),
-      this.loadImages(),
-      this.loadLayers(canvases),
-      this.loadTitleScreen(),
-    ]);
+  private unloadTitleScreen() {
+    this.debug.log("Unloading title screen");
+    titleScreen.forEach((entity) => {
+      this.clearEntity(entity.layer, entity.id);
+    });
+    this.#assetsLoaded.set(ASSETS_LOADED.TITLE_SCREEN, false);
+    this.checkIsReady();
+  }
+
+  private loadAssets() {
+    return Promise.all([this.loadFonts(), this.loadImages()]);
+  }
+
+  private unloadAssets() {
+    return Promise.all([this.unloadFonts(), this.unloadImages()]);
   }
 
   private getLayer(layer: LAYER) {
     return this.#layers.get(layer)!;
   }
-
-  // private clearLayer(layer: LAYER) {
-  //   this.debug.log("Clearing layer:", layer);
-  //   this.#layers.get(layer)?.clear();
-  // }
 
   private clearAllLayers() {
     this.debug.log("Clearing all layers");
@@ -150,8 +234,40 @@ export class Engine {
     return this.getLayer(layer).has(id);
   }
 
+  private createEntity(
+    entity:
+      | TextEntityProps
+      // | SpriteEntityProps
+      // | AnimatedSpriteEntityProps
+      | TimerEntityProps
+      | SpriteEntity
+      | AnimatedSpriteEntity
+      | TextEntityOld
+  ):
+    | TextEntity
+    | TimerEntity
+    | SpriteEntity
+    | AnimatedSpriteEntity
+    | TextEntityOld {
+    switch (entity.type) {
+      case "text":
+        return new TextEntity(entity);
+      // case "sprite":
+      //   return new SpriteEntity(entity);
+      // case "animated-sprite":
+      //   return new AnimatedSpriteEntity(entity);
+      case "timer":
+        return new TimerEntity(entity);
+      case "sprite":
+      case "animated-sprite":
+      case "text-old":
+      default:
+        return entity;
+    }
+  }
+
   private setEntity(entity: EntityInterface) {
-    if (entity.type === "text") this.#shouldUpdateLayout = true;
+    if (entity.type === "text") this.#layoutManager.requestUpdate();
     this.getLayer(entity.layer).set(entity.id, entity);
   }
 
@@ -164,15 +280,14 @@ export class Engine {
   }
 
   private updateLayout() {
-    this.#layoutManager.reset();
-    const entities = this.getEntitiesByType("text") as TextEntity[];
-    this.#layoutManager.update(entities);
+    const textEntities = this.getEntitiesByType("text") as TextEntity[];
+    this.#layoutManager.update(textEntities);
   }
 
   private render() {
-    if (this.#shouldUpdateLayout) {
+    if (this.#layoutManager.shouldUpdate) {
       this.updateLayout();
-      this.#shouldUpdateLayout = false;
+      // TODO LAYER.BG is completely unused at the moment
       this.getLayer(LAYER.UI).render(this.#time);
     }
 
@@ -180,10 +295,10 @@ export class Engine {
   }
 
   public resize = () => {
-    this.updateLayout();
-    for (const layer of this.#layers.values()) {
-      layer.resize(this.#time);
-    }
+    this.debug.log("Resizing");
+    this.#layoutManager.requestUpdate();
+    this.#layers.forEach((layer) => layer.resize());
+    this.render();
   };
 
   // The game loop updates animation progress and redraws the canvas.
@@ -192,21 +307,18 @@ export class Engine {
       this.#lastTick = timestamp;
       this.#time += 1;
 
-      const layer = this.getLayer(LAYER.GAME);
-
-      for (const entity of layer.values()) {
+      for (const entity of this.getLayer(LAYER.GAME).values()) {
         if (entity.delay && entity.delay > 0) {
           entity.delay -= 1;
           continue;
         }
 
-        if (entity.type === "timer") {
+        if (entity.type === "text" || entity.type === "timer") {
           entity.update();
-          continue;
-        }
-
-        if (entity.type === "text") {
-          entity.update(this.#time);
+          if (entity.startTime === 0) {
+            entity.startTime = performance.now();
+          }
+          entity.update();
           continue;
         }
 
@@ -244,21 +356,39 @@ export class Engine {
     requestAnimationFrame(this.step);
   };
 
-  public async start(canvases: Canvases) {
-    await this.loadAssets(canvases);
+  public async start() {
+    // If already running, just return instead of throwing
+    if (this.#isRunning) {
+      this.debug.log("Engine already running, ignoring start request");
+      return;
+    }
+
+    this.debug.log("Starting engine");
+    this.#isRunning = true;
+
+    // Wait for assets to load
+    while (!this.#isReady) {
+      if (!this.#isRunning) {
+        throw new Error("Engine stopped during startup");
+      }
+      this.debug.log("Waiting for assets to load");
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+
     this.#lastTick = performance.now();
-    this.debug.log("Canvas mounting");
-    requestAnimationFrame(this.step);
+    this.resize();
     window.addEventListener("resize", this.resize);
+    requestAnimationFrame(this.step);
   }
 
   public stop() {
-    this.debug.log("Canvas unmounting");
+    this.debug.log("Stopping engine");
+    this.#isRunning = false;
     window.removeEventListener("resize", this.resize);
   }
 
   private reset() {
-    this.debug.log("Canvas resetting");
+    this.debug.log("Engine resetting");
     this.clearAllLayers();
     this.loadTitleScreen();
     this.#hasDealt = false;
@@ -266,6 +396,7 @@ export class Engine {
       this.#counter.destroy();
       this.#counter = null;
     }
+    this.resize();
   }
 
   public update({
@@ -326,47 +457,47 @@ export class Engine {
 
   private createTimer = (onEnd: (layer: LAYER, id: string) => void) => {
     this.debug.log(`Creating timer: ${turnTimer.id}`);
-    const entity = new TimerEntity({ ...turnTimer, onEnd });
+    const entity = this.createEntity({ ...turnTimer, onEnd });
     this.setEntity(entity);
   };
 
   private createScores(dealer: Dealer, player: Player) {
     // TODO Handle split hands
 
-    const dealerText = new TextEntity({
+    const dealerText = this.createEntity({
       ...scoreText,
       id: "dealer-text",
       text: dealer.name,
-      position: "top left",
+      position: POSITION.TOP_LEFT,
       fontSize: 20,
     });
 
     this.setEntity(dealerText);
 
-    const dealerScoreText = new TextEntity({
+    const dealerScoreText = this.createEntity({
       ...scoreText,
       id: "dealer-score",
       text: dealer.score.toString(),
-      position: "top left",
+      position: POSITION.TOP_LEFT,
     });
 
     this.setEntity(dealerScoreText);
 
-    const playerText = new TextEntity({
+    const playerText = this.createEntity({
       ...scoreText,
       id: `${player.name.toLowerCase()}-text`,
       text: player.name,
-      position: "bottom left",
+      position: POSITION.BOTTOM_LEFT,
       fontSize: 20,
     });
 
     this.setEntity(playerText);
 
-    const playerScoreText = new TextEntity({
+    const playerScoreText = this.createEntity({
       ...scoreText,
       id: `${player.name.toLowerCase()}-score`,
       text: player.score.toString(),
-      position: "bottom left",
+      position: POSITION.BOTTOM_LEFT,
     });
 
     this.setEntity(playerScoreText);
@@ -434,7 +565,7 @@ export class Engine {
           y: card.isHidden ? 4992 : card.rank * cardSprite.spriteHeight,
         },
       ],
-      position: isDealer ? "top" : "bottom",
+      position: isDealer ? POSITION.TOP : POSITION.BOTTOM,
       delay,
       scale: isDealer ? 0.75 : 1,
       angle: ((Math.random() * 12 * 2 - 12) * Math.PI) / 180,
@@ -517,12 +648,12 @@ export class Engine {
     // entity.kerning = { start: 40, end: 0 };
 
     if (role === Role.Player) {
-      entity.position = "bottom";
+      entity.position = POSITION.BOTTOM;
       entity.translateY = { start: 50, end: 0 };
       entity.style.fontSize = 48;
       entity.offsetY = -0.15;
     } else if (role === Role.Dealer) {
-      entity.position = "top";
+      entity.position = POSITION.TOP;
       entity.translateY = { start: -50, end: 0 };
       entity.style.fontSize = 48;
       entity.offsetY = 0.15;
@@ -563,9 +694,9 @@ export class Engine {
     if (!entity) return;
     entity.progress = 0;
     entity.opacity = { start: 1, end: 0 };
-    if (entity.position === "bottom") {
+    if (entity.position === POSITION.BOTTOM) {
       entity.translateY = { start: 0, end: 50 };
-    } else if (entity.position === "top") {
+    } else if (entity.position === POSITION.TOP) {
       entity.translateY = { start: 0, end: -50 };
     }
     entity.onEnd = () => {

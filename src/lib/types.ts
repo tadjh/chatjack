@@ -16,17 +16,18 @@ export type Canvases = [
   HTMLCanvasElement | null,
 ];
 
-export type Position =
-  | "center"
-  | "eyeline"
-  | "left"
-  | "right"
-  | "top"
-  | "bottom"
-  | "top left"
-  | "top right"
-  | "bottom left"
-  | "bottom right";
+export enum POSITION {
+  CENTER = "center",
+  EYELINE = "eyeline",
+  LEFT = "left",
+  RIGHT = "right",
+  TOP = "top",
+  BOTTOM = "bottom",
+  TOP_LEFT = "top left",
+  TOP_RIGHT = "top right",
+  BOTTOM_LEFT = "bottom left",
+  BOTTOM_RIGHT = "bottom right",
+}
 
 interface BaseEntity {
   id: string;
@@ -48,7 +49,7 @@ interface BaseEntity {
     y: number;
     speed: number;
   };
-  position?: Position;
+  position?: POSITION;
   onBeing?: () => void;
   onEnd?: () => void;
 }
@@ -147,6 +148,7 @@ export interface AnimationPhase<
 > {
   name: Phase;
   duration: number; // in seconds or ticks
+  magnitude?: number;
   loop?: boolean;
   easing?: (t: number) => Props;
   // Function to compute the property value from a local progress (0 to 1)
@@ -171,7 +173,7 @@ export interface EntityProps<
   id: string;
   type: EntityType;
   layer: LAYER;
-  position?: Position;
+  position?: POSITION;
   delay?: number;
   x?: number;
   y?: number;
@@ -227,7 +229,7 @@ export type TextEntityProps = Omit<
   type: "text";
   layer: LAYER;
   text: string;
-  position: Position;
+  position: POSITION;
   delay?: number;
   fontSize: number;
   fontFamily: string;
@@ -252,7 +254,7 @@ export interface TimerEntityProps
   id: string;
   type: "timer";
   layer: LAYER;
-  position: Position;
+  position: POSITION;
   color: string | CanvasGradient | CanvasPattern;
   backgroundColor: string | CanvasGradient | CanvasPattern;
   backgroundScale?: number;

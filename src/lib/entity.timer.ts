@@ -58,7 +58,7 @@ export class TimerEntity extends Entity<
     this.width = this.#radius * 2;
     this.height = this.#radius * 2;
     const pos = this.getPosition();
-    this.x = pos.x;
+    this.x = pos.x + this.#radius;
     this.y = pos.y + this.#radius;
     return this;
   }

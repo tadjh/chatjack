@@ -72,19 +72,23 @@ export class TextEntity extends Entity<
       throw new Error("2d context not supported");
     }
     this.#offCtx = offCtx;
+
+    if (this.phases.length === 0) {
+      this.props.opacity = 1;
+    }
     this.debug.log(`Creating ${this.id}`);
     this.resize();
   }
 
-  public update(time: number): this {
-    super.update(time);
+  public update(): this {
+    super.update();
 
     if (!this.current) {
       throw new Error(`No current phase to update for ${this.id}`);
     }
 
     this.easing();
-    this.interpolate(time);
+    this.interpolate();
 
     if (this.progress === 1 && this.onEnd) {
       this.debug.log(`Calling onEnd from: ${this.id}`);
@@ -93,27 +97,34 @@ export class TextEntity extends Entity<
     return this;
   }
 
-  public resize(): this {
-    super.resize();
-    this.#fontSize = this.getFontSize();
-    const { width, height } = this.getDimensions();
-    this.width = width;
-    this.height = height;
-    const pos = this.getPosition();
+  setX(x: number): this {
     this.x =
       this.textAlign === "start" || this.textAlign === "left"
-        ? pos.x
+        ? x
         : this.textAlign === "center"
-          ? pos.x + this.width / 2
-          : pos.x + this.width;
+          ? x + this.width / 2
+          : x + this.width;
+    return this;
+  }
+
+  setY(y: number): this {
     this.y =
       this.textBaseline === "top"
-        ? pos.y
+        ? y
         : this.textBaseline === "middle"
-          ? pos.y + this.height / 2
-          : pos.y + this.height;
-    this.#offsetX = this.offsetX > 0 ? window.innerWidth / this.offsetX : 0;
-    this.#offsetY = this.offsetY > 0 ? window.innerHeight / this.offsetY : 0;
+          ? y + this.height / 2
+          : y + this.height;
+    return this;
+  }
+
+  public resize(): this {
+    super.resize();
+    this.setDimensions();
+    const pos = this.getPosition();
+    this.setX(pos.x);
+    // this.setY(pos.y);
+    // this.#offsetX = this.offsetX > 0 ? window.innerWidth / this.offsetX : 0;
+    // this.#offsetY = this.offsetY > 0 ? window.innerHeight / this.offsetY : 0;
     this.#strokeWidth = this.strokeWidth * this.scaleFactor;
     return this;
   }
@@ -146,7 +157,7 @@ export class TextEntity extends Entity<
     return this;
   }
 
-  protected interpolate(time: number): this {
+  protected interpolate(): this {
     if (!this.current) {
       throw new Error(`No current phase to interpolate for${this.id}`);
     }
@@ -158,10 +169,14 @@ export class TextEntity extends Entity<
 
       switch (this.current.name) {
         case "float-x":
-          this.props.offsetX = Math.sin(time / 6) * 3;
+          this.props.offsetX =
+            Math.sin(2 * Math.PI * this.localProgress + Math.PI / 2) *
+            (this.current.magnitude ?? 1);
           break;
         case "float-y":
-          this.props.offsetY = Math.sin(time / 6) * 3;
+          this.props.offsetY =
+            Math.sin(2 * Math.PI * this.localProgress + Math.PI / 2) *
+            (this.current.magnitude ?? 1);
           break;
         case "fade-slide-in-top":
           this.props.offsetY = lerp(-slide, 0, this.localProgress);
@@ -246,6 +261,13 @@ export class TextEntity extends Entity<
     ctx.fillStyle = this.color;
     ctx.fillText(this.text, this.#x, this.#y);
 
+    // Remove debug visualization
+    // ctx.fillRect(this.#x, this.#y, this.width, this.height);
+    // ctx.fillStyle = "red";
+    // ctx.fillRect(0, window.innerHeight / 4, window.innerWidth, 10);
+    // ctx.fillRect(0, (window.innerHeight / 4) * 2, window.innerWidth, 10);
+    // ctx.fillRect(0, (window.innerHeight / 4) * 3, window.innerWidth, 10);
+
     ctx.restore();
     return this;
   }
@@ -265,12 +287,20 @@ export class TextEntity extends Entity<
     width: number;
     height: number;
   } {
-    const { width, actualBoundingBoxAscent, actualBoundingBoxDescent } =
+    const { width, fontBoundingBoxAscent, fontBoundingBoxDescent } =
       this.#offCtx.measureText(this.text);
     return {
       width,
-      height: actualBoundingBoxAscent + actualBoundingBoxDescent,
+      height: fontBoundingBoxAscent + fontBoundingBoxDescent,
     };
+  }
+
+  private setDimensions(): this {
+    this.#fontSize = this.getFontSize();
+    const { width, height } = this.getDimensions();
+    this.width = width;
+    this.height = height;
+    return this;
   }
 }
 

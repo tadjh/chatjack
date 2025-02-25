@@ -1,4 +1,4 @@
-import { BASELINE_WIDTH, PADDING, Palette } from "./constants";
+import { BASELINE_WIDTH, PADDING_MULTIPLIER, Palette } from "./constants";
 import { Debug } from "./debug";
 import {
   AnimatedSpriteEntity,
@@ -8,14 +8,23 @@ import {
   SpriteEntity,
   TextEntityOld,
 } from "./types";
-import { rgb, font, easeOut, lerp, clamp, rgba, getPosition } from "./utils";
+import {
+  rgb,
+  font,
+  easeOut,
+  lerp,
+  clamp,
+  rgba,
+  getPosition,
+  getScaleFactor,
+} from "./utils";
 
 export class Layer extends Map<string, EntityInterface> {
-  #id: LAYER;
+  readonly id: LAYER;
   #canvas: HTMLCanvasElement;
   #ctx: CanvasRenderingContext2D;
-  #scaleFactor = window.innerWidth / BASELINE_WIDTH;
-  #padding = window.innerWidth * PADDING;
+  #scaleFactor = getScaleFactor();
+  #padding = window.innerWidth * PADDING_MULTIPLIER;
   #spritesheets: Map<string, HTMLImageElement>;
   #sizeMap: Map<
     string,
@@ -36,7 +45,7 @@ export class Layer extends Map<string, EntityInterface> {
     if (!ctx) {
       throw new Error("2d rendering context not supported");
     }
-    this.#id = id;
+    this.id = id;
     this.#spritesheets = spritesheets;
     this.debug = debug;
     this.#ctx = ctx;
@@ -45,7 +54,6 @@ export class Layer extends Map<string, EntityInterface> {
     this.#canvas.style.top = "0";
     this.#canvas.style.left = "0";
     this.#canvas.style.zIndex = id;
-    this.resize(0);
   }
 
   render(time: number) {
@@ -372,22 +380,21 @@ export class Layer extends Map<string, EntityInterface> {
     return { width, height };
   }
 
-  resize(time: number) {
-    this.debug.log(`Resizing ${this.#id}`);
+  resize() {
+    this.debug.log(`Resizing ${this.id}`);
     const ratio = window.devicePixelRatio || 1;
     this.#canvas.width = window.innerWidth * ratio;
     this.#canvas.height = window.innerHeight * ratio;
     this.#canvas.style.width = `${window.innerWidth}px`;
     this.#canvas.style.height = `${window.innerHeight}px`;
     this.#scaleFactor = window.innerWidth / BASELINE_WIDTH;
-    this.#padding = Math.floor(window.innerWidth * PADDING);
+    this.#padding = Math.floor(window.innerWidth * PADDING_MULTIPLIER);
     this.#ctx.scale(ratio, ratio);
     this.forEach((entity) => {
       if (entity.type === "text" || entity.type === "timer") {
         entity.resize();
       }
     });
-    this.render(time);
   }
 
   getByType(type: EntityType) {
