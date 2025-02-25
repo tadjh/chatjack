@@ -10,32 +10,40 @@ import {
 import { rgb, font, easeOut, lerp, clamp, rgba, getPosition } from "./utils";
 
 export class Layer extends Map<string, EntityInterface> {
+  #id: LAYER;
+  #canvas: HTMLCanvasElement;
   #ctx: CanvasRenderingContext2D;
   #scaleFactor = window.innerWidth / BASELINE_WIDTH;
   #padding = window.innerWidth * PADDING;
+  #spritesheets: Map<string, HTMLImageElement>;
   #sizeMap: Map<
     string,
     { width: number; height: number; x: number; y: number }
   > = new Map();
   #cache = new Map<string, ImageBitmap>();
+  protected debug: Debug;
 
   constructor(
-    private id: LAYER,
-    private canvas: HTMLCanvasElement,
-    private spritesheets: Map<string, HTMLImageElement>,
-    private debug = new Debug(id, Palette.Tan)
+    id: LAYER,
+    canvas: HTMLCanvasElement,
+    spritesheets: Map<string, HTMLImageElement>,
+    debug = new Debug(id, Palette.Tan)
   ) {
     super();
-    const ctx = canvas.getContext("2d");
+    this.#canvas = canvas;
+    const ctx = this.#canvas.getContext("2d");
     if (!ctx) {
       throw new Error("2d rendering context not supported");
     }
+    this.#id = id;
+    this.#spritesheets = spritesheets;
+    this.debug = debug;
     this.#ctx = ctx;
     this.#ctx.imageSmoothingEnabled = false;
-    this.canvas.style.position = "absolute";
-    this.canvas.style.top = "0";
-    this.canvas.style.left = "0";
-    this.canvas.style.zIndex = id;
+    this.#canvas.style.position = "absolute";
+    this.#canvas.style.top = "0";
+    this.#canvas.style.left = "0";
+    this.#canvas.style.zIndex = id;
     this.resize(0);
   }
 
@@ -206,7 +214,7 @@ export class Layer extends Map<string, EntityInterface> {
   }
 
   getCachedSprite(entity: SpriteEntity | AnimatedSpriteEntity) {
-    const image = this.spritesheets.get(entity.src);
+    const image = this.#spritesheets.get(entity.src);
     if (!image) {
       throw new Error(`Image not found: ${entity.src}`);
     }
@@ -362,12 +370,12 @@ export class Layer extends Map<string, EntityInterface> {
   }
 
   resize(time: number) {
-    this.debug.log(`Resizing ${this.id}`);
+    this.debug.log(`Resizing ${this.#id}`);
     const ratio = window.devicePixelRatio || 1;
-    this.canvas.width = window.innerWidth * ratio;
-    this.canvas.height = window.innerHeight * ratio;
-    this.canvas.style.width = `${window.innerWidth}px`;
-    this.canvas.style.height = `${window.innerHeight}px`;
+    this.#canvas.width = window.innerWidth * ratio;
+    this.#canvas.height = window.innerHeight * ratio;
+    this.#canvas.style.width = `${window.innerWidth}px`;
+    this.#canvas.style.height = `${window.innerHeight}px`;
     this.#scaleFactor = window.innerWidth / BASELINE_WIDTH;
     this.#padding = Math.floor(window.innerWidth * PADDING);
     this.#ctx.scale(ratio, ratio);

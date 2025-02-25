@@ -4,16 +4,24 @@ import { Debug } from "./debug";
 import { Hand } from "./hand";
 
 export class Player {
+  readonly name: string;
+  readonly seat: number;
+  readonly role: Role;
+  #isDone = false;
   #hasSplit = false;
   #hands: Hand[];
-  isDone = false;
+  protected debug: Debug;
 
   constructor(
-    public readonly name = "Player",
-    public readonly seat = 1,
-    public readonly role = Role.Player,
-    public debug = new Debug(name, Palette.Red)
+    name = "Player",
+    seat = 1,
+    role = Role.Player,
+    debug = new Debug(name, Palette.Red)
   ) {
+    this.name = name;
+    this.seat = seat;
+    this.role = role;
+    this.debug = debug;
     this.#hands = [new Hand(this.name)];
   }
 
@@ -45,8 +53,12 @@ export class Player {
     return this.#hasSplit;
   }
 
+  get isDone() {
+    return this.#isDone;
+  }
+
   hit(card: Card, index = 0) {
-    if (this.isDone) {
+    if (this.#isDone) {
       throw new Error(`${this.name}'s turn is over`);
     }
 
@@ -55,11 +67,20 @@ export class Player {
     }
     this.#hands[index].add(card);
 
+    // TODO Support split hands
+    if (
+      this.#hands.every(
+        (hand) => hand.isStand || hand.isBusted || hand.isBlackjack
+      )
+    ) {
+      this.#isDone = true;
+    }
+
     return this;
   }
 
   stand(index = 0) {
-    if (this.isDone) {
+    if (this.#isDone) {
       throw new Error(`${this.name}'s turn is over`);
     }
 
@@ -73,13 +94,13 @@ export class Player {
         (hand) => hand.isStand || hand.isBusted || hand.isBlackjack
       )
     ) {
-      this.isDone = true;
+      this.#isDone = true;
     }
     return this;
   }
 
   split() {
-    if (this.isDone) {
+    if (this.#isDone) {
       throw new Error(`${this.name}'s turn is over`);
     }
 
@@ -97,7 +118,7 @@ export class Player {
     this.#hands.forEach((hand) => hand.reset());
     this.#hands = [new Hand(this.name)];
     this.#hasSplit = false;
-    this.isDone = false;
+    this.#isDone = false;
     return this;
   }
 }

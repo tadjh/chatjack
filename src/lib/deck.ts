@@ -4,6 +4,8 @@ import { Debug } from "./debug";
 
 export class Deck extends Array<Card> {
   #name: string;
+  protected debug: Debug;
+
   constructor(
     {
       name = "Deck",
@@ -12,9 +14,10 @@ export class Deck extends Array<Card> {
     }:
       | { name?: string; shoeSize?: number; cards?: never }
       | { name?: string; shoeSize?: never; cards: number[] } = {},
-    public debug = new Debug(name, Palette.Blue)
+    debug = new Debug(name, Palette.Blue)
   ) {
     super();
+    this.debug = debug;
     this.#name = name;
     if (cards) {
       this.fix(cards);

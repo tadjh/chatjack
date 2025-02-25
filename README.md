@@ -15,6 +15,5 @@
 
 ## Quality of life
 
-- TODO Rename Renderer to Engine
 - TODO Bust and opacity drop should happen AFTER card finishes animating
 - TODO Bust opacity could be lower

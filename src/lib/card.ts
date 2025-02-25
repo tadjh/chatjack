@@ -1,3 +1,6 @@
+import { Palette } from "./constants";
+import { Debug } from "./debug";
+
 export enum Suit {
   Clubs = 0,
   Diamonds = 13,
@@ -47,21 +50,27 @@ const Letter: Map<number, string> = new Map([
 export class Card extends Number {
   readonly suit: number;
   readonly rank: number;
+  readonly #name: string;
+  readonly #icon: string;
   #id: string = "";
-  #name: string;
-  #icon: string;
   #points: number = 0;
   #isHidden: boolean;
-  owner: string = "";
-  handIndex: number = -1;
+  #owner: string = "";
+  #handIndex: number = -1;
+  protected debug: Debug;
 
-  constructor(card: number, hidden = false) {
+  constructor(
+    card: number,
+    hidden = false,
+    debug = new Debug("Card", Palette.DarkBlue)
+  ) {
     if (card < 0 || card > 52) {
       throw new Error("Invalid card");
     }
     super(card);
     this.suit = Card.toSuit(card);
     this.rank = card - this.suit;
+    this.debug = debug;
     this.#isHidden = hidden;
     this.#name = `${Rank[this.rank]} of ${Suit[this.suit]}`;
     this.#icon = `${Letter.get(this.rank)} ${Icon.get(this.suit)}`;
@@ -95,15 +104,30 @@ export class Card extends Number {
     return this.#icon;
   }
 
+  get owner() {
+    return this.#owner;
+  }
+
+  get handIndex() {
+    return this.#handIndex;
+  }
+
   show() {
     this.#isHidden = false;
     this.setId();
-    console.log("Revealing card:", this.name);
+    this.debug.log("Revealing card:", this.name);
     return this;
   }
 
   hide() {
     this.#isHidden = true;
+    this.setId();
+    return this;
+  }
+
+  add(owner: string, index: number) {
+    this.#owner = owner;
+    this.#handIndex = index;
     this.setId();
     return this;
   }
@@ -161,6 +185,8 @@ export class Card extends Number {
       throw new Error("Card is not an Ace");
     }
 
+    this.debug.log(`Setting Ace to ${type}`);
+
     if (type === "low") {
       this.#points = 1;
     } else {
@@ -171,11 +197,11 @@ export class Card extends Number {
   }
 
   setId() {
-    const owner = this.owner && this.owner.replace(/\s/g, "").toLowerCase();
+    const owner = this.#owner && this.#owner.replace(/\s/g, "").toLowerCase();
     const name = this.isHidden
       ? "hole-card"
       : this.#name.replace(/\s/g, "-").toLowerCase();
-    const slot = this.handIndex > -1 && `slot-${this.handIndex}`;
+    const slot = this.#handIndex > -1 && `slot-${this.#handIndex}`;
     const segments = [owner, name, slot].filter(Boolean);
     this.#id = segments.join("-");
     return this;

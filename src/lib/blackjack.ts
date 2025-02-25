@@ -6,18 +6,25 @@ import { State } from "./types";
 
 export class Blackjack {
   #state = State.Init;
+  #table: [Dealer, Player];
+  #deck: Deck;
   isGameover = false;
   isRevealed = false;
+  protected debug: Debug;
 
   constructor(
     {
       shoeSize = 1,
       fixedDeck = undefined,
     }: { shoeSize?: number; fixedDeck?: number[] } = {},
-    private table: [Dealer, Player] = [new Dealer(), new Player("Chat", 1)],
-    private deck = new Deck({ name: "Shoe" }),
-    private debug = new Debug("Blackjack")
+    table: [Dealer, Player] = [new Dealer(), new Player("Chat", 1)],
+    deck = new Deck({ name: "Shoe" }),
+    debug = new Debug("Blackjack")
   ) {
+    this.#table = table;
+    this.#deck = deck;
+    this.debug = debug;
+
     if (fixedDeck) {
       this.fixDeck(fixedDeck);
     } else {
@@ -26,15 +33,15 @@ export class Blackjack {
   }
 
   get numberOfPlayers() {
-    return this.table.length;
+    return this.#table.length;
   }
 
   get dealer() {
-    return this.table[0];
+    return this.#table[0];
   }
 
   get player() {
-    return this.table[1];
+    return this.#table[1];
   }
 
   get hasDealt() {
@@ -50,7 +57,7 @@ export class Blackjack {
   }
 
   get cardsRemaining() {
-    return this.deck.length;
+    return this.#deck.length;
   }
 
   get state() {
@@ -65,21 +72,21 @@ export class Blackjack {
   init(shoeSize: number) {
     this.debug.log("Constructing a new shoe");
     this.state = State.Init;
-    this.deck.init(shoeSize);
+    this.#deck.init(shoeSize);
     return this;
   }
 
   fixDeck(fixedDeck: number[]) {
-    this.deck.fix(fixedDeck);
+    this.#deck.fix(fixedDeck);
     return this;
   }
 
   draw(isHidden = false) {
-    return this.deck.draw(isHidden);
+    return this.#deck.draw(isHidden);
   }
 
   public empty() {
-    this.deck.empty();
+    this.#deck.empty();
     return this;
   }
 
@@ -99,11 +106,9 @@ export class Blackjack {
     player.hit(this.draw(), index);
     // TODO Support hitting a split hand
     if (player.hand.isBusted) {
-      player.isDone = true;
       this.state =
         player.role === Role.Dealer ? State.DealerBust : State.PlayerBust;
     } else if (player.hand.isBlackjack) {
-      player.isDone = true;
       this.state =
         player.role === Role.Dealer
           ? State.DealerBlackjack
@@ -141,17 +146,11 @@ export class Blackjack {
       throw new Error("Dealer has already played");
     }
 
-    if (!this.deck.length) {
+    if (!this.#deck.length) {
       this.debug.log("No more cards in the deck");
     }
 
-    if (this.dealer.hand.isBlackjack) {
-      this.state = State.DealerBlackjack;
-      this.dealer.isDone = true;
-      return this;
-    }
-
-    const decision = this.dealer.decide(this.deck);
+    const decision = this.dealer.decide(this.#deck);
 
     if (decision === "stand") {
       this.dealer.stand();
@@ -191,11 +190,11 @@ export class Blackjack {
 
   reset(shoeSize = 1) {
     this.debug.log("Resetting game");
-    this.table.forEach((player) => player.reset());
-    this.table = [new Dealer(), new Player("Chat", 1)];
+    this.#table.forEach((player) => player.reset());
+    this.#table = [new Dealer(), new Player("Chat", 1)];
     this.isGameover = false;
     this.isRevealed = false;
-    this.deck.empty();
+    this.#deck.empty();
     this.init(shoeSize);
     return this;
   }

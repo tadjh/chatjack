@@ -18,25 +18,24 @@ export abstract class Entity<
   readonly id: string;
   readonly type: EntityType;
   readonly layer: LAYER;
-  readonly position: Position = "center";
+  readonly position: Position;
   readonly speed: number;
+  readonly offsetX: number;
+  readonly offsetY: number;
   public progress: number = 0;
-  public totalDuration: number;
-  offsetX: number = 0;
-  offsetY: number = 0;
-  x: number = 0;
-  y: number = 0;
-  opacity: number = 1;
-  debug: Debug;
-  phases: AnimationPhase<Phase, Props>[];
-  props: Props;
-  current: AnimationPhase<Phase, Props> | null = null;
-  elapsed: number = 0;
-  public localProgress: number = 0;
-  width: number = 0;
-  height: number = 0;
-  padding: number = window.innerWidth * PADDING;
-  scaleFactor: number = window.innerWidth / BASELINE_WIDTH;
+  public x: number;
+  public y: number;
+  public width: number = 0;
+  public height: number = 0;
+  public phases: AnimationPhase<Phase, Props>[];
+  public props: Props;
+  protected totalDuration: number;
+  protected elapsed: number = 0;
+  protected localProgress: number = 0;
+  protected current: AnimationPhase<Phase, Props> | null = null;
+  protected padding: number = window.innerWidth * PADDING;
+  protected scaleFactor: number = window.innerWidth / BASELINE_WIDTH;
+  protected debug: Debug;
 
   constructor(
     entity: EntityProps<Phase, Props>,
@@ -45,13 +44,14 @@ export abstract class Entity<
     this.id = entity.id;
     this.type = entity.type;
     this.layer = entity.layer;
+    this.position = entity.position || "top left";
+    this.offsetX = entity.offsetX ?? 0;
+    this.offsetY = entity.offsetY ?? 0;
+    this.x = entity.x ?? 0;
+    this.y = entity.y ?? 0;
     this.phases = entity.phases;
     this.props = entity.props;
     this.debug = debug;
-
-    if (entity.position) {
-      this.position = entity.position;
-    }
 
     this.totalDuration = this.phases.reduce(
       (sum, phase) => sum + phase.duration,

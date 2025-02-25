@@ -42,9 +42,7 @@ export class Hand extends Array<Card> {
 
   add(card: Card) {
     this.protect();
-    card.handIndex = this.length;
-    card.owner = this.#owner;
-    card.setId();
+    card.add(this.#owner, this.length);
     super.push(card);
     return this.accumulate();
   }

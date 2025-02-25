@@ -17,8 +17,6 @@ export class TextEntity extends Entity<
   readonly fontFamily: string;
   readonly textBaseline: CanvasTextBaseline;
   readonly textAlign: CanvasTextAlign;
-  readonly offsetX: number;
-  readonly offsetY: number;
   readonly shadowColor?: string;
   readonly shadowOffsetX: number;
   readonly shadowOffsetY: number;
@@ -56,8 +54,6 @@ export class TextEntity extends Entity<
     this.fontFamily = entity.fontFamily;
     this.textBaseline = entity.textBaseline;
     this.textAlign = entity.textAlign;
-    this.offsetX = entity.offsetX;
-    this.offsetY = entity.offsetY;
     this.shadowColor = entity.shadowColor;
     this.shadowOffsetX = entity.shadowOffsetX ?? 0;
     this.shadowOffsetY = entity.shadowOffsetY ?? 0;

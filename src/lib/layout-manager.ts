@@ -8,7 +8,7 @@ enum DIRECTION {
 }
 
 export class LayoutManager {
-  private layouts: Map<Position, Generator<number, number, number>> = new Map();
+  #layouts: Map<Position, Generator<number, number, number>> = new Map();
   #padding: number;
   #gutter: number;
 
@@ -22,11 +22,11 @@ export class LayoutManager {
   }
 
   init() {
-    this.layouts.set(
+    this.#layouts.set(
       "top left",
       verticalLayoutGenerator(this.#padding, this.#gutter, DIRECTION.DOWN)
     );
-    this.layouts.set(
+    this.#layouts.set(
       "bottom left",
       verticalLayoutGenerator(
         window.innerHeight - this.#padding,
@@ -34,7 +34,7 @@ export class LayoutManager {
         DIRECTION.UP
       )
     );
-    this.layouts.set(
+    this.#layouts.set(
       "eyeline",
       verticalLayoutGenerator(
         window.innerHeight / 3,
@@ -47,10 +47,10 @@ export class LayoutManager {
   // TODO Extend for non-text entities.
   update(entities: TextEntity[]) {
     for (const entity of entities) {
-      if (!this.layouts.has(entity.position)) {
+      if (!this.#layouts.has(entity.position)) {
         throw new Error(`No layout for ${entity.position}`);
       }
-      const nextY = this.layouts
+      const nextY = this.#layouts
         .get(entity.position)!
         .next(entity.height).value;
       if (entity.position.includes("bottom")) {
@@ -62,8 +62,8 @@ export class LayoutManager {
   }
 
   reset() {
-    this.layouts.forEach((layout) => layout.return(0));
-    this.layouts.clear();
+    this.#layouts.forEach((layout) => layout.return(0));
+    this.#layouts.clear();
     this.init();
   }
 }

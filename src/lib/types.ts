@@ -171,6 +171,10 @@ export interface EntityProps<
   type: EntityType;
   layer: LAYER;
   position?: Position;
+  x?: number;
+  y?: number;
+  offsetX?: number;
+  offsetY?: number;
 }
 
 export type TextEntityAnimationTypes =
