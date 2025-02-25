@@ -3,6 +3,7 @@ import { Debug } from "./debug";
 import {
   AnimatedSpriteEntity,
   EntityInterface,
+  EntityType,
   LAYER,
   SpriteEntity,
   TextEntityOld,
@@ -145,8 +146,10 @@ export class Layer extends Map<string, EntityInterface> {
     const pos = getPosition(entity.position, width, height);
 
     if (entity.style.maxWidth !== "full") {
-      const dimensions = this.#sizeMap.get(entity.style.maxWidth)!;
-      pos.y = dimensions.y + dimensions.height * entity.style.lineHeight;
+      const dimensions = this.#sizeMap.get(entity.style.maxWidth);
+      if (dimensions) {
+        pos.y = dimensions.y + dimensions.height * entity.style.lineHeight;
+      }
     }
 
     entity.x = pos.x;
@@ -379,7 +382,16 @@ export class Layer extends Map<string, EntityInterface> {
     this.#scaleFactor = window.innerWidth / BASELINE_WIDTH;
     this.#padding = Math.floor(window.innerWidth * PADDING);
     this.#ctx.scale(ratio, ratio);
+    this.forEach((entity) => {
+      if (entity.type === "text" || entity.type === "timer") {
+        entity.resize();
+      }
+    });
     this.render(time);
+  }
+
+  getByType(type: EntityType) {
+    return Array.from(this.values()).filter((entity) => entity.type === type);
   }
 
   clear() {

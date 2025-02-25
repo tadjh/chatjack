@@ -16,6 +16,7 @@ import {
   AnimatedSpriteEntity,
   Canvases,
   EntityInterface,
+  EntityType,
   LAYER,
   SpriteEntity,
   State,
@@ -106,7 +107,11 @@ export class Engine {
 
   public loadTitleScreen() {
     titleScreen.forEach((entity) => {
-      this.setEntity(entity);
+      if (entity.type === "text") {
+        this.setEntity(new TextEntity(entity));
+      } else {
+        this.setEntity(entity);
+      }
     });
   }
 
@@ -154,22 +159,28 @@ export class Engine {
     this.getLayer(layer).delete(id);
   }
 
-  private render() {
-    this.getLayer(LAYER.GAME).render(this.#time);
+  private getEntitiesByType(type: EntityType) {
+    return [...this.#layers.values()].flatMap((layer) => layer.getByType(type));
+  }
 
+  private updateLayout() {
+    this.#layoutManager.reset();
+    const entities = this.getEntitiesByType("text") as TextEntity[];
+    this.#layoutManager.update(entities);
+  }
+
+  private render() {
     if (this.#shouldUpdateLayout) {
-      this.#layoutManager.reset();
-      const ui = this.getLayer(LAYER.UI);
-      const entities = [...ui.values()].filter(
-        (entity) => entity.type === "text"
-      );
-      this.#layoutManager.update(entities);
+      this.updateLayout();
       this.#shouldUpdateLayout = false;
-      ui.render(this.#time);
+      this.getLayer(LAYER.UI).render(this.#time);
     }
+
+    this.getLayer(LAYER.GAME).render(this.#time);
   }
 
   public resize = () => {
+    this.updateLayout();
     for (const layer of this.#layers.values()) {
       layer.resize(this.#time);
     }
@@ -184,14 +195,18 @@ export class Engine {
       const layer = this.getLayer(LAYER.GAME);
 
       for (const entity of layer.values()) {
-        if (entity.type === "text") continue;
+        if (entity.delay && entity.delay > 0) {
+          entity.delay -= 1;
+          continue;
+        }
+
         if (entity.type === "timer") {
           entity.update();
           continue;
         }
 
-        if (entity.delay && entity.delay > 0) {
-          entity.delay -= 1;
+        if (entity.type === "text") {
+          entity.update(this.#time);
           continue;
         }
 

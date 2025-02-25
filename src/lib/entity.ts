@@ -1,4 +1,10 @@
-import { BASELINE_WIDTH, FPS, PADDING, Palette } from "./constants";
+import {
+  BASELINE_HEIGHT,
+  BASELINE_WIDTH,
+  FPS,
+  PADDING,
+  Palette,
+} from "./constants";
 import { Debug } from "./debug";
 import {
   AnimationPhase,
@@ -23,6 +29,7 @@ export abstract class Entity<
   readonly offsetX: number;
   readonly offsetY: number;
   public progress: number = 0;
+  public delay: number;
   public x: number;
   public y: number;
   public width: number = 0;
@@ -30,11 +37,14 @@ export abstract class Entity<
   public phases: AnimationPhase<Phase, Props>[];
   public props: Props;
   protected totalDuration: number;
-  protected elapsed: number = 0;
+  protected phaseStart: number = 0;
   protected localProgress: number = 0;
   protected current: AnimationPhase<Phase, Props> | null = null;
   protected padding: number = window.innerWidth * PADDING;
-  protected scaleFactor: number = window.innerWidth / BASELINE_WIDTH;
+  protected scaleFactor: number = Math.min(
+    window.innerWidth / BASELINE_WIDTH,
+    window.innerHeight / BASELINE_HEIGHT
+  );
   protected debug: Debug;
 
   constructor(
@@ -47,6 +57,7 @@ export abstract class Entity<
     this.position = entity.position || "top left";
     this.offsetX = entity.offsetX ?? 0;
     this.offsetY = entity.offsetY ?? 0;
+    this.delay = entity.delay ?? 0;
     this.x = entity.x ?? 0;
     this.y = entity.y ?? 0;
     this.phases = entity.phases;
@@ -64,7 +75,7 @@ export abstract class Entity<
 
   protected setPhase(): this {
     let count = 0;
-    let elapsed = 0;
+    let timeSpent = 0;
     let current = this.phases[this.phases.length - 1];
     for (const p of this.phases) {
       count += p.duration;
@@ -72,10 +83,10 @@ export abstract class Entity<
         current = p;
         break;
       }
-      elapsed = count;
+      timeSpent = count;
     }
     this.current = current;
-    this.elapsed = elapsed;
+    this.phaseStart = timeSpent;
     return this;
   }
 
@@ -83,10 +94,15 @@ export abstract class Entity<
     if (this.current === null) {
       throw new Error("No current phase for local progress");
     }
-    const localProgress =
-      (this.progress * this.totalDuration - this.elapsed) /
-      this.current.duration;
-    this.localProgress = clamp(localProgress, 0, 1);
+
+    const elapsedInPhase = this.progress * this.totalDuration - this.phaseStart;
+    if (this.current.loop) {
+      this.localProgress =
+        (elapsedInPhase % this.current.duration) / this.current.duration;
+    } else {
+      this.localProgress = elapsedInPhase / this.current.duration;
+    }
+    this.localProgress = clamp(this.localProgress, 0, 1);
     return this;
   }
 
@@ -152,7 +168,14 @@ export abstract class Entity<
     return this;
   }
 
-  public abstract resize(): this;
+  public resize(): this {
+    this.scaleFactor = Math.min(
+      window.innerWidth / BASELINE_WIDTH,
+      window.innerHeight / BASELINE_HEIGHT
+    );
+    return this;
+  }
+
   protected abstract easing(): this;
   protected abstract interpolate(time?: number): this;
   public abstract render(ctx: CanvasRenderingContext2D): this;

@@ -147,6 +147,7 @@ export interface AnimationPhase<
 > {
   name: Phase;
   duration: number; // in seconds or ticks
+  loop?: boolean;
   easing?: (t: number) => Props;
   // Function to compute the property value from a local progress (0 to 1)
   interpolate?: (t: number) => Props;
@@ -171,6 +172,7 @@ export interface EntityProps<
   type: EntityType;
   layer: LAYER;
   position?: Position;
+  delay?: number;
   x?: number;
   y?: number;
   offsetX?: number;
@@ -222,16 +224,18 @@ export type TextEntityProps = Omit<
   "props"
 > & {
   id: string;
+  type: "text";
   layer: LAYER;
   text: string;
   position: Position;
+  delay?: number;
   fontSize: number;
   fontFamily: string;
   textBaseline: CanvasTextBaseline;
   textAlign: CanvasTextAlign;
   color: string | CanvasGradient | CanvasPattern;
-  offsetX: number;
-  offsetY: number;
+  offsetX?: number;
+  offsetY?: number;
 } & Shadow &
   Stroke;
 
@@ -246,6 +250,7 @@ export interface TimerEntityProps
     "props"
   > {
   id: string;
+  type: "timer";
   layer: LAYER;
   position: Position;
   color: string | CanvasGradient | CanvasPattern;

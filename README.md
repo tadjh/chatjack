@@ -2,6 +2,7 @@
 
 - TODO Action text is not end of queue sometimes
 - TODO Natural blackjack tint needs to happen AFTER action text (callback)
+- TODO Timer is not responsive
 
 ## Development
 

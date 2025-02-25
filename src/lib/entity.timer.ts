@@ -53,6 +53,7 @@ export class TimerEntity extends Entity<
   }
 
   public resize(): this {
+    super.resize();
     this.#radius = this.radius * this.scaleFactor;
     this.width = this.#radius * 2;
     this.height = this.#radius * 2;

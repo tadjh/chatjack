@@ -21,6 +21,13 @@ export class LayoutManager {
     this.init();
   }
 
+  resize(entities: TextEntity[]) {
+    this.#padding = window.innerWidth * PADDING;
+    this.#gutter = (window.innerWidth * PADDING) / 4;
+    this.reset();
+    this.update(entities);
+  }
+
   init() {
     this.#layouts.set(
       "top left",
@@ -38,7 +45,7 @@ export class LayoutManager {
       "eyeline",
       verticalLayoutGenerator(
         window.innerHeight / 3,
-        this.#gutter,
+        this.#gutter * 6,
         DIRECTION.DOWN
       )
     );
@@ -54,6 +61,8 @@ export class LayoutManager {
         .get(entity.position)!
         .next(entity.height).value;
       if (entity.position.includes("bottom")) {
+        entity.y = nextY - entity.height;
+      } else if (entity.position.includes("eyeline")) {
         entity.y = nextY - entity.height;
       } else {
         entity.y = nextY;
@@ -74,7 +83,6 @@ function* verticalLayoutGenerator(
   direction: DIRECTION = DIRECTION.DOWN
 ): Generator<number, number, number> {
   let currentY = initialY;
-
   while (true) {
     // Yield the current Y position, then update with the provided entity height.
     const height = yield currentY;

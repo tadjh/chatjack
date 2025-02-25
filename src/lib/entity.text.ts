@@ -22,13 +22,15 @@ export class TextEntity extends Entity<
   readonly shadowOffsetY: number;
   readonly shadowBlur: number;
   readonly strokeColor?: string | CanvasGradient | CanvasPattern;
-  readonly strokeWidth?: number;
+  readonly strokeWidth: number;
   public text: string;
   public color: string | CanvasGradient | CanvasPattern;
   #fontSize: number;
   #offsetX: number;
   #offsetY: number;
   #offCtx: OffscreenCanvasRenderingContext2D;
+  #x: number = 0;
+  #y: number = 0;
   #strokeWidth: number = 0;
 
   constructor(
@@ -40,7 +42,7 @@ export class TextEntity extends Entity<
         ...entity,
         type: "text",
         props: {
-          opacity: 1,
+          opacity: 0,
           kerning: 0,
           offsetX: 0,
           offsetY: 0,
@@ -59,11 +61,11 @@ export class TextEntity extends Entity<
     this.shadowOffsetY = entity.shadowOffsetY ?? 0;
     this.shadowBlur = entity.shadowBlur ?? 0;
     this.strokeColor = entity.strokeColor;
-    this.strokeWidth = entity.strokeWidth;
+    this.strokeWidth = entity.strokeWidth ?? 0;
     this.#fontSize = entity.fontSize;
-    this.#offsetX = entity.offsetX;
-    this.#offsetY = entity.offsetY;
-    this.#strokeWidth = entity.strokeWidth ?? 0;
+    this.#offsetX = entity.offsetX ?? 0;
+    this.#offsetY = entity.offsetY ?? 0;
+    this.#strokeWidth = this.strokeWidth;
     const offCanvas = new OffscreenCanvas(1, 1);
     const offCtx = offCanvas.getContext("2d");
     if (!offCtx) {
@@ -92,6 +94,7 @@ export class TextEntity extends Entity<
   }
 
   public resize(): this {
+    super.resize();
     this.#fontSize = this.getFontSize();
     const { width, height } = this.getDimensions();
     this.width = width;
@@ -111,9 +114,7 @@ export class TextEntity extends Entity<
           : pos.y + this.height;
     this.#offsetX = this.offsetX > 0 ? window.innerWidth / this.offsetX : 0;
     this.#offsetY = this.offsetY > 0 ? window.innerHeight / this.offsetY : 0;
-    if (this.strokeWidth !== undefined) {
-      this.#strokeWidth = this.strokeWidth * this.scaleFactor;
-    }
+    this.#strokeWidth = this.strokeWidth * this.scaleFactor;
     return this;
   }
 
@@ -153,7 +154,7 @@ export class TextEntity extends Entity<
     if (this.current.interpolate) {
       this.props = this.current.interpolate(this.localProgress);
     } else {
-      const slide = 300 * this.scaleFactor;
+      const slide = 50 * this.scaleFactor;
 
       switch (this.current.name) {
         case "float-x":
@@ -208,12 +209,8 @@ export class TextEntity extends Entity<
 
   public render(ctx: CanvasRenderingContext2D): this {
     ctx.save();
-    // if (entity.style.maxWidth !== "full") {
-    //     const dimensions = this.#sizeMap.get(entity.style.maxWidth)!;
-    //     pos.y = dimensions.y + dimensions.height * entity.style.lineHeight;
-    //   }
-    this.x += this.props.offsetX + this.#offsetX;
-    this.y += this.props.offsetY + this.#offsetY;
+    this.#x = this.x + this.props.offsetX + this.#offsetX;
+    this.#y = this.y + this.props.offsetY + this.#offsetY;
     ctx.textBaseline = this.textBaseline;
     ctx.textAlign = this.textAlign;
     ctx.globalAlpha = this.props.opacity;
@@ -222,19 +219,21 @@ export class TextEntity extends Entity<
 
     if (this.shadowColor) {
       ctx.shadowColor = this.shadowColor;
-      ctx.shadowOffsetX =
-        this.shadowOffsetX * this.scaleFactor - this.props.offsetX;
-      ctx.shadowOffsetY =
-        this.shadowOffsetY * this.scaleFactor - this.props.offsetY;
+      const supressX =
+        this.current?.name === "float-x" ? this.props.offsetX : 0;
+      const supressY =
+        this.current?.name === "float-y" ? this.props.offsetY : 0;
+      ctx.shadowOffsetX = this.shadowOffsetX * this.scaleFactor - supressX;
+      ctx.shadowOffsetY = this.shadowOffsetY * this.scaleFactor - supressY;
       ctx.shadowBlur = this.shadowBlur;
     }
 
     if (this.strokeColor) {
       ctx.strokeStyle = this.strokeColor;
       ctx.fillStyle = this.strokeColor;
-      ctx.lineWidth = this.#strokeWidth * this.scaleFactor;
-      ctx.fillText(this.text, this.x, this.y);
-      ctx.strokeText(this.text, this.x, this.y);
+      ctx.lineWidth = this.#strokeWidth;
+      ctx.fillText(this.text, this.#x, this.#y);
+      ctx.strokeText(this.text, this.#x, this.#y);
     }
 
     if (this.shadowColor) {
@@ -245,7 +244,7 @@ export class TextEntity extends Entity<
     }
 
     ctx.fillStyle = this.color;
-    ctx.fillText(this.text, this.x, this.y);
+    ctx.fillText(this.text, this.#x, this.#y);
 
     ctx.restore();
     return this;

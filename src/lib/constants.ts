@@ -4,6 +4,7 @@ const isDevelopment = import.meta.env.MODE === "development";
 export const FPS = 12;
 export const PADDING = 2 / 100;
 export const BASELINE_WIDTH = 800;
+export const BASELINE_HEIGHT = 400;
 
 export const Palette: Record<string, Vector3> = {
   White: [255, 255, 255], // "#ffffff"

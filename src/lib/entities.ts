@@ -14,8 +14,8 @@ const SPRITE_HEIGHT = 384;
 
 export const titleScreen: [
   AnimatedSpriteEntity,
-  TextEntityOld,
-  TextEntityOld,
+  TextEntityProps,
+  TextEntityProps,
   TextEntityOld,
 ] = [
   {
@@ -67,50 +67,62 @@ export const titleScreen: [
   },
   {
     id: "title",
-    type: "text-old",
+    type: "text",
     text: "ChatJack",
-    easing: "easeOutCubic",
     layer: LAYER.GAME,
     position: "eyeline",
-    style: {
-      textAlign: "center",
-      color: Palette.Yellow,
-      maxWidth: "full",
-      fontSize: 128,
-      fontFamily: FONT.DISPLAY,
-      lineHeight: 1.2,
-      shadow: { color: Palette.DarkestGreen, x: 8, y: 8, size: 16 },
-      stroke: { width: 16, color: Palette.Black },
-    },
-    translateY: { start: 50, end: 0 },
-    opacity: { start: 0, end: 1 },
-    kerning: { start: 40, end: 0 },
-    float: { x: 0, y: 3, speed: 1 / 6 },
-    index: 0,
+    fontSize: 128,
+    fontFamily: FONT.DISPLAY,
+    textBaseline: "top",
+    textAlign: "center",
+    color: rgb(Palette.Yellow),
+    shadowColor: rgb(Palette.DarkestGreen),
+    shadowOffsetX: 6,
+    shadowOffsetY: 6,
+    shadowBlur: 0,
+    strokeColor: rgb(Palette.Black),
+    strokeWidth: 5,
+    phases: [
+      {
+        name: "fade-slide-kerning-in-bottom",
+        duration: 2,
+      },
+      {
+        name: "float-y",
+        duration: 10,
+        loop: true,
+      },
+    ],
   },
   {
     id: "subtitle",
-    type: "text-old",
+    type: "text",
     text: "Twitch Chat Plays Blackjack",
-    easing: "easeOutCubic",
     layer: LAYER.GAME,
-    delay: 12,
-    offsetY: 0.025,
-    style: {
-      textAlign: "center",
-      color: Palette.Yellow,
-      maxWidth: "title",
-      fontSize: 48,
-      fontFamily: FONT.DISPLAY,
-      lineHeight: 1.2,
-      shadow: { color: Palette.DarkestGreen, x: 4, y: 4, size: 16 },
-      stroke: { width: 8, color: Palette.Black },
-    },
     position: "eyeline",
-    translateY: { start: 50, end: 0 },
-    opacity: { start: 0, end: 1 },
-    float: { x: 0, y: 3, speed: 1 / 6 },
-    index: 1,
+    fontSize: 40,
+    fontFamily: FONT.DISPLAY,
+    textBaseline: "top",
+    textAlign: "center",
+    delay: 12,
+    color: rgb(Palette.Yellow),
+    shadowColor: rgb(Palette.DarkestGreen),
+    shadowOffsetX: 6,
+    shadowOffsetY: 6,
+    shadowBlur: 0,
+    strokeColor: rgb(Palette.Black),
+    strokeWidth: 5,
+    phases: [
+      {
+        name: "fade-slide-in-bottom",
+        duration: 2,
+      },
+      {
+        name: "float-y",
+        duration: 10,
+        loop: true,
+      },
+    ],
   },
   {
     id: "start",
@@ -232,6 +244,7 @@ export const actionText: TextEntityOld = {
 
 export const scoreText: TextEntityProps = {
   id: "score",
+  type: "text",
   text: "",
   layer: LAYER.UI,
   position: "bottom left",
@@ -247,8 +260,6 @@ export const scoreText: TextEntityProps = {
   strokeColor: rgb(Palette.Black),
   strokeWidth: 2,
   phases: [],
-  offsetX: 0,
-  offsetY: 0,
 };
 
 export const cardSprite: SpriteEntity = {
@@ -291,6 +302,7 @@ export const animatedCardSprite: AnimatedSpriteEntity = {
 
 export const turnTimer: TimerEntityProps = {
   id: "turn-timer",
+  type: "timer",
   layer: LAYER.GAME,
   position: "top right",
   color: rgb(Palette.White),
