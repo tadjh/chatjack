@@ -1,20 +1,22 @@
 import { Palette, IMAGE, FONT } from "./constants";
 import {
-  TextEntity,
+  TextEntityOld,
   AnimatedSpriteEntity,
   SpriteEntity,
   LAYER,
   TimerEntityProps,
+  TextEntityProps,
 } from "./types";
+import { rgb } from "./utils";
 
 const SPRITE_WIDTH = 256;
 const SPRITE_HEIGHT = 384;
 
 export const titleScreen: [
   AnimatedSpriteEntity,
-  TextEntity,
-  TextEntity,
-  TextEntity,
+  TextEntityOld,
+  TextEntityOld,
+  TextEntityOld,
 ] = [
   {
     id: "flip-card",
@@ -65,7 +67,7 @@ export const titleScreen: [
   },
   {
     id: "title",
-    type: "text",
+    type: "text-old",
     text: "ChatJack",
     easing: "easeOutCubic",
     layer: LAYER.GAME,
@@ -88,7 +90,7 @@ export const titleScreen: [
   },
   {
     id: "subtitle",
-    type: "text",
+    type: "text-old",
     text: "Twitch Chat Plays Blackjack",
     easing: "easeOutCubic",
     layer: LAYER.GAME,
@@ -112,7 +114,7 @@ export const titleScreen: [
   },
   {
     id: "start",
-    type: "text",
+    type: "text-old",
     text: "!start",
     easing: "easeOutCubic",
     layer: LAYER.GAME,
@@ -135,10 +137,10 @@ export const titleScreen: [
   },
 ];
 
-export const gameoverText: [TextEntity, TextEntity, TextEntity] = [
+export const gameoverText: [TextEntityOld, TextEntityOld, TextEntityOld] = [
   {
     id: "title",
-    type: "text",
+    type: "text-old",
     text: "Dealer Win!",
     easing: "easeOutCubic",
     layer: LAYER.GAME,
@@ -160,7 +162,7 @@ export const gameoverText: [TextEntity, TextEntity, TextEntity] = [
   },
   {
     id: "subtitle",
-    type: "text",
+    type: "text-old",
     text: "Better luck next time",
     easing: "easeOutCubic",
     layer: LAYER.GAME,
@@ -183,7 +185,7 @@ export const gameoverText: [TextEntity, TextEntity, TextEntity] = [
   },
   {
     id: "restart",
-    type: "text",
+    type: "text-old",
     text: "!restart",
     easing: "easeOutCubic",
     layer: LAYER.GAME,
@@ -206,9 +208,9 @@ export const gameoverText: [TextEntity, TextEntity, TextEntity] = [
   },
 ];
 
-export const actionText: TextEntity = {
+export const actionText: TextEntityOld = {
   id: "action",
-  type: "text",
+  type: "text-old",
   text: "",
   layer: LAYER.GAME,
   easing: "easeOutCubic",
@@ -228,24 +230,25 @@ export const actionText: TextEntity = {
   // kerning: { start: 40, end: 0 },
 };
 
-export const scoreText: TextEntity = {
+export const scoreText: TextEntityProps = {
   id: "score",
-  type: "text",
   text: "",
   layer: LAYER.UI,
-  easing: "linear",
-  style: {
-    textAlign: "left",
-    color: Palette.White,
-    maxWidth: "full",
-    fontSize: 32,
-    fontFamily: FONT.SANS_SERIF,
-    lineHeight: 1,
-    shadow: { color: Palette.DarkestGreen, x: 4, y: 4, size: 16 },
-    stroke: { width: 16, color: Palette.Black },
-  },
   position: "bottom left",
-  clamp: true,
+  textAlign: "left",
+  textBaseline: "top",
+  color: rgb(Palette.White),
+  fontSize: 32,
+  fontFamily: FONT.SANS_SERIF,
+  shadowColor: rgb(Palette.DarkestGreen),
+  shadowOffsetX: 4,
+  shadowOffsetY: 4,
+  shadowBlur: 0,
+  strokeColor: rgb(Palette.Black),
+  strokeWidth: 2,
+  phases: [],
+  offsetX: 0,
+  offsetY: 0,
 };
 
 export const cardSprite: SpriteEntity = {
@@ -290,8 +293,8 @@ export const turnTimer: TimerEntityProps = {
   id: "turn-timer",
   layer: LAYER.GAME,
   position: "top right",
-  color: Palette.White,
-  backgroundColor: Palette.DarkestGreen,
+  color: rgb(Palette.White),
+  backgroundColor: rgb(Palette.DarkestGreen),
   radius: 24,
   startAngle: 0,
   rotation: -90,

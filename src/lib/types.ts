@@ -1,4 +1,5 @@
 import { IMAGE } from "./constants";
+import { TextEntity } from "./entity.text";
 import { TimerEntity } from "./entity.timer";
 
 export type Vector3 = [number, number, number];
@@ -29,7 +30,7 @@ export type Position =
 
 interface BaseEntity {
   id: string;
-  type: "text" | "sprite" | "animated-sprite" | "timer";
+  type: "text-old" | "text" | "sprite" | "animated-sprite" | "timer";
   progress?: number;
   easing: "linear" | "easeOutCubic" | "easeOutQuint";
   layer: LAYER;
@@ -52,8 +53,8 @@ interface BaseEntity {
   onEnd?: () => void;
 }
 
-export interface TextEntity extends BaseEntity {
-  type: "text";
+export interface TextEntityOld extends BaseEntity {
+  type: "text-old";
   text: string;
   style: {
     textAlign?: CanvasTextAlign;
@@ -116,9 +117,10 @@ export interface AnimatedSpriteEntity extends BaseSprite {
 }
 
 export type EntityInterface =
-  | TextEntity
+  | TextEntityOld
   | SpriteEntity
   | AnimatedSpriteEntity
+  | TextEntity
   | TimerEntity;
 
 export enum State {
@@ -149,7 +151,6 @@ export interface AnimationPhase<
   // Function to compute the property value from a local progress (0 to 1)
   interpolate?: (t: number) => Props;
 }
-
 export interface AnimationSpec<
   Phase extends string,
   Props extends Record<string, number>,
@@ -160,30 +161,93 @@ export interface AnimationSpec<
   onBegin?: (layer: LAYER, id: string) => void;
   onEnd?: (layer: LAYER, id: string) => void;
 }
-export type TimerEntityPhaseTypes = "zoom-in" | "countdown" | "zoom-out";
 
-export type TimerEntityPhaseProps = {
+export type EntityType = "text" | "sprite" | "animated-sprite" | "timer";
+export interface EntityProps<
+  Phase extends string,
+  Props extends Record<string, number>,
+> extends AnimationSpec<Phase, Props> {
+  id: string;
+  type: EntityType;
+  layer: LAYER;
+  position?: Position;
+}
+
+export type TextEntityAnimationTypes =
+  | "float-x"
+  | "float-y"
+  | "fade-slide-in-top"
+  | "fade-slide-in-right"
+  | "fade-slide-in-bottom"
+  | "fade-slide-in-left"
+  | "fade-slide-out-top"
+  | "fade-slide-out-right"
+  | "fade-slide-out-bottom"
+  | "fade-slide-out-left"
+  | "fade-slide-kerning-in-bottom";
+export type TextEntityAnimationProps = {
+  opacity: number;
+  kerning: number;
+  offsetX: number;
+  offsetY: number;
+};
+
+type Shadow =
+  | {
+      shadowColor: string;
+      shadowOffsetX: number;
+      shadowOffsetY: number;
+      shadowBlur: number;
+    }
+  | {
+      shadowColor: undefined;
+      shadowOffsetX?: number;
+      shadowOffsetY?: number;
+      shadowBlur?: number;
+    };
+
+type Stroke =
+  | {
+      strokeColor: string;
+      strokeWidth: number;
+    }
+  | { strokeColor: undefined; strokeWidth?: number };
+
+export type TextEntityProps = Omit<
+  AnimationSpec<TextEntityAnimationTypes, TextEntityAnimationProps>,
+  "props"
+> & {
+  id: string;
+  layer: LAYER;
+  text: string;
+  position: Position;
+  fontSize: number;
+  fontFamily: string;
+  textBaseline: CanvasTextBaseline;
+  textAlign: CanvasTextAlign;
+  color: string | CanvasGradient | CanvasPattern;
+  offsetX: number;
+  offsetY: number;
+} & Shadow &
+  Stroke;
+
+export type TimerEntityAnimationTypes = "zoom-in" | "countdown" | "zoom-out";
+export type TimerEntityAnimationProps = {
   angle: number;
   radius: number;
 };
-
-interface AnimationPhases<T extends string, P extends Record<string, number>> {
-  phases: AnimationPhase<T, P>[];
-  props?: P;
-  // Optional overall callbacks:
-  onBegin?: (layer: LAYER, id: string) => void;
-  onEnd?: (layer: LAYER, id: string) => void;
-}
-
 export interface TimerEntityProps
-  extends AnimationPhases<TimerEntityPhaseTypes, TimerEntityPhaseProps> {
+  extends Omit<
+    AnimationSpec<TimerEntityAnimationTypes, TimerEntityAnimationProps>,
+    "props"
+  > {
   id: string;
   layer: LAYER;
   position: Position;
-  color: Vector3;
-  backgroundColor?: Vector3;
+  color: string | CanvasGradient | CanvasPattern;
+  backgroundColor: string | CanvasGradient | CanvasPattern;
   backgroundScale?: number;
-  strokeColor?: Vector3;
+  strokeColor?: string | CanvasGradient | CanvasPattern;
   strokeScale?: number;
   counterclockwise?: boolean;
   radius: number;

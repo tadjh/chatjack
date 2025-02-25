@@ -2,32 +2,30 @@ import { Palette } from "./constants";
 import { Debug } from "./debug";
 import { Entity } from "./entity";
 import {
-  Vector3,
   TimerEntityProps,
-  TimerEntityPhaseTypes,
-  TimerEntityPhaseProps,
+  TimerEntityAnimationTypes,
+  TimerEntityAnimationProps,
 } from "./types";
-import { easeOutBack, getPosition, lerp, radians, rgb, rgba } from "./utils";
+import { easeOutBack, lerp, radians } from "./utils";
 
 export class TimerEntity extends Entity<
-  TimerEntityPhaseTypes,
-  TimerEntityPhaseProps
+  TimerEntityAnimationTypes,
+  TimerEntityAnimationProps
 > {
   readonly type = "timer";
-  readonly color: Vector3;
-  readonly backgroundColor: Vector3 | undefined;
+  readonly color: string | CanvasGradient | CanvasPattern;
   readonly radius: number;
   readonly startAngle: number;
   readonly rotation: number;
+  readonly backgroundColor?: string | CanvasGradient | CanvasPattern;
   readonly backgroundScale: number = 1.15;
-  readonly strokeColor?: Vector3;
+  readonly strokeColor?: string | CanvasGradient | CanvasPattern;
   readonly strokeScale: number = 1.05;
   readonly counterclockwise: boolean = false;
-  #scaledRadius: number = 0;
+  #radius: number = 0;
 
   constructor(
     entity: TimerEntityProps,
-    scaleFactor: number,
     debug = new Debug("TimerEntity", Palette.LightGrey)
   ) {
     super(
@@ -42,86 +40,87 @@ export class TimerEntity extends Entity<
       debug
     );
     this.color = entity.color;
-    this.backgroundColor = entity.backgroundColor;
-    this.backgroundScale = entity.backgroundScale ?? this.backgroundScale;
     this.radius = entity.radius;
     this.rotation = radians(entity.rotation);
     this.startAngle = radians(entity.startAngle) + this.rotation;
+    this.backgroundColor = entity.backgroundColor;
+    this.backgroundScale = entity.backgroundScale ?? this.backgroundScale;
     this.strokeColor = entity.strokeColor;
     this.strokeScale = entity.strokeScale ?? this.strokeScale;
     this.counterclockwise = entity.counterclockwise ?? this.counterclockwise;
-    this.resize(scaleFactor);
+    this.#radius = this.radius;
+    this.resize();
   }
 
-  resize(scaleFactor: number) {
-    this.#scaledRadius = this.radius * scaleFactor;
-    const pos = getPosition(
-      this.position,
-      this.#scaledRadius * 2,
-      this.#scaledRadius * 2
-    );
+  public resize(): this {
+    this.#radius = this.radius * this.scaleFactor;
+    this.width = this.#radius * 2;
+    this.height = this.#radius * 2;
+    const pos = this.getPosition();
     this.x = pos.x;
-    this.y = pos.y + this.#scaledRadius;
+    this.y = pos.y + this.#radius;
+    return this;
   }
 
-  easing() {
+  protected easing(): this {
     if (!this.current) {
       throw new Error(`No current phase to ease for ${this.id}`);
     }
 
     if (this.current.easing) {
       this.props = this.current.easing(this.localProgress);
-      return;
+    } else {
+      switch (this.current.name) {
+        case "zoom-in":
+          this.localProgress = easeOutBack(this.localProgress);
+          break;
+        case "zoom-out":
+        case "countdown":
+          // linear easing
+          break;
+        default:
+          break;
+      }
     }
-
-    switch (this.current.name) {
-      case "zoom-in":
-        this.localProgress = easeOutBack(this.localProgress);
-        break;
-      case "zoom-out":
-      case "countdown":
-        break;
-      default:
-        break;
-    }
+    return this;
   }
 
-  interpolate() {
+  protected interpolate(): this {
     if (!this.current) {
       throw new Error(`No current phase to interpolate for${this.id}`);
     }
 
     if (this.current.interpolate) {
       this.props = this.current.interpolate(this.localProgress);
-      return;
+    } else {
+      switch (this.current.name) {
+        case "zoom-in":
+          this.props.angle = this.startAngle;
+          this.props.radius = Math.max(
+            lerp(0, this.#radius, this.localProgress),
+            0
+          );
+          break;
+        case "countdown":
+          this.props.angle =
+            lerp(0, Math.PI * 2, this.localProgress) + this.rotation;
+          this.props.radius = this.#radius;
+          break;
+        case "zoom-out":
+          this.props.angle = Math.PI * 2;
+          this.props.radius = Math.max(
+            lerp(this.#radius, 0, this.localProgress),
+            0
+          );
+          break;
+        default:
+          break;
+      }
     }
-
-    switch (this.current.name) {
-      case "zoom-in":
-        this.props.angle = this.startAngle;
-        this.props.radius = Math.max(
-          lerp(0, this.#scaledRadius, this.localProgress),
-          0
-        );
-        break;
-      case "countdown":
-        this.props.angle =
-          lerp(0, Math.PI * 2, this.localProgress) + this.rotation;
-        this.props.radius = this.#scaledRadius;
-        break;
-      case "zoom-out":
-        this.props.angle = Math.PI * 2;
-        this.props.radius = Math.max(
-          lerp(this.#scaledRadius, 0, this.localProgress),
-          0
-        );
-        break;
-      default:
-        break;
-    }
+    return this;
   }
 
-  update() {
+  public update(): this {
     super.update();
 
     if (!this.current) {
@@ -135,9 +134,11 @@ export class TimerEntity extends Entity<
       this.debug.log(`Calling onEnd from: ${this.id}`);
       this.onEnd(this.layer, this.id);
     }
+
+    return this;
   }
 
-  render(ctx: CanvasRenderingContext2D) {
+  public render(ctx: CanvasRenderingContext2D): this {
     if (this.backgroundColor) {
       ctx.beginPath();
       ctx.moveTo(this.x, this.y);
@@ -150,7 +151,7 @@ export class TimerEntity extends Entity<
         false
       );
       ctx.closePath();
-      ctx.fillStyle = rgba(this.backgroundColor);
+      ctx.fillStyle = this.backgroundColor;
       ctx.fill();
     }
 
@@ -166,7 +167,7 @@ export class TimerEntity extends Entity<
         this.counterclockwise
       );
       ctx.closePath();
-      ctx.fillStyle = rgba(this.strokeColor);
+      ctx.fillStyle = this.strokeColor;
       ctx.fill();
     }
 
@@ -181,8 +182,9 @@ export class TimerEntity extends Entity<
       this.counterclockwise || false
     );
     ctx.closePath();
-    ctx.fillStyle = rgba(this.color);
+    ctx.fillStyle = this.color;
     ctx.fill();
+    return this;
   }
 }
 

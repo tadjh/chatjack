@@ -8,7 +8,7 @@ import {
   turnTimer,
 } from "./entities";
 import { Card } from "./card";
-import { Fonts, Palette, Images, BASELINE_WIDTH } from "./constants";
+import { Fonts, Palette, Images } from "./constants";
 import { Dealer } from "./dealer";
 import { Layer } from "./layer";
 import { Player, Role } from "./player";
@@ -19,19 +19,23 @@ import {
   LAYER,
   SpriteEntity,
   State,
-  TextEntity,
+  TextEntityOld,
   TimerEntityProps,
 } from "./types";
 import { Hand, Status } from "./hand";
 import { Debug } from "./debug";
 import { Counter } from "./counter";
 import { TimerEntity } from "./entity.timer";
+import { TextEntity } from "./entity.text";
+import { rgb } from "./utils";
+import { LayoutManager } from "./layout-manager";
 
 export const FPS = 12;
-const TICK_RATE = 1000 / FPS;
-const ANIMATION_SPEED = 1 / 12;
 
 export class Renderer {
+  readonly fps: number;
+  readonly tickRate: number;
+  readonly baseAnimSpeed: number;
   #layers: Map<LAYER, Layer> = new Map();
   #lastTick = 0;
   #time = 0;
@@ -39,13 +43,21 @@ export class Renderer {
   #hasDealt = false;
   #spritesheets: Map<string, HTMLImageElement> = new Map();
   #counter: Counter | null = null;
-  #scaleFactor = window.innerWidth / BASELINE_WIDTH;
+  #layoutManager: LayoutManager;
+  #shouldUpdateLayout: boolean = false;
 
   constructor(
-    private tickRate = TICK_RATE,
-    private baseAnimSpeed = ANIMATION_SPEED,
+    fps = FPS,
+    tickRate = 1000 / fps,
+    animationSpeed = 1 / fps,
+    layoutManager = new LayoutManager(),
     private debug = new Debug("Renderer", Palette.Orange)
-  ) {}
+  ) {
+    this.fps = fps;
+    this.tickRate = tickRate;
+    this.baseAnimSpeed = animationSpeed;
+    this.#layoutManager = layoutManager;
+  }
 
   public async loadFont(family: string, url: string): Promise<void> {
     const fontFace = new FontFace(family, `url("${url}")`);
@@ -137,6 +149,7 @@ export class Renderer {
   }
 
   private setEntity(entity: EntityInterface) {
+    if (entity.type === "text") this.#shouldUpdateLayout = true;
     this.getLayer(entity.layer).set(entity.id, entity);
   }
 
@@ -146,14 +159,23 @@ export class Renderer {
 
   private render() {
     this.getLayer(LAYER.GAME).render(this.#time);
+
+    if (this.#shouldUpdateLayout) {
+      this.#layoutManager.reset();
+      const ui = this.getLayer(LAYER.UI);
+      const entities = [...ui.values()].filter(
+        (entity) => entity.type === "text"
+      );
+      this.#layoutManager.update(entities);
+      this.#shouldUpdateLayout = false;
+      ui.render(this.#time);
+    }
   }
 
   public resize = () => {
     for (const layer of this.#layers.values()) {
       layer.resize(this.#time);
     }
-
-    this.#scaleFactor = window.innerWidth / BASELINE_WIDTH;
   };
 
   // The game loop updates animation progress and redraws the canvas.
@@ -165,6 +187,7 @@ export class Renderer {
       const layer = this.getLayer(LAYER.GAME);
 
       for (const entity of layer.values()) {
+        if (entity.type === "text") continue;
         if (entity.type === "timer") {
           entity.update();
           continue;
@@ -176,10 +199,11 @@ export class Renderer {
         }
 
         entity.progress = entity.progress ?? 0;
-
         if (entity.progress < 1) {
-          entity.progress += entity.speed ?? this.baseAnimSpeed;
-          if (entity.progress > 1) entity.progress = 1;
+          entity.progress = Math.min(
+            entity.progress + (entity.speed ?? this.baseAnimSpeed),
+            1
+          );
         } else if (entity.onEnd) {
           entity.onEnd();
           entity.onEnd = undefined;
@@ -284,67 +308,53 @@ export class Renderer {
       default:
         break;
     }
-
-    this.getLayer(LAYER.UI).render(this.#time);
   }
 
   private createTimer = (timer: TimerEntityProps) => {
     this.debug.log(`Creating timer: ${timer.id}`);
-    const entity = new TimerEntity(timer, this.#scaleFactor);
+    const entity = new TimerEntity(timer);
     this.setEntity(entity);
   };
 
   private createScores(dealer: Dealer, player: Player) {
     // TODO Handle split hands
 
-    const dealerText: TextEntity = {
+    const dealerText = new TextEntity({
       ...scoreText,
       id: "dealer-text",
       text: dealer.name,
       position: "top left",
-      style: { ...scoreText.style, fontSize: 20 },
-      offsetY: -0.025,
-    };
+      fontSize: 20,
+    });
 
-    this.debug.log(`Creating ${dealerText.id}:`, dealerText.text);
     this.setEntity(dealerText);
 
-    const dealerScoreText: TextEntity = {
+    const dealerScoreText = new TextEntity({
       ...scoreText,
       id: "dealer-score",
-      text: `${dealer.score}`,
+      text: dealer.score.toString(),
       position: "top left",
-      style: { ...scoreText.style, maxWidth: "dealer-text" },
-      offsetY: 0.03,
-    };
+    });
 
-    this.debug.log(`Creating ${dealerScoreText.id}:`, dealerScoreText.text);
     this.setEntity(dealerScoreText);
 
-    const playerText: TextEntity = {
+    const playerText = new TextEntity({
       ...scoreText,
       id: `${player.name.toLowerCase()}-text`,
       text: player.name,
       position: "bottom left",
-      style: { ...scoreText.style, fontSize: 20 },
-    };
+      fontSize: 20,
+    });
 
-    this.debug.log(`Creating ${playerText.id}:`, playerText.text);
     this.setEntity(playerText);
 
-    const playerScoreText: TextEntity = {
+    const playerScoreText = new TextEntity({
       ...scoreText,
       id: `${player.name.toLowerCase()}-score`,
       text: player.score.toString(),
       position: "bottom left",
-      style: {
-        ...scoreText.style,
-        maxWidth: `${player.name.toLowerCase()}-text`,
-        lineHeight: -2.4,
-      },
-    };
+    });
 
-    this.debug.log(`Creating ${playerScoreText.id}:`, playerScoreText.text);
     this.setEntity(playerScoreText);
   }
 
@@ -364,7 +374,7 @@ export class Renderer {
       );
       if (dealerScoreText) {
         dealerScoreText.text = dealerScore.toString();
-        dealerScoreText.style.color = this.getColorScore(dealerScore);
+        dealerScoreText.color = rgb(this.getColorScore(dealerScore));
         this.debug.log(`Updating ${dealerScoreText.id}:`, dealerScoreText.text);
         this.setEntity(dealerScoreText);
       }
@@ -376,7 +386,7 @@ export class Renderer {
       );
       if (playerScoreText) {
         playerScoreText.text = player.score.toString();
-        playerScoreText.style.color = this.getColorScore(player.score);
+        playerScoreText.color = rgb(this.getColorScore(player.score));
         this.debug.log(`Updating ${playerScoreText.id}:`, playerScoreText.text);
         this.setEntity(playerScoreText);
       }
@@ -485,7 +495,7 @@ export class Renderer {
   }
 
   private createActionText(state: State, role: Role) {
-    const entity: TextEntity = {
+    const entity: TextEntityOld = {
       ...actionText,
     };
     entity.progress = 0;

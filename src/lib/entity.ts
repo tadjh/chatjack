@@ -1,19 +1,14 @@
-import { Palette } from "./constants";
+import { BASELINE_WIDTH, PADDING, Palette } from "./constants";
 import { Debug } from "./debug";
 import { FPS } from "./renderer";
-import { AnimationPhase, AnimationSpec, LAYER, Position } from "./types";
-
-type EntityType = "text" | "sprite" | "animated-sprite" | "timer";
-
-interface EntityProps<
-  Phase extends string,
-  Props extends Record<string, number>,
-> extends AnimationSpec<Phase, Props> {
-  id: string;
-  type: EntityType;
-  layer: LAYER;
-  position?: Position;
-}
+import {
+  AnimationPhase,
+  AnimationSpec,
+  EntityProps,
+  EntityType,
+  LAYER,
+  Position,
+} from "./types";
 import { clamp } from "./utils";
 
 export abstract class Entity<
@@ -28,20 +23,21 @@ export abstract class Entity<
   readonly speed: number;
   public progress: number = 0;
   public totalDuration: number;
-  //   offsetX: number = 0;
-  //   offsetY: number = 0;
+  offsetX: number = 0;
+  offsetY: number = 0;
   x: number = 0;
   y: number = 0;
   opacity: number = 1;
   debug: Debug;
-  //   float: { x: number; y: number; speed: number } = { x: 0, y: 0, speed: 1 / 2 };
   phases: AnimationPhase<Phase, Props>[];
   props: Props;
-  onBegin?: (layer: LAYER, id: string) => void | undefined;
-  onEnd?: (layer: LAYER, id: string) => void | undefined;
   current: AnimationPhase<Phase, Props> | null = null;
   elapsed: number = 0;
   public localProgress: number = 0;
+  width: number = 0;
+  height: number = 0;
+  padding: number = window.innerWidth * PADDING;
+  scaleFactor: number = window.innerWidth / BASELINE_WIDTH;
 
   constructor(
     entity: EntityProps<Phase, Props>,
@@ -58,29 +54,16 @@ export abstract class Entity<
       this.position = entity.position;
     }
 
-    if (entity.onBegin) {
-      this.onBegin = entity.onBegin;
-    }
-
-    if (entity.onEnd) {
-      this.onEnd = entity.onEnd;
-    }
-
-    if (entity.onBegin) {
-      this.onBegin = entity.onBegin;
-      this.debug.log(`${this.id} called onBegin`);
-      this.onBegin(this.layer, this.id);
-    }
-
     this.totalDuration = this.phases.reduce(
       (sum, phase) => sum + phase.duration,
       0
     );
 
-    this.speed = 1 / (this.totalDuration * FPS);
+    this.speed =
+      this.totalDuration > 0 ? 1 / (this.totalDuration * FPS) : 1 / 12;
   }
 
-  setPhase() {
+  protected setPhase(): this {
     let count = 0;
     let elapsed = 0;
     let current = this.phases[this.phases.length - 1];
@@ -94,9 +77,10 @@ export abstract class Entity<
     }
     this.current = current;
     this.elapsed = elapsed;
+    return this;
   }
 
-  setLocalProgress() {
+  protected setLocalProgress(): this {
     if (this.current === null) {
       throw new Error("No current phase for local progress");
     }
@@ -104,17 +88,76 @@ export abstract class Entity<
       (this.progress * this.totalDuration - this.elapsed) /
       this.current.duration;
     this.localProgress = clamp(localProgress, 0, 1);
+    return this;
   }
 
-  update() {
+  protected getPosition(): {
+    x: number;
+    y: number;
+  } {
+    switch (this.position) {
+      case "center":
+        return {
+          x: (window.innerWidth - this.width) / 2,
+          y: (window.innerHeight - this.height) / 2,
+        };
+      case "eyeline":
+        return {
+          x: (window.innerWidth - this.width) / 2,
+          y: window.innerHeight / 3 - this.height,
+        };
+      case "top":
+        return { x: (window.innerWidth - this.width) / 2, y: this.padding };
+      case "right":
+        return {
+          x: window.innerWidth - this.width - this.padding,
+          y: (window.innerHeight - this.height) / 2,
+        };
+      case "bottom":
+        return {
+          x: (window.innerWidth - this.width) / 2,
+          y: window.innerHeight - this.height - this.padding,
+        };
+      case "left":
+        return {
+          x: this.padding,
+          y: (window.innerHeight - this.height) / 2,
+        };
+      case "top left":
+        return { x: this.padding, y: this.padding };
+      case "top right":
+        return {
+          x: window.innerWidth - this.width - this.padding,
+          y: this.padding,
+        };
+      case "bottom left":
+        return {
+          x: this.padding,
+          y: window.innerHeight - this.height - this.padding,
+        };
+      case "bottom right":
+        return {
+          x: window.innerWidth - this.width - this.padding,
+          y: window.innerHeight - this.height - this.padding,
+        };
+      default:
+        return { x: this.x, y: this.y };
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public update(_time?: number): this {
     this.progress = Math.min(this.progress + this.speed, 1);
     this.setPhase();
     this.setLocalProgress();
+    return this;
   }
 
-  abstract resize(scaleFactor: number): void;
-  abstract easing(): void;
-  abstract interpolate(): void;
-  abstract render(ctx: CanvasRenderingContext2D): void;
+  public abstract resize(): this;
+  protected abstract easing(): this;
+  protected abstract interpolate(time?: number): this;
+  public abstract render(ctx: CanvasRenderingContext2D): this;
+  onBegin?: (layer: LAYER, id: string) => void | undefined;
+  onEnd?: (layer: LAYER, id: string) => void | undefined;
 }
 

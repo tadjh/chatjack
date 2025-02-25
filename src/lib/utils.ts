@@ -61,6 +61,18 @@ export function easeOut(x: number, y: number): number {
 }
 
 /**
+ * Applies an ease-out cubic function to a given value.
+ *
+ * This function calculates an easing value for smoother animations.
+ *
+ * @param x - The current time or progress value.
+ * @returns The eased value.
+ */
+export function easeOutCubic(x: number): number {
+  return easeOut(x, 3);
+}
+
+/**
  * Applies an "ease out back" easing function to the given normalized value.
  *
  * This function creates an animation effect where the transition overshoots slightly
@@ -120,10 +132,11 @@ export function radians(degrees: number): number {
   return (degrees * Math.PI) / 180;
 }
 
+// TODO Deprecate
 export function getPadding(): number {
   return window.innerWidth / 50;
 }
-
+// TODO Deprecate
 export function getPosition(
   position: Position | undefined,
   entityWidth: number,

@@ -2,9 +2,11 @@
 
 - TODO Action text is not end of queue sometimes
 - TODO Natural blackjack tint needs to happen AFTER action text (callback)
+- TODO Exit doesn't return to title screen
 
 ## Development
 
+- TODO Add debug to Card class
 - TODO Create render order list
 - TODO show chat actions on the opposite side of the scores "!hit or !stand", hide when no longer chat's turn
 - TODO Split ui into dynamic-ui and static-ui

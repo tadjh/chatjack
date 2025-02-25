@@ -5,7 +5,7 @@ import {
   EntityInterface,
   LAYER,
   SpriteEntity,
-  TextEntity,
+  TextEntityOld,
 } from "./types";
 import { rgb, font, easeOut, lerp, clamp, rgba, getPosition } from "./utils";
 
@@ -51,6 +51,9 @@ export class Layer extends Map<string, EntityInterface> {
       }
       switch (entity.type) {
         case "text":
+          entity.render(this.#ctx);
+          break;
+        case "text-old":
           this.renderText(entity, time);
           break;
         case "sprite":
@@ -70,7 +73,7 @@ export class Layer extends Map<string, EntityInterface> {
     }
   }
 
-  getFontSize(entity: TextEntity) {
+  getFontSize(entity: TextEntityOld) {
     let fontSize = this.#scaleFactor * entity.style.fontSize;
     this.#ctx.font = font(fontSize, entity.style.fontFamily);
     const textWidth = this.#ctx.measureText(entity.text).width;
@@ -85,7 +88,7 @@ export class Layer extends Map<string, EntityInterface> {
     return fontSize;
   }
 
-  renderText(entity: TextEntity, time: number) {
+  renderText(entity: TextEntityOld, time: number) {
     this.#ctx.textBaseline = "top";
     this.#ctx.textAlign = "center";
     this.#ctx.fillStyle = rgb(Palette.White);
