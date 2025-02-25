@@ -72,9 +72,9 @@ export class TimerEntity extends Entity<
     } else {
       switch (this.current.name) {
         case "zoom-in":
+        case "zoom-out":
           this.localProgress = easeOutBack(this.localProgress);
           break;
-        case "zoom-out":
         case "countdown":
           // linear easing
           break;

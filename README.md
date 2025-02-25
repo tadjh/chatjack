@@ -6,7 +6,6 @@
 
 ## Development
 
-- TODO Add debug to Card class
 - TODO Create render order list
 - TODO show chat actions on the opposite side of the scores "!hit or !stand", hide when no longer chat's turn
 - TODO Split ui into dynamic-ui and static-ui

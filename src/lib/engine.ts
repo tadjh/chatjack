@@ -20,7 +20,6 @@ import {
   SpriteEntity,
   State,
   TextEntityOld,
-  TimerEntityProps,
 } from "./types";
 import { Hand, Status } from "./hand";
 import { Debug } from "./debug";
@@ -308,9 +307,9 @@ export class Engine {
     }
   }
 
-  private createTimer = (timer: TimerEntityProps) => {
-    this.debug.log(`Creating timer: ${timer.id}`);
-    const entity = new TimerEntity(timer);
+  private createTimer = (onEnd: (layer: LAYER, id: string) => void) => {
+    this.debug.log(`Creating timer: ${turnTimer.id}`);
+    const entity = new TimerEntity({ ...turnTimer, onEnd });
     this.setEntity(entity);
   };
 
@@ -439,34 +438,34 @@ export class Engine {
     this.setEntity(entity);
   }
 
+  private createCounter(count: number, callback: (counter: Counter) => void) {
+    const counter = new Counter("create-hands", count, () => callback(counter));
+    this.#counter = counter;
+    return counter;
+  }
+
   private createHands(dealer: Dealer, player: Player) {
     const delay = 8;
     let count = 0;
     const dealerHand = dealer.hand;
     const playerHand = player.hand;
 
-    const counter = new Counter(
-      "create-hands",
+    const counter = this.createCounter(
       dealerHand.length + playerHand.length,
       () =>
-        this.createTimer({
-          ...turnTimer,
-          onEnd: (layer: LAYER, id: string) => {
-            this.#counter?.destroy();
-            this.#counter = null;
-            this.clearEntity(layer, id);
-          },
-        })
+        this.createTimer((layer: LAYER, id: string) =>
+          this.clearEntity(layer, id)
+        )
     );
-
-    const onEnd = counter.tick;
-
-    this.#counter = counter;
 
     this.#holeCardId = dealer.hand[1].id;
     for (let i = 0; i < dealer.hand.length; i++) {
-      this.createCard(playerHand[i], count++ * delay, "playing", onEnd);
-      this.createCard(dealerHand[i], count++ * delay, "playing", onEnd);
+      this.createCard(playerHand[i], count++ * delay, "playing", () =>
+        counter.tick()
+      );
+      this.createCard(dealerHand[i], count++ * delay, "playing", () =>
+        counter.tick()
+      );
     }
 
     if (playerHand.status === "blackjack") {

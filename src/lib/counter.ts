@@ -29,6 +29,7 @@ export class Counter {
     this.#current++;
     if (this.current >= this.#targetCount) {
       this.#callback();
+      this.destroy();
     }
   };
 
