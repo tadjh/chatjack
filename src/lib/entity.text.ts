@@ -80,20 +80,34 @@ export class TextEntity extends Entity<
     this.resize();
   }
 
-  public update(): this {
-    super.update();
-
-    if (!this.current) {
-      throw new Error(`No current phase to update for ${this.id}`);
+  private getFontSize(): number {
+    let fontSize = this.scaleFactor * this.fontSize;
+    this.#offCtx.font = font(fontSize, this.fontFamily);
+    const textWidth = this.#offCtx.measureText(this.text).width;
+    const maxWidth = window.innerWidth - this.padding * 2;
+    if (textWidth > maxWidth) {
+      fontSize *= maxWidth / textWidth;
     }
+    return fontSize;
+  }
 
-    this.easing();
-    this.interpolate();
+  private getDimensions(): {
+    width: number;
+    height: number;
+  } {
+    const { width, fontBoundingBoxAscent, fontBoundingBoxDescent } =
+      this.#offCtx.measureText(this.text);
+    return {
+      width,
+      height: fontBoundingBoxAscent + fontBoundingBoxDescent,
+    };
+  }
 
-    if (this.progress === 1 && this.onEnd) {
-      this.debug.log(`Calling onEnd from: ${this.id}`);
-      this.onEnd(this.layer, this.id);
-    }
+  private setDimensions(): this {
+    this.#fontSize = this.getFontSize();
+    const { width, height } = this.getDimensions();
+    this.width = width;
+    this.height = height;
     return this;
   }
 
@@ -222,6 +236,23 @@ export class TextEntity extends Entity<
     return this;
   }
 
+  public update(): this {
+    super.update();
+
+    if (!this.current) {
+      throw new Error(`No current phase to update for ${this.id}`);
+    }
+
+    this.easing();
+    this.interpolate();
+
+    if (this.progress === 1 && this.onEnd) {
+      this.debug.log(`Calling onEnd from: ${this.id}`);
+      this.onEnd(this.layer, this.id);
+    }
+    return this;
+  }
+
   public render(ctx: CanvasRenderingContext2D): this {
     ctx.save();
     this.#x = this.x + this.props.offsetX + this.#offsetX;
@@ -269,37 +300,6 @@ export class TextEntity extends Entity<
     // ctx.fillRect(0, (window.innerHeight / 4) * 3, window.innerWidth, 10);
 
     ctx.restore();
-    return this;
-  }
-
-  private getFontSize(): number {
-    let fontSize = this.scaleFactor * this.fontSize;
-    this.#offCtx.font = font(fontSize, this.fontFamily);
-    const textWidth = this.#offCtx.measureText(this.text).width;
-    const maxWidth = window.innerWidth - this.padding * 2;
-    if (textWidth > maxWidth) {
-      fontSize *= maxWidth / textWidth;
-    }
-    return fontSize;
-  }
-
-  private getDimensions(): {
-    width: number;
-    height: number;
-  } {
-    const { width, fontBoundingBoxAscent, fontBoundingBoxDescent } =
-      this.#offCtx.measureText(this.text);
-    return {
-      width,
-      height: fontBoundingBoxAscent + fontBoundingBoxDescent,
-    };
-  }
-
-  private setDimensions(): this {
-    this.#fontSize = this.getFontSize();
-    const { width, height } = this.getDimensions();
-    this.width = width;
-    this.height = height;
     return this;
   }
 }
