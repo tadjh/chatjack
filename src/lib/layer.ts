@@ -1,35 +1,20 @@
-import { BASELINE_WIDTH, PADDING_MULTIPLIER, Palette } from "./constants";
+import { Palette } from "./constants";
 import { Debug } from "./debug";
+import { TextEntity } from "./entity.text";
 import {
   AnimatedSpriteEntity,
   EntityInterface,
   EntityType,
   LAYER,
   SpriteEntity,
-  TextEntityOld,
 } from "./types";
-import {
-  rgb,
-  font,
-  easeOut,
-  lerp,
-  clamp,
-  rgba,
-  getPosition,
-  getScaleFactor,
-} from "./utils";
+import { easeOut, lerp, rgba, getPosition } from "./utils";
 
 export class Layer extends Map<string, EntityInterface> {
   readonly id: LAYER;
   #canvas: HTMLCanvasElement;
   #ctx: CanvasRenderingContext2D;
-  #scaleFactor = getScaleFactor();
-  #padding = window.innerWidth * PADDING_MULTIPLIER;
   #spritesheets: Map<string, HTMLImageElement>;
-  #sizeMap: Map<
-    string,
-    { width: number; height: number; x: number; y: number }
-  > = new Map();
   #cache = new Map<string, ImageBitmap>();
   protected debug: Debug;
 
@@ -59,19 +44,16 @@ export class Layer extends Map<string, EntityInterface> {
   render(time: number) {
     this.clearRect();
 
-    let action;
+    let action: TextEntity | undefined;
 
     this.forEach((entity) => {
-      if (entity.id === "action") {
-        action = entity;
-        return;
-      }
       switch (entity.type) {
         case "text":
+          if (entity.id === "action") {
+            action = entity;
+            return;
+          }
           entity.render(this.#ctx);
-          break;
-        case "text-old":
-          this.renderText(entity, time);
           break;
         case "sprite":
         case "animated-sprite":
@@ -86,142 +68,8 @@ export class Layer extends Map<string, EntityInterface> {
     });
 
     if (action) {
-      this.renderText(action, time);
+      action.render(this.#ctx);
     }
-  }
-
-  getFontSize(entity: TextEntityOld) {
-    let fontSize = this.#scaleFactor * entity.style.fontSize;
-    this.#ctx.font = font(fontSize, entity.style.fontFamily);
-    const textWidth = this.#ctx.measureText(entity.text).width;
-    let maxWidth = window.innerWidth - this.#padding * 2;
-    if (entity.style.maxWidth !== "full") {
-      const dimensions = this.#sizeMap.get(entity.style.maxWidth);
-      maxWidth = dimensions?.width || maxWidth;
-    }
-    if (textWidth > maxWidth) {
-      fontSize *= maxWidth / textWidth;
-    }
-    return fontSize;
-  }
-
-  renderText(entity: TextEntityOld, time: number) {
-    this.#ctx.textBaseline = "top";
-    this.#ctx.textAlign = "center";
-    this.#ctx.fillStyle = rgb(Palette.White);
-
-    const fontSize = this.getFontSize(entity);
-    this.#ctx.font = font(fontSize, entity.style.fontFamily);
-
-    let easing = 1;
-    entity.progress = entity.progress ?? 0;
-    let opacity = entity.opacity?.end ?? 1;
-    let translateX = entity.translateX?.end ?? 0;
-    let translateY = entity.translateY?.end ?? 0;
-    let kerning = entity.kerning?.end ?? 0;
-
-    if (entity.progress < 1) {
-      if (entity.easing === "linear") {
-        easing = entity.progress;
-      } else if (entity.easing === "easeOutCubic") {
-        easing = easeOut(entity.progress, 3);
-      } else if (entity.easing === "easeOutQuint") {
-        easing = easeOut(entity.progress, 5);
-      }
-      if (entity.translateX) {
-        translateX = lerp(
-          entity.translateX.start,
-          entity.translateX.end,
-          easing
-        );
-      }
-      if (entity.translateY) {
-        translateY = lerp(
-          entity.translateY.start,
-          entity.translateY.end,
-          easing
-        );
-      }
-      if (entity.opacity) {
-        opacity = lerp(entity.opacity.start, entity.opacity.end, easing);
-      }
-      if (entity.kerning) {
-        kerning = lerp(entity.kerning.start, entity.kerning.end, easing);
-      }
-    }
-
-    const { width, height } = this.getTextDimensions(entity.text, this.#ctx);
-    const pos = getPosition(entity.position, width, height);
-
-    if (entity.style.maxWidth !== "full") {
-      const dimensions = this.#sizeMap.get(entity.style.maxWidth);
-      if (dimensions) {
-        pos.y = dimensions.y + dimensions.height * entity.style.lineHeight;
-      }
-    }
-
-    entity.x = pos.x;
-    entity.y = pos.y;
-
-    if (entity.style.textAlign !== "left") {
-      entity.x += width / 2;
-    }
-
-    if (entity.float && entity.float.x !== 0) {
-      translateX += Math.sin(time * entity.float.speed) * entity.float.x;
-    }
-    if (entity.float && entity.float.y !== 0) {
-      translateY += Math.sin(time * entity.float.speed) * entity.float.y;
-    }
-
-    entity.x += (entity.offsetX ?? 0) * window.innerWidth;
-    entity.y += (entity.offsetY ?? 0) * window.innerHeight;
-
-    if (entity.clamp) {
-      entity.x = clamp(
-        entity.x,
-        this.#padding + width / 2,
-        window.innerWidth - width
-      );
-      entity.y = clamp(
-        entity.y,
-        this.#padding,
-        window.innerHeight - height - this.#padding
-      );
-    }
-
-    this.#sizeMap.set(entity.id, { width, height, x: entity.x, y: entity.y });
-
-    entity.x += translateX;
-    entity.y += translateY;
-
-    this.#ctx.letterSpacing = `${kerning}px`;
-
-    if (entity.style.shadow) {
-      const shadowOffset = entity.progress < 1 ? 0 : translateY;
-      this.#ctx.strokeStyle = rgba(entity.style.shadow.color, opacity);
-      this.#ctx.lineWidth = fontSize / entity.style.shadow.size;
-      this.#ctx.fillStyle = rgba(entity.style.shadow.color, opacity);
-      this.#ctx.fillText(
-        entity.text,
-        entity.x + entity.style.shadow.x,
-        entity.y + entity.style.shadow.y - shadowOffset
-      );
-      this.#ctx.strokeText(
-        entity.text,
-        entity.x + entity.style.shadow.x,
-        entity.y + entity.style.shadow.y - shadowOffset
-      );
-    }
-
-    if (entity.style.stroke) {
-      this.#ctx.strokeStyle = rgba(entity.style.stroke.color, opacity);
-      this.#ctx.lineWidth = fontSize / entity.style.stroke.width;
-      this.#ctx.strokeText(entity.text, entity.x, entity.y);
-    }
-
-    this.#ctx.fillStyle = rgba(entity.style.color, opacity);
-    this.#ctx.fillText(entity.text, entity.x, entity.y);
   }
 
   getCachedSprite(entity: SpriteEntity | AnimatedSpriteEntity) {
@@ -387,8 +235,6 @@ export class Layer extends Map<string, EntityInterface> {
     this.#canvas.height = window.innerHeight * ratio;
     this.#canvas.style.width = `${window.innerWidth}px`;
     this.#canvas.style.height = `${window.innerHeight}px`;
-    this.#scaleFactor = window.innerWidth / BASELINE_WIDTH;
-    this.#padding = Math.floor(window.innerWidth * PADDING_MULTIPLIER);
     this.#ctx.scale(ratio, ratio);
     this.forEach((entity) => {
       if (entity.type === "text" || entity.type === "timer") {

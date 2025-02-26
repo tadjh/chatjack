@@ -31,7 +31,7 @@ export enum POSITION {
 
 interface BaseEntity {
   id: string;
-  type: "text-old" | "text" | "sprite" | "animated-sprite" | "timer";
+  type: "text" | "sprite" | "animated-sprite" | "timer";
   progress?: number;
   easing: "linear" | "easeOutCubic" | "easeOutQuint";
   layer: LAYER;
@@ -52,29 +52,6 @@ interface BaseEntity {
   position?: POSITION;
   onBeing?: () => void;
   onEnd?: () => void;
-}
-
-export interface TextEntityOld extends BaseEntity {
-  type: "text-old";
-  text: string;
-  style: {
-    textAlign?: CanvasTextAlign;
-    color: [number, number, number];
-    maxWidth: string;
-    fontSize: number;
-    fontFamily: string;
-    lineHeight: number;
-    shadow?: {
-      color: [number, number, number];
-      x: number;
-      y: number;
-      size: number;
-    };
-    stroke?: { color: [number, number, number]; width: number };
-  };
-  kerning?: { start: number; end: number };
-  index?: number;
-  clamp?: boolean;
 }
 
 interface SpriteCoordinates {
@@ -118,7 +95,6 @@ export interface AnimatedSpriteEntity extends BaseSprite {
 }
 
 export type EntityInterface =
-  | TextEntityOld
   | SpriteEntity
   | AnimatedSpriteEntity
   | TextEntity

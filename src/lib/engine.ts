@@ -21,7 +21,6 @@ import {
   POSITION,
   SpriteEntity,
   State,
-  TextEntityOld,
   TextEntityProps,
   TimerEntityProps,
 } from "./types";
@@ -242,13 +241,7 @@ export class Engine {
       | TimerEntityProps
       | SpriteEntity
       | AnimatedSpriteEntity
-      | TextEntityOld
-  ):
-    | TextEntity
-    | TimerEntity
-    | SpriteEntity
-    | AnimatedSpriteEntity
-    | TextEntityOld {
+  ): TextEntity | TimerEntity | SpriteEntity | AnimatedSpriteEntity {
     switch (entity.type) {
       case "text":
         return new TextEntity(entity);
@@ -260,7 +253,6 @@ export class Engine {
         return new TimerEntity(entity);
       case "sprite":
       case "animated-sprite":
-      case "text-old":
       default:
         return entity;
     }
@@ -640,70 +632,45 @@ export class Engine {
   }
 
   private createActionText(state: State, role: Role) {
-    const entity: TextEntityOld = {
+    const props: TextEntityProps = {
       ...actionText,
     };
-    entity.progress = 0;
-    entity.opacity = { start: 0, end: 1 };
-    // entity.kerning = { start: 40, end: 0 };
 
     if (role === Role.Player) {
-      entity.position = POSITION.BOTTOM;
-      entity.translateY = { start: 50, end: 0 };
-      entity.style.fontSize = 48;
-      entity.offsetY = -0.15;
+      props.position = POSITION.BOTTOM;
+      // entity.offsetY = -0.15;
     } else if (role === Role.Dealer) {
-      entity.position = POSITION.TOP;
-      entity.translateY = { start: -50, end: 0 };
-      entity.style.fontSize = 48;
-      entity.offsetY = 0.15;
+      props.position = POSITION.TOP;
+      // entity.offsetY = 0.15;
     }
 
     switch (state) {
       case State.PlayerHit:
       case State.DealerHit:
-        entity.text = "Hit!";
-        entity.style.color = Palette.White;
+        props.text = "Hit!";
+        props.color = rgb(Palette.White);
         break;
       case State.PlayerStand:
       case State.DealerStand:
-        entity.text = "Stand!";
-        entity.style.color = Palette.LightestGrey;
+        props.text = "Stand!";
+        props.color = rgb(Palette.LightestGrey);
         break;
       case State.PlayerBust:
       case State.DealerBust:
-        entity.text = "Bust!";
-        entity.style.color = Palette.Red;
+        props.text = "Bust!";
+        props.color = rgb(Palette.Red);
         break;
       case State.PlayerBlackjack:
       case State.DealerBlackjack:
-        entity.text = "Blackjack!";
-        entity.style.color = Palette.Blue;
+        props.text = "Blackjack!";
+        props.color = rgb(Palette.Blue);
         break;
       default:
         throw new Error(`Cannot create action text for state: ${state}`);
     }
 
-    entity.onEnd = () => this.updateActionText();
-    this.debug.log(`Creating ${entity.id}:`, entity.text);
-    this.setEntity(entity);
-  }
-
-  private updateActionText() {
-    const entity = this.getEntity(actionText);
-    if (!entity) return;
-    entity.progress = 0;
-    entity.opacity = { start: 1, end: 0 };
-    if (entity.position === POSITION.BOTTOM) {
-      entity.translateY = { start: 0, end: 50 };
-    } else if (entity.position === POSITION.TOP) {
-      entity.translateY = { start: 0, end: -50 };
-    }
-    entity.onEnd = () => {
-      this.clearEntity(actionText.layer, actionText.id);
-    };
-    // entity.kerning = { start: 0, end: 40 };
-    this.debug.log(`Updating ${entity.id}:`, entity.text);
+    const entity = this.createEntity(props);
+    this.debug.log(`Creating ${props.id}:`, props.text);
     this.setEntity(entity);
   }
 
@@ -819,14 +786,15 @@ export class Engine {
         throw new Error(`Cannot create gameover text for state: ${state}`);
     }
 
-    for (const entity of gameoverText) {
-      if (entity.id === "title") {
-        entity.text = title;
-      } else if (entity.id === "subtitle") {
-        entity.text = subtitle;
+    for (const props of gameoverText) {
+      if (props.id === "title") {
+        props.text = title;
+      } else if (props.id === "subtitle") {
+        props.text = subtitle;
       }
-      entity.progress = 0;
-      this.debug.log(`Creating ${entity.id}`, entity.text);
+
+      const entity = this.createEntity(props);
+      this.debug.log(`Creating ${props.id}`, props.text);
       this.setEntity(entity);
     }
   }

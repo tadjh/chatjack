@@ -41,20 +41,20 @@ export abstract class Entity<
   protected lastTime: number = performance.now();
 
   constructor(
-    entity: EntityProps<Phase, Props>,
+    props: EntityProps<Phase, Props>,
     debug = new Debug("Entity", Palette.Black)
   ) {
-    this.id = entity.id;
-    this.type = entity.type;
-    this.layer = entity.layer;
-    this.position = entity.position || POSITION.TOP_LEFT;
-    this.offsetX = entity.offsetX ?? 0;
-    this.offsetY = entity.offsetY ?? 0;
-    this.delay = entity.delay ?? 0;
-    this.x = entity.x ?? 0;
-    this.y = entity.y ?? 0;
-    this.phases = entity.phases;
-    this.props = entity.props;
+    this.id = props.id;
+    this.type = props.type;
+    this.layer = props.layer;
+    this.position = props.position || POSITION.TOP_LEFT;
+    this.offsetX = props.offsetX ?? 0;
+    this.offsetY = props.offsetY ?? 0;
+    this.delay = props.delay ?? 0;
+    this.x = props.x ?? 0;
+    this.y = props.y ?? 0;
+    this.phases = props.phases;
+    this.props = props.props;
     this.debug = debug;
 
     this.totalDuration = this.phases.reduce(

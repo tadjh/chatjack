@@ -25,12 +25,12 @@ export class TimerEntity extends Entity<
   #radius: number = 0;
 
   constructor(
-    entity: TimerEntityProps,
+    props: TimerEntityProps,
     debug = new Debug("TimerEntity", Palette.LightGrey)
   ) {
     super(
       {
-        ...entity,
+        ...props,
         type: "timer",
         props: {
           angle: 0,
@@ -39,15 +39,15 @@ export class TimerEntity extends Entity<
       },
       debug
     );
-    this.color = entity.color;
-    this.radius = entity.radius;
-    this.rotation = radians(entity.rotation);
-    this.startAngle = radians(entity.startAngle) + this.rotation;
-    this.backgroundColor = entity.backgroundColor;
-    this.backgroundScale = entity.backgroundScale ?? this.backgroundScale;
-    this.strokeColor = entity.strokeColor;
-    this.strokeScale = entity.strokeScale ?? this.strokeScale;
-    this.counterclockwise = entity.counterclockwise ?? this.counterclockwise;
+    this.color = props.color;
+    this.radius = props.radius;
+    this.rotation = radians(props.rotation);
+    this.startAngle = radians(props.startAngle) + this.rotation;
+    this.backgroundColor = props.backgroundColor;
+    this.backgroundScale = props.backgroundScale ?? this.backgroundScale;
+    this.strokeColor = props.strokeColor;
+    this.strokeScale = props.strokeScale ?? this.strokeScale;
+    this.counterclockwise = props.counterclockwise ?? this.counterclockwise;
     this.#radius = this.radius;
     this.resize();
   }

@@ -6,7 +6,7 @@ import {
   TextEntityAnimationProps,
   TextEntityProps,
 } from "./types";
-import { easeOutCubic, font, lerp } from "./utils";
+import { easeOutCubic, font, getVerticalScaleFactor, lerp } from "./utils";
 
 export class TextEntity extends Entity<
   TextEntityAnimationTypes,
@@ -34,12 +34,12 @@ export class TextEntity extends Entity<
   #strokeWidth: number = 0;
 
   constructor(
-    entity: TextEntityProps,
+    props: TextEntityProps,
     debug = new Debug("TextEntity", Palette.LightGrey)
   ) {
     super(
       {
-        ...entity,
+        ...props,
         type: "text",
         props: {
           opacity: 0,
@@ -50,21 +50,21 @@ export class TextEntity extends Entity<
       },
       debug
     );
-    this.text = entity.text;
-    this.color = entity.color;
-    this.fontSize = entity.fontSize;
-    this.fontFamily = entity.fontFamily;
-    this.textBaseline = entity.textBaseline;
-    this.textAlign = entity.textAlign;
-    this.shadowColor = entity.shadowColor;
-    this.shadowOffsetX = entity.shadowOffsetX ?? 0;
-    this.shadowOffsetY = entity.shadowOffsetY ?? 0;
-    this.shadowBlur = entity.shadowBlur ?? 0;
-    this.strokeColor = entity.strokeColor;
-    this.strokeWidth = entity.strokeWidth ?? 0;
-    this.#fontSize = entity.fontSize;
-    this.#offsetX = entity.offsetX ?? 0;
-    this.#offsetY = entity.offsetY ?? 0;
+    this.text = props.text;
+    this.color = props.color;
+    this.fontSize = props.fontSize;
+    this.fontFamily = props.fontFamily;
+    this.textBaseline = props.textBaseline;
+    this.textAlign = props.textAlign;
+    this.shadowColor = props.shadowColor;
+    this.shadowOffsetX = props.shadowOffsetX ?? 0;
+    this.shadowOffsetY = props.shadowOffsetY ?? 0;
+    this.shadowBlur = props.shadowBlur ?? 0;
+    this.strokeColor = props.strokeColor;
+    this.strokeWidth = props.strokeWidth ?? 0;
+    this.#fontSize = props.fontSize;
+    this.#offsetX = props.offsetX ?? 0;
+    this.#offsetY = props.offsetY ?? 0;
     this.#strokeWidth = this.strokeWidth;
     const offCanvas = new OffscreenCanvas(1, 1);
     const offCtx = offCanvas.getContext("2d");
@@ -124,7 +124,7 @@ export class TextEntity extends Entity<
     this.setX(pos.x);
     // this.setY(pos.y);
     // this.#offsetX = this.offsetX > 0 ? window.innerWidth / this.offsetX : 0;
-    // this.#offsetY = this.offsetY > 0 ? window.innerHeight / this.offsetY : 0;
+    this.#offsetY = getVerticalScaleFactor() * this.offsetY;
     this.#strokeWidth = this.strokeWidth * this.scaleFactor;
     return this;
   }
