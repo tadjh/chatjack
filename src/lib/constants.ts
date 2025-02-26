@@ -64,6 +64,6 @@ export enum IMAGE {
   UI = "ui",
 }
 
-export const Images: Map<IMAGE, string> = new Map([
+export const images: Map<IMAGE, string> = new Map([
   [IMAGE.CARDS, `${isDevelopment ? "/src" : ""}/assets/sprites/cards.png`],
 ]);

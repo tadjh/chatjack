@@ -35,6 +35,9 @@ export class TimerEntity extends Entity<
         props: {
           angle: 0,
           radius: 0,
+          opacity: 1,
+          offsetX: 0,
+          offsetY: 0,
         },
       },
       debug
@@ -46,7 +49,7 @@ export class TimerEntity extends Entity<
     this.backgroundColor = props.backgroundColor;
     this.backgroundScale = props.backgroundScale ?? this.backgroundScale;
     this.strokeColor = props.strokeColor;
-    this.strokeScale = props.strokeScale ?? this.strokeScale;
+    this.strokeScale = props.strokeWidth ?? this.strokeScale;
     this.counterclockwise = props.counterclockwise ?? this.counterclockwise;
     this.#radius = this.radius;
     this.resize();
@@ -80,6 +83,7 @@ export class TimerEntity extends Entity<
           // linear easing
           break;
         default:
+          super.easing();
           break;
       }
     }
@@ -115,27 +119,10 @@ export class TimerEntity extends Entity<
           );
           break;
         default:
+          super.interpolate();
           break;
       }
     }
-    return this;
-  }
-
-  public update(): this {
-    super.update();
-
-    if (!this.current) {
-      throw new Error(`No current phase to update for ${this.id}`);
-    }
-
-    this.easing();
-    this.interpolate();
-
-    if (this.progress === 1 && this.onEnd) {
-      this.debug.log(`Calling onEnd from: ${this.id}`);
-      this.onEnd(this.layer, this.id);
-    }
-
     return this;
   }
 

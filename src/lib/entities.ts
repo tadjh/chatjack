@@ -1,11 +1,10 @@
 import { Palette, IMAGE, FONT } from "./constants";
 import {
-  AnimatedSpriteEntity,
-  SpriteEntity,
   LAYER,
   TimerEntityProps,
   TextEntityProps,
   POSITION,
+  SpriteEntityProps,
 } from "./types";
 import { rgb } from "./utils";
 
@@ -13,22 +12,35 @@ const SPRITE_WIDTH = 256;
 const SPRITE_HEIGHT = 384;
 
 export const titleScreen: [
-  AnimatedSpriteEntity,
+  SpriteEntityProps,
   TextEntityProps,
   TextEntityProps,
   TextEntityProps,
 ] = [
   {
     id: "flip-card",
-    type: "animated-sprite",
+    type: "sprite",
     src: IMAGE.CARDS,
-    playback: "loop",
     layer: LAYER.GAME,
-    easing: "easeOutQuint",
     position: POSITION.CENTER,
+    spriteWidth: SPRITE_WIDTH,
+    spriteHeight: SPRITE_HEIGHT,
+    opacity: 1,
+    phases: [
+      {
+        name: "fade-slide-in-bottom",
+        duration: 2,
+      },
+      {
+        name: "animated-float-y",
+        duration: 1.5,
+        magnitude: 6,
+        loop: true,
+      },
+    ],
     spriteElapsed: 0,
     spriteDuration: 6,
-    spriteIndex: 0,
+    scale: 0.7,
     sprites: [
       { x: 0, y: 4992 },
       { x: 256, y: 4992 },
@@ -51,19 +63,11 @@ export const titleScreen: [
       { x: 512, y: 4992, flipX: true },
       { x: 256, y: 4992, flipX: true },
     ],
-    spriteWidth: SPRITE_WIDTH,
-    spriteHeight: SPRITE_HEIGHT,
     delay: 24,
-    translateY: { start: 200, end: 0 },
-    opacity: { start: 0, end: 1 },
-    float: { x: 0, y: 5, speed: 1 / 2 },
-    shadow: {
-      color: Palette.DarkestGreen,
-      opacity: 1,
-      offsetX: 48,
-      offsetY: 48,
-      blur: 0,
-    },
+    shadowColor: rgb(Palette.DarkestGreen),
+    shadowOffsetX: 32,
+    shadowOffsetY: 32,
+    shadowBlur: 0,
   },
   {
     id: "title",
@@ -274,16 +278,7 @@ export const actionText: TextEntityProps = {
   shadowBlur: 0,
   strokeColor: rgb(Palette.Black),
   strokeWidth: 4,
-  phases: [
-    {
-      name: "fade-slide-in-bottom",
-      duration: 1.5,
-    },
-    {
-      name: "fade-slide-out-bottom",
-      duration: 1.5,
-    },
-  ],
+  phases: [],
 };
 
 export const scoreText: TextEntityProps = {
@@ -306,42 +301,25 @@ export const scoreText: TextEntityProps = {
   phases: [],
 };
 
-export const cardSprite: SpriteEntity = {
+export const cardSprite: SpriteEntityProps = {
   id: "default-card",
   type: "sprite",
   src: IMAGE.CARDS,
-  easing: "easeOutQuint",
   layer: LAYER.GAME,
-  speed: 1 / 12,
   sprites: [{ x: 0, y: 4992 }],
   spriteWidth: SPRITE_WIDTH,
   spriteHeight: SPRITE_HEIGHT,
-  shadow: {
-    color: Palette.DarkestGreen,
-    opacity: 1,
-    offsetX: 12,
-    offsetY: 12,
-    blur: 0,
-  },
-};
-
-export const animatedCardSprite: AnimatedSpriteEntity = {
-  id: "animated-card",
-  type: "animated-sprite",
-  src: IMAGE.CARDS,
-  playback: "once",
-  easing: "easeOutQuint",
-  layer: LAYER.GAME,
-  spriteWidth: SPRITE_WIDTH,
-  spriteHeight: SPRITE_HEIGHT,
-  spriteElapsed: 0,
-  spriteDuration: 1,
-  spriteIndex: 0,
-  sprites: [
-    { x: 0, y: 4992 },
-    { x: 256, y: 4992 },
-    { x: 512, y: 4992 },
-  ],
+  opacity: 1,
+  phases: [],
+  position: POSITION.CENTER,
+  scale: 1,
+  angle: 0,
+  offsetX: 0,
+  offsetY: 0,
+  shadowColor: rgb(Palette.DarkestGreen),
+  shadowOffsetX: 12,
+  shadowOffsetY: 12,
+  shadowBlur: 0,
 };
 
 export const turnTimer: TimerEntityProps = {

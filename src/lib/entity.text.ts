@@ -17,10 +17,6 @@ export class TextEntity extends Entity<
   readonly fontFamily: string;
   readonly textBaseline: CanvasTextBaseline;
   readonly textAlign: CanvasTextAlign;
-  readonly shadowColor?: string;
-  readonly shadowOffsetX: number;
-  readonly shadowOffsetY: number;
-  readonly shadowBlur: number;
   readonly strokeColor?: string | CanvasGradient | CanvasPattern;
   readonly strokeWidth: number;
   public text: string;
@@ -56,10 +52,6 @@ export class TextEntity extends Entity<
     this.fontFamily = props.fontFamily;
     this.textBaseline = props.textBaseline;
     this.textAlign = props.textAlign;
-    this.shadowColor = props.shadowColor;
-    this.shadowOffsetX = props.shadowOffsetX ?? 0;
-    this.shadowOffsetY = props.shadowOffsetY ?? 0;
-    this.shadowBlur = props.shadowBlur ?? 0;
     this.strokeColor = props.strokeColor;
     this.strokeWidth = props.strokeWidth ?? 0;
     this.#fontSize = props.fontSize;
@@ -152,18 +144,11 @@ export class TextEntity extends Entity<
       this.props = this.current.easing(this.localProgress);
     } else {
       switch (this.current.name) {
-        case "fade-slide-in-top":
-        case "fade-slide-in-bottom":
-        case "fade-slide-out-top":
-        case "fade-slide-out-bottom":
         case "fade-slide-kerning-in-bottom":
           this.localProgress = easeOutCubic(this.localProgress);
           break;
-        case "float-x":
-        case "float-y":
-          // linear easing
-          break;
         default:
+          super.easing();
           break;
       }
     }
@@ -182,73 +167,15 @@ export class TextEntity extends Entity<
       const slide = 50 * this.scaleFactor;
 
       switch (this.current.name) {
-        case "float-x":
-          this.props.offsetX =
-            Math.sin(2 * Math.PI * this.localProgress + Math.PI / 2) *
-            (this.current.magnitude ?? 1);
-          break;
-        case "float-y":
-          this.props.offsetY =
-            Math.sin(2 * Math.PI * this.localProgress + Math.PI / 2) *
-            (this.current.magnitude ?? 1);
-          break;
-        case "fade-slide-in-top":
-          this.props.offsetY = lerp(-slide, 0, this.localProgress);
-          this.props.opacity = lerp(0, 1, this.localProgress);
-          break;
-        case "fade-slide-in-right":
-          this.props.offsetX = lerp(slide, 0, this.localProgress);
-          this.props.opacity = lerp(0, 1, this.localProgress);
-          break;
-        case "fade-slide-in-bottom":
-          this.props.offsetY = lerp(slide, 0, this.localProgress);
-          this.props.opacity = lerp(0, 1, this.localProgress);
-          break;
-        case "fade-slide-in-left":
-          this.props.offsetX = lerp(-slide, 0, this.localProgress);
-          this.props.opacity = lerp(0, 1, this.localProgress);
-          break;
-        case "fade-slide-out-top":
-          this.props.offsetY = lerp(0, -slide, this.localProgress);
-          this.props.opacity = lerp(1, 0, this.localProgress);
-          break;
-        case "fade-slide-out-bottom":
-          this.props.offsetY = lerp(0, slide, this.localProgress);
-          this.props.opacity = lerp(1, 0, this.localProgress);
-          break;
-        case "fade-slide-out-left":
-          this.props.offsetX = lerp(0, -slide, this.localProgress);
-          this.props.opacity = lerp(1, 0, this.localProgress);
-          break;
-        case "fade-slide-out-right":
-          this.props.offsetX = lerp(0, slide, this.localProgress);
-          this.props.opacity = lerp(1, 0, this.localProgress);
-          break;
         case "fade-slide-kerning-in-bottom":
           this.props.kerning = lerp(40, 0, this.localProgress);
           this.props.offsetY = lerp(slide, 0, this.localProgress);
           this.props.opacity = lerp(0, 1, this.localProgress);
           break;
         default:
+          super.interpolate();
           break;
       }
-    }
-    return this;
-  }
-
-  public update(): this {
-    super.update();
-
-    if (!this.current) {
-      throw new Error(`No current phase to update for ${this.id}`);
-    }
-
-    this.easing();
-    this.interpolate();
-
-    if (this.progress === 1 && this.onEnd) {
-      this.debug.log(`Calling onEnd from: ${this.id}`);
-      this.onEnd(this.layer, this.id);
     }
     return this;
   }

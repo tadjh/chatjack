@@ -1,27 +1,17 @@
 import { Palette } from "./constants";
 import { Debug } from "./debug";
 import { TextEntity } from "./entity.text";
-import {
-  AnimatedSpriteEntity,
-  EntityInterface,
-  EntityType,
-  LAYER,
-  SpriteEntity,
-} from "./types";
-import { easeOut, lerp, rgba, getPosition } from "./utils";
+import { EntityTypes, BaseEntityType, LAYER } from "./types";
 
-export class Layer extends Map<string, EntityInterface> {
+export class Layer extends Map<string, EntityTypes> {
   readonly id: LAYER;
   #canvas: HTMLCanvasElement;
   #ctx: CanvasRenderingContext2D;
-  #spritesheets: Map<string, HTMLImageElement>;
-  #cache = new Map<string, ImageBitmap>();
   protected debug: Debug;
 
   constructor(
     id: LAYER,
     canvas: HTMLCanvasElement,
-    spritesheets: Map<string, HTMLImageElement>,
     debug = new Debug(id, Palette.Tan)
   ) {
     super();
@@ -31,7 +21,6 @@ export class Layer extends Map<string, EntityInterface> {
       throw new Error("2d rendering context not supported");
     }
     this.id = id;
-    this.#spritesheets = spritesheets;
     this.debug = debug;
     this.#ctx = ctx;
     this.#ctx.imageSmoothingEnabled = false;
@@ -41,30 +30,26 @@ export class Layer extends Map<string, EntityInterface> {
     this.#canvas.style.zIndex = id;
   }
 
-  render(time: number) {
+  public getByType(type: BaseEntityType) {
+    return Array.from(this.values()).filter((entity) => entity.type === type);
+  }
+
+  private clearRect() {
+    this.#ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+  }
+
+  public render() {
     this.clearRect();
 
     let action: TextEntity | undefined;
 
     this.forEach((entity) => {
-      switch (entity.type) {
-        case "text":
-          if (entity.id === "action") {
-            action = entity;
-            return;
-          }
-          entity.render(this.#ctx);
-          break;
-        case "sprite":
-        case "animated-sprite":
-          this.renderSprite(entity, time);
-          break;
-        case "timer":
-          entity.render(this.#ctx);
-          break;
-        default:
-          break;
+      if (entity.id === "action") {
+        action = entity as TextEntity;
+        return;
       }
+      if (entity.delay > 0) return;
+      entity.render(this.#ctx);
     });
 
     if (action) {
@@ -72,163 +57,7 @@ export class Layer extends Map<string, EntityInterface> {
     }
   }
 
-  getCachedSprite(entity: SpriteEntity | AnimatedSpriteEntity) {
-    const image = this.#spritesheets.get(entity.src);
-    if (!image) {
-      throw new Error(`Image not found: ${entity.src}`);
-    }
-
-    const id = this.getSpriteId(entity);
-    if (this.#cache.has(id)) {
-      return this.#cache.get(id)!;
-    }
-
-    const offscreenCanvas = new OffscreenCanvas(
-      entity.spriteWidth,
-      entity.spriteHeight
-    );
-    const offCtx = offscreenCanvas.getContext("2d");
-    if (!offCtx) {
-      throw new Error("2d rendering context not supported");
-    }
-    offCtx.imageSmoothingEnabled = false;
-
-    const coords = entity.sprites[entity.spriteIndex ?? 0];
-
-    offCtx.drawImage(
-      image,
-      coords.x,
-      coords.y,
-      entity.spriteWidth,
-      entity.spriteHeight,
-      0,
-      0,
-      entity.spriteWidth,
-      entity.spriteHeight
-    );
-    const bitmap = offscreenCanvas.transferToImageBitmap();
-    this.#cache.set(id, bitmap);
-    return bitmap;
-  }
-
-  getSpriteId(entity: SpriteEntity | AnimatedSpriteEntity) {
-    return `${entity.id}-frame-${entity.spriteIndex ?? 0}`;
-  }
-
-  renderSprite(entity: SpriteEntity | AnimatedSpriteEntity, time: number) {
-    let easing = 1;
-    let translateX = entity.translateX?.end ?? 0;
-    let translateY = entity.translateY?.end ?? 0;
-    let opacity = entity.opacity?.end ?? 1;
-    entity.progress = entity.progress ?? 0;
-
-    if (entity.progress < 1) {
-      if (entity.easing === "linear") {
-        easing = entity.progress;
-      } else if (entity.easing === "easeOutCubic") {
-        easing = easeOut(entity.progress, 3);
-      } else if (entity.easing === "easeOutQuint") {
-        easing = easeOut(entity.progress, 5);
-      }
-
-      if (entity.translateX) {
-        translateX = lerp(
-          entity.translateX.start,
-          entity.translateX.end,
-          easing
-        );
-      }
-
-      if (entity.translateY) {
-        translateY = lerp(
-          entity.translateY.start,
-          entity.translateY.end,
-          easing
-        );
-      }
-
-      if (entity.opacity) {
-        opacity = lerp(entity.opacity.start, entity.opacity.end, easing);
-      }
-    }
-
-    if (entity.float) {
-      if (entity.float.x !== 0) {
-        translateX += Math.sin(time * entity.float.speed) * entity.float.x;
-      }
-
-      if (entity.float.y !== 0) {
-        translateY += Math.sin(time * entity.float.speed) * entity.float.y;
-      }
-    }
-
-    const scaleFactor =
-      ((entity.scale ?? 1) * (window.innerWidth * 0.2)) / entity.spriteWidth;
-
-    const scaledWidth = entity.spriteWidth * scaleFactor;
-    const scaledHeight = entity.spriteHeight * scaleFactor;
-
-    const pos = getPosition(entity.position, scaledWidth, scaledHeight);
-    entity.x = pos.x + translateX + (entity.offsetX ?? 0) * scaleFactor;
-    entity.y = pos.y + translateY + (entity.offsetY ?? 0) * scaleFactor;
-
-    const sprite = this.getCachedSprite(entity);
-    const coords = entity.sprites[entity.spriteIndex ?? 0];
-
-    this.#ctx.save();
-
-    this.#ctx.globalAlpha = opacity;
-
-    this.#ctx.translate(
-      entity.x + scaledWidth / 2,
-      entity.y + scaledHeight / 2
-    );
-
-    if (coords.flipX || coords.flipY) {
-      this.#ctx.scale(coords.flipX ? -1 : 1, coords.flipY ? -1 : 1);
-    }
-
-    if (entity.angle) {
-      this.#ctx.rotate(entity.angle);
-    }
-
-    if (entity.shadow) {
-      this.#ctx.shadowColor = rgba(entity.shadow.color, entity.shadow.opacity);
-      this.#ctx.shadowBlur = entity.shadow.blur;
-      this.#ctx.shadowOffsetX = entity.shadow.offsetX;
-      this.#ctx.shadowOffsetY = entity.shadow.offsetY;
-    }
-
-    this.#ctx.drawImage(
-      sprite,
-      -scaledWidth / 2,
-      -scaledHeight / 2,
-      scaledWidth,
-      scaledHeight
-    );
-
-    this.#ctx.restore();
-  }
-
-  clearRect() {
-    this.#ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-  }
-
-  getTextDimensions(
-    text: string,
-    ctx: CanvasRenderingContext2D
-  ): { width: number; height: number } {
-    const metrics = ctx.measureText(text);
-    const width = metrics.width;
-    // Use actual bounding box values if available (supported in many modern browsers)
-    const height =
-      metrics.actualBoundingBoxAscent && metrics.actualBoundingBoxDescent
-        ? metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent
-        : parseInt(ctx.font, 10); // fallback to using the font size as an approximation
-    return { width, height };
-  }
-
-  resize() {
+  public resize() {
     this.debug.log(`Resizing ${this.id}`);
     const ratio = window.devicePixelRatio || 1;
     this.#canvas.width = window.innerWidth * ratio;
@@ -236,18 +65,11 @@ export class Layer extends Map<string, EntityInterface> {
     this.#canvas.style.width = `${window.innerWidth}px`;
     this.#canvas.style.height = `${window.innerHeight}px`;
     this.#ctx.scale(ratio, ratio);
-    this.forEach((entity) => {
-      if (entity.type === "text" || entity.type === "timer") {
-        entity.resize();
-      }
-    });
+    this.forEach((entity) => entity.resize());
   }
 
-  getByType(type: EntityType) {
-    return Array.from(this.values()).filter((entity) => entity.type === type);
-  }
-
-  clear() {
+  public clear() {
+    this.debug.log(`Clearing ${this.id}`);
     super.clear();
     this.clearRect();
   }

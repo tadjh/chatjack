@@ -1,4 +1,5 @@
 import { IMAGE } from "./constants";
+import { SpriteEntity } from "./entity.sprite";
 import { TextEntity } from "./entity.text";
 import { TimerEntity } from "./entity.timer";
 
@@ -29,76 +30,41 @@ export enum POSITION {
   BOTTOM_RIGHT = "bottom right",
 }
 
-interface BaseEntity {
-  id: string;
-  type: "text" | "sprite" | "animated-sprite" | "timer";
-  progress?: number;
-  easing: "linear" | "easeOutCubic" | "easeOutQuint";
-  layer: LAYER;
-  speed?: number;
-  delay?: number;
-  offsetX?: number;
-  offsetY?: number;
-  x?: number;
-  y?: number;
-  translateX?: { start: number; end: number };
-  translateY?: { start: number; end: number };
-  opacity?: { start: number; end: number };
-  float?: {
-    x: number;
-    y: number;
-    speed: number;
-  };
-  position?: POSITION;
-  onBeing?: () => void;
-  onEnd?: () => void;
-}
-
-interface SpriteCoordinates {
+export interface SpriteCoordinates {
   x: number;
   y: number;
   flipX?: boolean;
   flipY?: boolean;
 }
 
-interface BaseSprite extends BaseEntity {
-  src: IMAGE;
-  sprites: [SpriteCoordinates, ...SpriteCoordinates[]];
-  x?: number;
-  y?: number;
-  spriteWidth: number;
-  spriteHeight: number;
-  spriteIndex?: number;
-  scale?: number;
-  angle?: number;
-  shadow?: {
-    color: [number, number, number];
-    opacity: number;
-    offsetX: number;
-    offsetY: number;
-    blur: number;
-  };
-}
+type Shadow =
+  | {
+      shadowColor: string;
+      shadowOffsetX: number;
+      shadowOffsetY: number;
+      shadowBlur: number;
+    }
+  | {
+      shadowColor?: string;
+      shadowOffsetX?: number;
+      shadowOffsetY?: number;
+      shadowBlur?: number;
+    };
 
-export interface SpriteEntity extends BaseSprite {
-  type: "sprite";
-}
+type Stroke =
+  | {
+      strokeColor: string;
+      strokeWidth: number;
+    }
+  | { strokeColor: undefined; strokeWidth?: number };
 
 export type Playback = "once" | "loop";
 
-export interface AnimatedSpriteEntity extends BaseSprite {
-  type: "animated-sprite";
-  playback: Playback;
-  spriteElapsed?: number;
-  spriteDuration: number;
-  spriteIndex: number;
-}
-
-export type EntityInterface =
-  | SpriteEntity
-  | AnimatedSpriteEntity
-  | TextEntity
-  | TimerEntity;
+export type EntityTypes = SpriteEntity | TextEntity | TimerEntity;
+export type EntityProps =
+  | SpriteEntityProps
+  | TextEntityProps
+  | TimerEntityProps;
 
 export enum State {
   Init,
@@ -141,13 +107,13 @@ export interface AnimationSpec<
   onEnd?: (layer: LAYER, id: string) => void;
 }
 
-export type EntityType = "text" | "sprite" | "animated-sprite" | "timer";
-export interface EntityProps<
+export type BaseEntityType = "text" | "sprite" | "timer";
+export type BaseEntityProps<
   Phase extends string,
   Props extends Record<string, number>,
-> extends AnimationSpec<Phase, Props> {
+> = AnimationSpec<Phase, Props> & {
   id: string;
-  type: EntityType;
+  type: BaseEntityType;
   layer: LAYER;
   position?: POSITION;
   delay?: number;
@@ -155,11 +121,18 @@ export interface EntityProps<
   y?: number;
   offsetX?: number;
   offsetY?: number;
-}
+  opacity?: number;
+} & Shadow;
 
-export type TextEntityAnimationTypes =
-  | "float-x"
-  | "float-y"
+export type BaseEntityAnimationTypes =
+  | "slide-in-top"
+  | "slide-in-right"
+  | "slide-in-bottom"
+  | "slide-in-left"
+  | "slide-out-top"
+  | "slide-out-right"
+  | "slide-out-bottom"
+  | "slide-out-left"
   | "fade-slide-in-top"
   | "fade-slide-in-right"
   | "fade-slide-in-bottom"
@@ -168,76 +141,80 @@ export type TextEntityAnimationTypes =
   | "fade-slide-out-right"
   | "fade-slide-out-bottom"
   | "fade-slide-out-left"
-  | "fade-slide-kerning-in-bottom";
-export type TextEntityAnimationProps = {
+  | "float-x"
+  | "float-y";
+
+export type BaseAnimationProps = {
   opacity: number;
-  kerning: number;
   offsetX: number;
   offsetY: number;
 };
 
-type Shadow =
-  | {
-      shadowColor: string;
-      shadowOffsetX: number;
-      shadowOffsetY: number;
-      shadowBlur: number;
-    }
-  | {
-      shadowColor: undefined;
-      shadowOffsetX?: number;
-      shadowOffsetY?: number;
-      shadowBlur?: number;
-    };
+export type TextEntityAnimationTypes =
+  | BaseEntityAnimationTypes
+  | "fade-slide-kerning-in-bottom";
+export type TextEntityAnimationProps = BaseAnimationProps & {
+  kerning: number;
+};
 
-type Stroke =
-  | {
-      strokeColor: string;
-      strokeWidth: number;
-    }
-  | { strokeColor: undefined; strokeWidth?: number };
+type BaseEntityNoProps<
+  AnimationTypes extends BaseEntityAnimationTypes | string,
+  AnimationProps extends BaseAnimationProps & Record<string, number>,
+> = Omit<BaseEntityProps<AnimationTypes, AnimationProps>, "props">;
 
-export type TextEntityProps = Omit<
-  AnimationSpec<TextEntityAnimationTypes, TextEntityAnimationProps>,
-  "props"
+export type TextEntityProps = BaseEntityNoProps<
+  TextEntityAnimationTypes,
+  TextEntityAnimationProps
 > & {
-  id: string;
   type: "text";
-  layer: LAYER;
   text: string;
-  position: POSITION;
-  delay?: number;
   fontSize: number;
   fontFamily: string;
   textBaseline: CanvasTextBaseline;
   textAlign: CanvasTextAlign;
   color: string | CanvasGradient | CanvasPattern;
-  offsetX?: number;
-  offsetY?: number;
-} & Shadow &
-  Stroke;
+} & Stroke;
 
 export type TimerEntityAnimationTypes = "zoom-in" | "countdown" | "zoom-out";
-export type TimerEntityAnimationProps = {
+export type TimerEntityAnimationProps = BaseAnimationProps & {
   angle: number;
   radius: number;
 };
-export interface TimerEntityProps
-  extends Omit<
-    AnimationSpec<TimerEntityAnimationTypes, TimerEntityAnimationProps>,
-    "props"
-  > {
-  id: string;
+export type TimerEntityProps = BaseEntityNoProps<
+  TimerEntityAnimationTypes,
+  TimerEntityAnimationProps
+> & {
   type: "timer";
-  layer: LAYER;
-  position: POSITION;
   color: string | CanvasGradient | CanvasPattern;
   backgroundColor: string | CanvasGradient | CanvasPattern;
   backgroundScale?: number;
   strokeColor?: string | CanvasGradient | CanvasPattern;
-  strokeScale?: number;
+  strokeWidth?: number;
   counterclockwise?: boolean;
   radius: number;
   startAngle: number;
   rotation: number;
-}
+};
+
+export type SpriteEntityAnimationTypes =
+  | BaseEntityAnimationTypes
+  | "flip-over"
+  | "animated-float-y";
+export type SpriteEntityAnimationProps = BaseAnimationProps & {
+  spriteIndex: number;
+};
+
+export type SpriteEntityProps = BaseEntityNoProps<
+  SpriteEntityAnimationTypes,
+  SpriteEntityAnimationProps
+> & {
+  type: "sprite";
+  src: IMAGE;
+  sprites: [SpriteCoordinates, ...SpriteCoordinates[]];
+  spriteWidth: number;
+  spriteHeight: number;
+  scale?: number;
+  angle?: number;
+  spriteElapsed?: number;
+  spriteDuration?: number;
+};

@@ -2,27 +2,25 @@ import {
   actionText,
   cardSprite,
   gameoverText,
-  animatedCardSprite,
   titleScreen,
   scoreText,
   turnTimer,
 } from "./entities";
 import { Card } from "./card";
-import { Fonts, Palette, Images, FPS } from "./constants";
+import { Fonts, Palette, images, FPS } from "./constants";
 import { Dealer } from "./dealer";
 import { Layer } from "./layer";
 import { Player, Role } from "./player";
 import {
-  AnimatedSpriteEntity,
   Canvases,
-  EntityInterface,
-  EntityType,
+  EntityTypes,
+  BaseEntityType,
   LAYER,
   POSITION,
-  SpriteEntity,
+  SpriteEntityProps,
   State,
   TextEntityProps,
-  TimerEntityProps,
+  EntityProps,
 } from "./types";
 import { Hand, Status } from "./hand";
 import { Debug } from "./debug";
@@ -31,6 +29,7 @@ import { TimerEntity } from "./entity.timer";
 import { TextEntity } from "./entity.text";
 import { rgb } from "./utils";
 import { LayoutManager } from "./layout-manager";
+import { SpriteEntity } from "./entity.sprite";
 enum ASSETS_LOADED {
   FONTS,
   IMAGES,
@@ -43,16 +42,16 @@ export class Engine {
   readonly baseAnimSpeed: number;
   #layers: Map<LAYER, Layer> = new Map();
   #lastTick = 0;
-  #time = 0;
-  #holeCardId = "";
   #hasDealt = false;
   #spritesheets: Map<string, HTMLImageElement> = new Map();
+  #cache = new Map<string, ImageBitmap>();
   #counter: Counter | null = null;
   #layoutManager: LayoutManager;
   #isLoading = false;
   #isRunning = false;
   #isReady = false;
   #assetsLoaded = new Map<ASSETS_LOADED, boolean>();
+  #holeCardId: string = "";
   private static instance: Engine | null = null;
 
   public static getInstance(): Engine {
@@ -101,8 +100,7 @@ export class Engine {
     if (
       this.#assetsLoaded.get(ASSETS_LOADED.FONTS) &&
       this.#assetsLoaded.get(ASSETS_LOADED.IMAGES) &&
-      this.#assetsLoaded.get(ASSETS_LOADED.LAYERS) &&
-      this.#assetsLoaded.get(ASSETS_LOADED.TITLE_SCREEN)
+      this.#assetsLoaded.get(ASSETS_LOADED.LAYERS)
     ) {
       this.#isReady = true;
     } else {
@@ -135,7 +133,7 @@ export class Engine {
 
   private async loadImages(): Promise<void> {
     // TODO scale multiple sizes of the sprite sheet for player and dealer
-    for (const [name, url] of Images) {
+    for (const [name, url] of images) {
       this.debug.log("Loading image:", name);
       const image = new Image();
       image.src = url;
@@ -172,9 +170,8 @@ export class Engine {
       if (!canvas) {
         throw new Error(`Canvas not found for layer: ${layer}`);
       }
-      this.#layers.set(layer, new Layer(layer, canvas, this.#spritesheets));
+      this.#layers.set(layer, new Layer(layer, canvas));
     }
-    this.loadTitleScreen();
     this.#assetsLoaded.set(ASSETS_LOADED.LAYERS, true);
     this.checkIsReady();
   }
@@ -188,9 +185,7 @@ export class Engine {
 
   private loadTitleScreen() {
     this.debug.log("Loading title screen");
-    titleScreen.forEach((entity) => {
-      this.setEntity(this.createEntity(entity));
-    });
+    titleScreen.forEach((entity) => this.createEntity(entity));
     this.#assetsLoaded.set(ASSETS_LOADED.TITLE_SCREEN, true);
     this.checkIsReady();
   }
@@ -221,11 +216,11 @@ export class Engine {
     this.#layers.forEach((layer) => layer.clear());
   }
 
-  private getEntity<T extends EntityInterface>(entity: T) {
+  private getEntity<T extends EntityTypes>(entity: T) {
     return this.getLayer(entity.layer).get(entity.id) as T | undefined;
   }
 
-  private getEntityById<T extends EntityInterface>(layer: LAYER, id: string) {
+  private getEntityById<T extends EntityTypes>(layer: LAYER, id: string) {
     return this.getLayer(layer).get(id) as T | undefined;
   }
 
@@ -233,32 +228,31 @@ export class Engine {
     return this.getLayer(layer).has(id);
   }
 
-  private createEntity(
-    entity:
-      | TextEntityProps
-      // | SpriteEntityProps
-      // | AnimatedSpriteEntityProps
-      | TimerEntityProps
-      | SpriteEntity
-      | AnimatedSpriteEntity
-  ): TextEntity | TimerEntity | SpriteEntity | AnimatedSpriteEntity {
-    switch (entity.type) {
-      case "text":
-        return new TextEntity(entity);
-      // case "sprite":
-      //   return new SpriteEntity(entity);
-      // case "animated-sprite":
-      //   return new AnimatedSpriteEntity(entity);
-      case "timer":
-        return new TimerEntity(entity);
+  private createEntity(props: EntityProps) {
+    let entity: EntityTypes;
+
+    this.debug.log("Creating entity:", props.id);
+
+    switch (props.type) {
       case "sprite":
-      case "animated-sprite":
+        entity = new SpriteEntity(props, this.debug);
+        // Cache all sprite bitmaps at once using the engine's cache
+        this.cacheEntityBitmaps(entity);
+        break;
+      case "text":
+        entity = new TextEntity(props, this.debug);
+        break;
+      case "timer":
+        entity = new TimerEntity(props, this.debug);
+        break;
       default:
-        return entity;
+        throw new Error(`Unknown entity type`);
     }
+
+    this.setEntity(entity);
   }
 
-  private setEntity(entity: EntityInterface) {
+  private setEntity(entity: EntityTypes) {
     if (entity.type === "text") this.#layoutManager.requestUpdate();
     this.getLayer(entity.layer).set(entity.id, entity);
   }
@@ -267,7 +261,7 @@ export class Engine {
     this.getLayer(layer).delete(id);
   }
 
-  private getEntitiesByType(type: EntityType) {
+  private getEntitiesByType(type: BaseEntityType) {
     return [...this.#layers.values()].flatMap((layer) => layer.getByType(type));
   }
 
@@ -280,10 +274,10 @@ export class Engine {
     if (this.#layoutManager.shouldUpdate) {
       this.updateLayout();
       // TODO LAYER.BG is completely unused at the moment
-      this.getLayer(LAYER.UI).render(this.#time);
+      this.getLayer(LAYER.UI).render();
     }
 
-    this.getLayer(LAYER.GAME).render(this.#time);
+    this.getLayer(LAYER.GAME).render();
   }
 
   public resize = () => {
@@ -297,50 +291,18 @@ export class Engine {
   private step = (timestamp: number) => {
     if (timestamp - this.#lastTick >= this.tickRate) {
       this.#lastTick = timestamp;
-      this.#time += 1;
 
       for (const entity of this.getLayer(LAYER.GAME).values()) {
         if (entity.delay && entity.delay > 0) {
           entity.delay -= 1;
+          entity.props.opacity = 0;
           continue;
         }
 
-        if (entity.type === "text" || entity.type === "timer") {
-          entity.update();
-          if (entity.startTime === 0) {
-            entity.startTime = performance.now();
-          }
-          entity.update();
-          continue;
+        if (entity.startTime === 0) {
+          entity.startTime = performance.now();
         }
-
-        entity.progress = entity.progress ?? 0;
-        if (entity.progress < 1) {
-          entity.progress = Math.min(
-            entity.progress + (entity.speed ?? this.baseAnimSpeed),
-            1
-          );
-        } else if (entity.onEnd) {
-          entity.onEnd();
-          entity.onEnd = undefined;
-        }
-
-        if (entity.type === "animated-sprite") {
-          if (
-            entity.playback === "once" &&
-            entity.spriteIndex === entity.sprites.length - 1
-          ) {
-            continue;
-          }
-
-          entity.spriteElapsed = entity.spriteElapsed ?? 0;
-          entity.spriteElapsed += 1;
-          if (entity.spriteElapsed >= entity.spriteDuration) {
-            entity.spriteElapsed = 0;
-            entity.spriteIndex =
-              (entity.spriteIndex + 1) % entity.sprites.length;
-          }
-        }
+        entity.update();
       }
 
       this.render();
@@ -368,6 +330,8 @@ export class Engine {
     }
 
     this.#lastTick = performance.now();
+    this.loadTitleScreen();
+
     this.resize();
     window.addEventListener("resize", this.resize);
     requestAnimationFrame(this.step);
@@ -448,15 +412,12 @@ export class Engine {
   }
 
   private createTimer = (onEnd: (layer: LAYER, id: string) => void) => {
-    this.debug.log(`Creating timer: ${turnTimer.id}`);
-    const entity = this.createEntity({ ...turnTimer, onEnd });
-    this.setEntity(entity);
+    this.createEntity({ ...turnTimer, onEnd });
   };
 
   private createScores(dealer: Dealer, player: Player) {
     // TODO Handle split hands
-
-    const dealerText = this.createEntity({
+    this.createEntity({
       ...scoreText,
       id: "dealer-text",
       text: dealer.name,
@@ -464,18 +425,14 @@ export class Engine {
       fontSize: 20,
     });
 
-    this.setEntity(dealerText);
-
-    const dealerScoreText = this.createEntity({
+    this.createEntity({
       ...scoreText,
       id: "dealer-score",
       text: dealer.score.toString(),
       position: POSITION.TOP_LEFT,
     });
 
-    this.setEntity(dealerScoreText);
-
-    const playerText = this.createEntity({
+    this.createEntity({
       ...scoreText,
       id: `${player.name.toLowerCase()}-text`,
       text: player.name,
@@ -483,16 +440,12 @@ export class Engine {
       fontSize: 20,
     });
 
-    this.setEntity(playerText);
-
-    const playerScoreText = this.createEntity({
+    this.createEntity({
       ...scoreText,
       id: `${player.name.toLowerCase()}-score`,
       text: player.score.toString(),
       position: POSITION.BOTTOM_LEFT,
     });
-
-    this.setEntity(playerScoreText);
   }
 
   private getColorScore(score: number) {
@@ -537,45 +490,71 @@ export class Engine {
     callback?: () => void
   ) {
     const isDealer = card.owner === "Dealer";
-    const entity: SpriteEntity = {
+    const spriteX = card.isHidden
+      ? 0
+      : status === "stand"
+        ? (card.suit % 12) * 1024 + cardSprite.spriteWidth * 3
+        : (card.suit % 12) * 1024 + cardSprite.spriteWidth * 2;
+
+    const spriteY = card.isHidden ? 4992 : card.rank * cardSprite.spriteHeight;
+
+    const props: SpriteEntityProps = {
       ...cardSprite,
       id: card.id,
-      progress: 0,
-      offsetX:
-        (isDealer ? cardSprite.spriteWidth / 4 : -cardSprite.spriteWidth / 2) +
-        card.handIndex * (isDealer ? -128 : 128),
+      offsetX: (isDealer ? 128 : -128) + card.handIndex * (isDealer ? -48 : 64),
       offsetY: isDealer
-        ? -cardSprite.spriteHeight / 2 + Math.random() * 64
-        : cardSprite.spriteHeight / 2 + -64 + Math.random() * -64,
+        ? -50 + Math.random() * 64
+        : 50 + -64 + Math.random() * -64,
       sprites: [
         {
-          x: card.isHidden
-            ? 0
-            : status === "stand"
-              ? (card.suit % 12) * 1024 + cardSprite.spriteWidth * 3
-              : (card.suit % 12) * 1024 + cardSprite.spriteWidth * 2,
-          y: card.isHidden ? 4992 : card.rank * cardSprite.spriteHeight,
+          x: spriteX,
+          y: spriteY,
         },
       ],
       position: isDealer ? POSITION.TOP : POSITION.BOTTOM,
       delay,
-      scale: isDealer ? 0.75 : 1,
+      scale: isDealer ? 0.55 : 0.75,
       angle: ((Math.random() * 12 * 2 - 12) * Math.PI) / 180,
-      opacity: { start: 1, end: status === "busted" ? 0.5 : 1 },
-      translateY: {
-        start: isDealer
-          ? -cardSprite.spriteHeight * 2 * 0.75
-          : cardSprite.spriteHeight * 2,
-        end: 0,
-      },
+      opacity: status === "busted" ? 0.5 : 1,
+      phases: [
+        {
+          name: isDealer ? "slide-in-top" : "slide-in-bottom",
+          duration: 1,
+          magnitude: 300,
+        },
+      ],
+      shadowOffsetX: isDealer ? 8 : 12,
+      shadowOffsetY: isDealer ? 8 : 12,
       onEnd: () => {
-        this.debug.log(`Finishing animation: ${card.id}`);
+        if (status === "blackjack") {
+          const entity = this.getEntityById<SpriteEntity>(
+            props.layer,
+            props.id
+          )!;
+          const newX = (card.suit % 12) * 1024 + cardSprite.spriteWidth * 3;
+          const newY = card.rank * cardSprite.spriteHeight;
+          const newProps: SpriteEntityProps = {
+            ...entity,
+            id: `card-sprite-x-${newX}-y-${newY}`,
+            sprites: [
+              {
+                x: newX,
+                y: newY,
+              },
+            ],
+          };
+          this.createEntity(newProps);
+          this.debug.log(
+            `Updating ${entity.id}: { x: ${entity.sprites[0].x}, y: ${entity.sprites[0].y} }`
+          );
+          this.clearEntity(entity.layer, entity.id);
+          this.createActionText(State.PlayerBlackjack, Role.Player);
+        }
         if (callback) callback();
       },
     };
 
-    this.debug.log(`Creating ${entity.id}`);
-    this.setEntity(entity);
+    this.createEntity(props);
   }
 
   private createCounter(count: number, callback: (counter: Counter) => void) {
@@ -607,28 +586,6 @@ export class Engine {
         counter.tick()
       );
     }
-
-    if (playerHand.status === "blackjack") {
-      playerHand.forEach((card, index) => {
-        const entity = this.getEntityById<SpriteEntity>(
-          cardSprite.layer,
-          card.id
-        )!;
-        entity.onEnd = () => {
-          entity.sprites[0] = {
-            x: (card.suit % 12) * 1024 + cardSprite.spriteWidth * 3,
-            y: card.rank * cardSprite.spriteHeight,
-          };
-          this.debug.log(
-            `Updating ${entity.id}: { x: ${entity.sprites[0].x}, y: ${entity.sprites[0].y} }`
-          );
-          this.setEntity(entity);
-          if (index === playerHand.length - 1) {
-            this.createActionText(State.PlayerBlackjack, Role.Player);
-          }
-        };
-      });
-    }
   }
 
   private createActionText(state: State, role: Role) {
@@ -638,10 +595,30 @@ export class Engine {
 
     if (role === Role.Player) {
       props.position = POSITION.BOTTOM;
-      // entity.offsetY = -0.15;
+      props.phases = [
+        {
+          name: "fade-slide-in-bottom",
+          duration: 1.5,
+        },
+        {
+          name: "fade-slide-out-bottom",
+          duration: 1.5,
+        },
+      ];
+      props.offsetY = -32;
     } else if (role === Role.Dealer) {
       props.position = POSITION.TOP;
-      // entity.offsetY = 0.15;
+      props.phases = [
+        {
+          name: "fade-slide-in-top",
+          duration: 1.5,
+        },
+        {
+          name: "fade-slide-out-top",
+          duration: 1.5,
+        },
+      ];
+      props.offsetY = 64;
     }
 
     switch (state) {
@@ -669,45 +646,22 @@ export class Engine {
         throw new Error(`Cannot create action text for state: ${state}`);
     }
 
-    const entity = this.createEntity(props);
-    this.debug.log(`Creating ${props.id}:`, props.text);
-    this.setEntity(entity);
+    this.createEntity(props);
   }
 
   private updateBustCard(card: Card) {
     const entity = this.getEntityById<SpriteEntity>(cardSprite.layer, card.id)!;
-    entity.opacity = {
-      start: 1,
-      end: 0.5,
-    };
-    this.debug.log(`Updating ${entity.id}: { opacity: ${entity.opacity.end} }`);
+    entity.opacity = 0.5;
+    this.debug.log(`Updating ${entity.id}: { opacity: ${entity.opacity} }`);
     this.setEntity(entity);
   }
 
   private updateStandCard(card: Card) {
-    const entity = this.getEntityById<SpriteEntity | AnimatedSpriteEntity>(
-      cardSprite.layer,
-      card.id
-    )!;
-    if (entity.type === "sprite") {
-      entity.sprites[0] = {
-        x: entity.sprites[0].x + entity.spriteWidth,
-        y: entity.sprites[0].y,
-      };
-      this.debug.log(
-        `Updating ${entity.id}: { x: ${entity.sprites[0].x}, y: ${entity.sprites[0].y} }`
-      );
-      this.setEntity(entity);
-    } else if (entity.type === "animated-sprite") {
-      entity.sprites[entity.spriteIndex] = {
-        x: entity.sprites[entity.spriteIndex].x + entity.spriteWidth,
-        y: entity.sprites[entity.spriteIndex].y,
-      };
-      this.debug.log(
-        `Updating ${entity.id}: { x: ${entity.sprites[entity.spriteIndex].x}, y: ${entity.sprites[entity.spriteIndex].y} }`
-      );
-      this.setEntity(entity);
-    }
+    const entity = this.getEntityById<SpriteEntity>(cardSprite.layer, card.id)!;
+    entity.sprites[entity.props.spriteIndex].x += entity.spriteWidth;
+    this.debug.log(`Updating ${entity.id}`);
+    this.updateEntitySprites(entity);
+    this.setEntity(entity);
   }
 
   private updateHand(hand: Hand) {
@@ -732,22 +686,29 @@ export class Engine {
     }
     const cardX = (holeCard.suit % 12) * 1024;
     const cardY = holeCard.rank * entity.spriteHeight;
-    const newHoleCard: AnimatedSpriteEntity = {
+
+    this.createEntity({
       ...entity,
-      ...animatedCardSprite,
       id: holeCard.id,
+      phases: [
+        {
+          name: "flip-over",
+          duration: 0.5,
+        },
+      ],
       sprites: [
-        ...animatedCardSprite.sprites,
+        { x: 0, y: 4992 },
+        { x: 256, y: 4992 },
+        { x: 512, y: 4992 },
         { x: cardX, y: cardY },
         { x: cardX + 256, y: cardY },
         { x: cardX + 512, y: cardY },
       ],
-    };
+    });
+
     this.clearEntity(entity.layer, entity.id);
-    this.debug.log(
-      `Creating ${newHoleCard.id}: { x: ${cardX + 512}, y: ${cardY} }`
-    );
-    this.setEntity(newHoleCard);
+    this.debug.log(`Updating ${entity.id}: { x: ${cardX + 512}, y: ${cardY} }`);
+    return this;
   }
 
   private createGameoverText(state: State) {
@@ -793,9 +754,53 @@ export class Engine {
         props.text = subtitle;
       }
 
-      const entity = this.createEntity(props);
-      this.debug.log(`Creating ${props.id}`, props.text);
-      this.setEntity(entity);
+      this.createEntity(props);
     }
+  }
+
+  /**
+   * Get a cached bitmap or create and cache a new one
+   */
+  private getCachedBitmap(
+    entity: SpriteEntity,
+    spriteIndex: number
+  ): ImageBitmap {
+    const sprite = entity.sprites[spriteIndex];
+    const cacheKey = SpriteEntity.getSpriteId(entity.src, sprite.x, sprite.y);
+
+    if (this.#cache.has(cacheKey)) {
+      this.debug.log(`Cache hit for ${cacheKey}`);
+      return this.#cache.get(cacheKey)!;
+    }
+
+    this.debug.log(`Cache miss for ${cacheKey}, creating new bitmap`);
+    const bitmap = entity.createImageBitmap(this.#spritesheets, spriteIndex);
+    this.#cache.set(cacheKey, bitmap);
+    return bitmap;
+  }
+
+  /**
+   * Cache all bitmaps for a sprite entity
+   */
+  private cacheEntityBitmaps(entity: SpriteEntity): void {
+    this.debug.log(
+      `Caching ${entity.sprites.length} sprite(s) for ${entity.id}`
+    );
+
+    const bitmaps: ImageBitmap[] = [];
+
+    // Get or create bitmaps for each sprite
+    for (let i = 0; i < entity.sprites.length; i++) {
+      const bitmap = this.getCachedBitmap(entity, i);
+      bitmaps.push(bitmap);
+    }
+
+    // Set all bitmaps at once
+    entity.setBitmaps(bitmaps);
+  }
+
+  // Add a method to update sprite bitmaps when sprites change
+  public updateEntitySprites(entity: SpriteEntity): void {
+    this.cacheEntityBitmaps(entity);
   }
 }
