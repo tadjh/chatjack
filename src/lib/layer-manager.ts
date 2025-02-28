@@ -12,8 +12,11 @@ export class LayerManager extends Map<LAYER, Layer> {
     this.#layouts = layouts;
   }
 
-  public getEntityById<T extends EntityTypes>(layer: LAYER, id: string) {
-    return this.get(layer)!.get(id) as T | undefined;
+  public getEntityById<T extends EntityTypes>(
+    layer: LAYER,
+    id: string
+  ): T | undefined {
+    return this.get(layer)?.get(id) as T | undefined;
   }
 
   public hasEntityById(layer: LAYER, id: string) {

@@ -493,30 +493,6 @@ export class Engine {
       shadowOffsetX: isDealer ? 8 : 12,
       shadowOffsetY: isDealer ? 8 : 12,
       onEnd: () => {
-        if (status === "blackjack") {
-          const entity = this.#layers.getEntityById<SpriteEntity>(
-            props.layer,
-            props.id
-          )!;
-          const newX = (card.suit % 12) * 1024 + cardSprite.spriteWidth * 3;
-          const newY = card.rank * cardSprite.spriteHeight;
-          const newProps: SpriteEntityProps = {
-            ...entity,
-            id: `card-sprite-x-${newX}-y-${newY}`,
-            sprites: [
-              {
-                x: newX,
-                y: newY,
-              },
-            ],
-          };
-          this.createEntity(newProps);
-          this.debug.log(
-            `Updating ${entity.id}: { x: ${entity.sprites[0].x}, y: ${entity.sprites[0].y} }`
-          );
-          this.#layers.removeEntity(entity.layer, entity.id);
-          this.createActionText(State.PlayerBlackjack, Role.Player);
-        }
         if (callback) callback();
       },
     };
@@ -524,8 +500,9 @@ export class Engine {
     this.createEntity(props);
   }
 
-  private createCounter(count: number, callback: (counter: Counter) => void) {
-    const counter = new Counter("create-hands", count, () => callback(counter));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private createCounter(count: number, callback: (...any: any[]) => void) {
+    const counter = new Counter("create-hands", count, callback);
     this.#counter = counter;
     return counter;
   }
@@ -538,18 +515,39 @@ export class Engine {
 
     const counter = this.createCounter(
       dealerHand.length + playerHand.length,
-      () =>
-        this.createTimer((layer: LAYER, id: string) =>
-          this.#layers.removeEntity(layer, id)
-        )
+      () => {
+        if (playerHand.status === "blackjack") {
+          playerHand.forEach((card) => {
+            const entity = this.#layers.getEntityById<SpriteEntity>(
+              cardSprite.layer,
+              card.id
+            );
+            if (!entity) {
+              throw new Error("Entity not found");
+            }
+
+            const newX = (card.suit % 12) * 1024 + cardSprite.spriteWidth * 3;
+            const newY = card.rank * cardSprite.spriteHeight;
+            entity.addSprite({ x: newX, y: newY }, true);
+
+            this.updateEntitySprites(entity);
+          });
+
+          this.createActionText(State.PlayerBlackjack, Role.Player);
+        } else {
+          this.createTimer((layer: LAYER, id: string) =>
+            this.#layers.removeEntity(layer, id)
+          );
+        }
+      }
     );
 
     this.#holeCardId = dealer.hand[1].id;
     for (let i = 0; i < dealer.hand.length; i++) {
-      this.createCard(playerHand[i], count++ * delay, "playing", () =>
+      this.createCard(playerHand[i], count++ * delay, playerHand.status, () =>
         counter.tick()
       );
-      this.createCard(dealerHand[i], count++ * delay, "playing", () =>
+      this.createCard(dealerHand[i], count++ * delay, dealerHand.status, () =>
         counter.tick()
       );
     }
@@ -739,7 +737,11 @@ export class Engine {
     spriteIndex: number
   ): ImageBitmap {
     const sprite = entity.sprites[spriteIndex];
-    const cacheKey = SpriteEntity.getSpriteId(entity.src, sprite.x, sprite.y);
+    const cacheKey = SpriteEntity.formatSpriteId(
+      entity.src,
+      sprite.x,
+      sprite.y
+    );
 
     if (this.#cache.has(cacheKey)) {
       // this.debug.log(`Cache hit for ${cacheKey}`);

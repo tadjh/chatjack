@@ -108,8 +108,24 @@ export class SpriteEntity extends Entity<
   /**
    * Get a unique ID for a sprite
    */
-  static getSpriteId(src: IMAGE, x: number, y: number) {
+  static formatSpriteId(src: IMAGE, x: number, y: number) {
     return `${src}-sprite-x-${x}-y-${y}`;
+  }
+
+  addSprite(coords: SpriteCoordinates, setActive = false): this {
+    console.log(this.props.spriteIndex);
+
+    this.debug.log(
+      `Updating ${this.id}: { x: ${this.sprites[this.sprites.length - 1].x}, y: ${this.sprites[this.sprites.length - 1].y} }`
+    );
+    this.sprites.push(coords);
+    if (setActive) {
+      this.props.spriteIndex = this.sprites.length - 1;
+    }
+
+    console.log(this.props.spriteIndex);
+
+    return this;
   }
 
   setY(y: number): this {

@@ -1,7 +1,5 @@
 ## Bugs
 
-- TODO Natural blackjack tint needs to happen AFTER action text (callback)
-
 ## Development
 
 - TODO show chat actions on the opposite side of the scores "!hit or !stand", hide when no longer chat's turn
