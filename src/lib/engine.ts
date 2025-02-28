@@ -7,20 +7,18 @@ import {
   turnTimer,
 } from "./entities";
 import { Card } from "./card";
-import { Fonts, Palette, images, FPS } from "./constants";
+import { Palette, FPS, Fonts, images } from "./constants";
 import { Dealer } from "./dealer";
-import { Layer } from "./layer";
 import { Player, Role } from "./player";
 import {
   Canvases,
   EntityTypes,
-  BaseEntityType,
   LAYER,
   POSITION,
   SpriteEntityProps,
-  State,
   TextEntityProps,
   EntityProps,
+  State,
 } from "./types";
 import { Hand, Status } from "./hand";
 import { Debug } from "./debug";
@@ -28,50 +26,69 @@ import { Counter } from "./counter";
 import { TimerEntity } from "./entity.timer";
 import { TextEntity } from "./entity.text";
 import { rgb } from "./utils";
-import { LayoutManager } from "./layout-manager";
 import { SpriteEntity } from "./entity.sprite";
+import { DynamicLayer } from "./layer.dynamic";
+import { StaticLayer } from "./layer.static";
+import { LayerManager } from "./layer-manager";
+
 enum ASSETS_LOADED {
   FONTS,
   IMAGES,
   LAYERS,
   TITLE_SCREEN,
 }
+
+export type EngineOptions = {
+  fps?: number;
+  tickRate?: number;
+  animationSpeed?: number;
+};
+
 export class Engine {
+  private static instance: Engine | null = null;
+  public static readonly defaults: Required<EngineOptions> = {
+    fps: FPS,
+    tickRate: 1000 / FPS,
+    animationSpeed: 1 / FPS,
+  };
   readonly fps: number;
   readonly tickRate: number;
   readonly baseAnimSpeed: number;
-  #layers: Map<LAYER, Layer> = new Map();
+  protected debug: Debug;
   #lastTick = 0;
   #hasDealt = false;
   #spritesheets: Map<string, HTMLImageElement> = new Map();
   #cache = new Map<string, ImageBitmap>();
   #counter: Counter | null = null;
-  #layoutManager: LayoutManager;
+  #layers: LayerManager;
   #isLoading = false;
   #isRunning = false;
   #isReady = false;
   #assetsLoaded = new Map<ASSETS_LOADED, boolean>();
   #holeCardId: string = "";
-  private static instance: Engine | null = null;
 
-  public static getInstance(): Engine {
+  public static create(options?: EngineOptions): Engine {
     if (!Engine.instance) {
-      Engine.instance = new Engine();
+      Engine.instance = new Engine(options);
     }
     return Engine.instance;
   }
 
   private constructor(
-    fps = FPS,
-    tickRate = 1000 / fps,
-    animationSpeed = 1 / fps,
-    layoutManager = new LayoutManager(),
-    private debug = new Debug("Renderer", Palette.Orange)
+    {
+      fps = Engine.defaults.fps,
+      tickRate = Engine.defaults.tickRate,
+      animationSpeed = Engine.defaults.animationSpeed,
+    }: EngineOptions = Engine.defaults,
+    layers = new LayerManager(),
+    debug = new Debug("Engine", Palette.Orange)
   ) {
+    this.debug = debug;
+    this.debug.log("Creating Engine instance");
     this.fps = fps;
     this.tickRate = tickRate;
     this.baseAnimSpeed = animationSpeed;
-    this.#layoutManager = layoutManager;
+    this.#layers = layers;
     this.init();
   }
 
@@ -109,8 +126,9 @@ export class Engine {
   }
 
   private async loadFonts(): Promise<void> {
-    for (const fontFace of Fonts) {
-      this.debug.log("Loading font:", fontFace.family);
+    this.debug.log("Loading fonts");
+    for (const [font, url] of Fonts) {
+      const fontFace = new FontFace(font, `url(${url})`);
       if (!document.fonts.has(fontFace)) {
         document.fonts.add(fontFace);
         await fontFace.load();
@@ -121,8 +139,9 @@ export class Engine {
   }
 
   private async unloadFonts(): Promise<void> {
-    for (const fontFace of Fonts) {
-      this.debug.log("Unloading font:", fontFace.family);
+    this.debug.log("Unloading fonts");
+    for (const [font, url] of Fonts) {
+      const fontFace = new FontFace(font, `url(${url})`);
       if (document.fonts.has(fontFace)) {
         document.fonts.delete(fontFace);
       }
@@ -132,9 +151,9 @@ export class Engine {
   }
 
   private async loadImages(): Promise<void> {
+    this.debug.log("Loading images");
     // TODO scale multiple sizes of the sprite sheet for player and dealer
     for (const [name, url] of images) {
-      this.debug.log("Loading image:", name);
       const image = new Image();
       image.src = url;
       await new Promise((resolve, reject) => {
@@ -148,8 +167,8 @@ export class Engine {
   }
 
   private async unloadImages(): Promise<void> {
+    this.debug.log("Unloading images");
     for (const [name] of this.#spritesheets) {
-      this.debug.log("Unloading image:", name);
       this.#spritesheets.delete(name);
     }
     this.#assetsLoaded.set(ASSETS_LOADED.IMAGES, false);
@@ -170,7 +189,11 @@ export class Engine {
       if (!canvas) {
         throw new Error(`Canvas not found for layer: ${layer}`);
       }
-      this.#layers.set(layer, new Layer(layer, canvas));
+      if (layer === LAYER.GAME) {
+        this.#layers.set(layer, new DynamicLayer(layer, canvas));
+      } else {
+        this.#layers.set(layer, new StaticLayer(layer, canvas));
+      }
     }
     this.#assetsLoaded.set(ASSETS_LOADED.LAYERS, true);
     this.checkIsReady();
@@ -184,6 +207,9 @@ export class Engine {
   }
 
   private loadTitleScreen() {
+    if (!this.#assetsLoaded.get(ASSETS_LOADED.LAYERS)) {
+      throw new Error("Layers not loaded");
+    }
     this.debug.log("Loading title screen");
     titleScreen.forEach((entity) => this.createEntity(entity));
     this.#assetsLoaded.set(ASSETS_LOADED.TITLE_SCREEN, true);
@@ -193,7 +219,7 @@ export class Engine {
   private unloadTitleScreen() {
     this.debug.log("Unloading title screen");
     titleScreen.forEach((entity) => {
-      this.clearEntity(entity.layer, entity.id);
+      this.#layers.removeEntity(entity.layer, entity.id);
     });
     this.#assetsLoaded.set(ASSETS_LOADED.TITLE_SCREEN, false);
     this.checkIsReady();
@@ -207,108 +233,49 @@ export class Engine {
     return Promise.all([this.unloadFonts(), this.unloadImages()]);
   }
 
-  private getLayer(layer: LAYER) {
-    return this.#layers.get(layer)!;
-  }
-
-  private clearAllLayers() {
-    this.debug.log("Clearing all layers");
-    this.#layers.forEach((layer) => layer.clear());
-  }
-
-  private getEntity<T extends EntityTypes>(entity: T) {
-    return this.getLayer(entity.layer).get(entity.id) as T | undefined;
-  }
-
-  private getEntityById<T extends EntityTypes>(layer: LAYER, id: string) {
-    return this.getLayer(layer).get(id) as T | undefined;
-  }
-
-  private hasEntityById(layer: LAYER, id: string) {
-    return this.getLayer(layer).has(id);
-  }
-
   private createEntity(props: EntityProps) {
     let entity: EntityTypes;
 
-    this.debug.log("Creating entity:", props.id);
-
     switch (props.type) {
       case "sprite":
-        entity = new SpriteEntity(props, this.debug);
+        entity = new SpriteEntity(props);
         // Cache all sprite bitmaps at once using the engine's cache
         this.cacheEntityBitmaps(entity);
         break;
       case "text":
-        entity = new TextEntity(props, this.debug);
+        entity = new TextEntity(props);
         break;
       case "timer":
-        entity = new TimerEntity(props, this.debug);
+        entity = new TimerEntity(props);
         break;
       default:
         throw new Error(`Unknown entity type`);
     }
 
-    this.setEntity(entity);
-  }
-
-  private setEntity(entity: EntityTypes) {
-    if (entity.type === "text") this.#layoutManager.requestUpdate();
-    this.getLayer(entity.layer).set(entity.id, entity);
-  }
-
-  private clearEntity(layer: LAYER, id: string) {
-    this.getLayer(layer).delete(id);
-  }
-
-  private getEntitiesByType(type: BaseEntityType) {
-    return [...this.#layers.values()].flatMap((layer) => layer.getByType(type));
-  }
-
-  private updateLayout() {
-    const textEntities = this.getEntitiesByType("text") as TextEntity[];
-    this.#layoutManager.update(textEntities);
-  }
-
-  private render() {
-    if (this.#layoutManager.shouldUpdate) {
-      this.updateLayout();
-      // TODO LAYER.BG is completely unused at the moment
-      this.getLayer(LAYER.UI).render();
-    }
-
-    this.getLayer(LAYER.GAME).render();
+    this.#layers.setEntity(entity);
   }
 
   public resize = () => {
     this.debug.log("Resizing");
-    this.#layoutManager.requestUpdate();
-    this.#layers.forEach((layer) => layer.resize());
+    this.#layers.resize();
     this.render();
   };
 
   // The game loop updates animation progress and redraws the canvas.
-  private step = (timestamp: number) => {
+  private update = (timestamp: number) => {
     if (timestamp - this.#lastTick >= this.tickRate) {
       this.#lastTick = timestamp;
 
-      for (const entity of this.getLayer(LAYER.GAME).values()) {
-        if (entity.delay && entity.delay > 0) {
-          entity.delay -= 1;
-          entity.props.opacity = 0;
-          continue;
-        }
-
-        if (entity.startTime === 0) {
-          entity.startTime = performance.now();
-        }
-        entity.update();
-      }
+      this.#layers.update();
 
       this.render();
     }
-    requestAnimationFrame(this.step);
+    requestAnimationFrame(this.update);
   };
+
+  private render() {
+    this.#layers.render();
+  }
 
   public async start() {
     // If already running, just return instead of throwing
@@ -334,7 +301,7 @@ export class Engine {
 
     this.resize();
     window.addEventListener("resize", this.resize);
-    requestAnimationFrame(this.step);
+    requestAnimationFrame(this.update);
   }
 
   public stop() {
@@ -345,7 +312,7 @@ export class Engine {
 
   private reset() {
     this.debug.log("Engine resetting");
-    this.clearAllLayers();
+    this.#layers.clear();
     this.loadTitleScreen();
     this.#hasDealt = false;
     if (this.#counter) {
@@ -355,7 +322,7 @@ export class Engine {
     this.resize();
   }
 
-  public update({
+  public event({
     dealer,
     player,
     state,
@@ -382,7 +349,7 @@ export class Engine {
           this.reset();
         }
         this.#hasDealt = true;
-        this.clearAllLayers();
+        this.#layers.clear();
         this.createScores(dealer, player);
         this.createHands(dealer, player);
         break;
@@ -458,7 +425,7 @@ export class Engine {
   private updateScores(player: Dealer | Player) {
     if (player.role === Role.Dealer) {
       const dealerScore = player.score;
-      const dealerScoreText = this.getEntityById<TextEntity>(
+      const dealerScoreText = this.#layers.getEntityById<TextEntity>(
         scoreText.layer,
         "dealer-score"
       );
@@ -466,11 +433,11 @@ export class Engine {
         dealerScoreText.text = dealerScore.toString();
         dealerScoreText.color = rgb(this.getColorScore(dealerScore));
         this.debug.log(`Updating ${dealerScoreText.id}:`, dealerScoreText.text);
-        this.setEntity(dealerScoreText);
+        this.#layers.setEntity(dealerScoreText);
       }
     } else {
       // TODO Handle split hands
-      const playerScoreText = this.getEntityById<TextEntity>(
+      const playerScoreText = this.#layers.getEntityById<TextEntity>(
         scoreText.layer,
         `${player.name.toLowerCase()}-score`
       );
@@ -478,7 +445,7 @@ export class Engine {
         playerScoreText.text = player.score.toString();
         playerScoreText.color = rgb(this.getColorScore(player.score));
         this.debug.log(`Updating ${playerScoreText.id}:`, playerScoreText.text);
-        this.setEntity(playerScoreText);
+        this.#layers.setEntity(playerScoreText);
       }
     }
   }
@@ -527,7 +494,7 @@ export class Engine {
       shadowOffsetY: isDealer ? 8 : 12,
       onEnd: () => {
         if (status === "blackjack") {
-          const entity = this.getEntityById<SpriteEntity>(
+          const entity = this.#layers.getEntityById<SpriteEntity>(
             props.layer,
             props.id
           )!;
@@ -547,7 +514,7 @@ export class Engine {
           this.debug.log(
             `Updating ${entity.id}: { x: ${entity.sprites[0].x}, y: ${entity.sprites[0].y} }`
           );
-          this.clearEntity(entity.layer, entity.id);
+          this.#layers.removeEntity(entity.layer, entity.id);
           this.createActionText(State.PlayerBlackjack, Role.Player);
         }
         if (callback) callback();
@@ -573,7 +540,7 @@ export class Engine {
       dealerHand.length + playerHand.length,
       () =>
         this.createTimer((layer: LAYER, id: string) =>
-          this.clearEntity(layer, id)
+          this.#layers.removeEntity(layer, id)
         )
     );
 
@@ -650,23 +617,29 @@ export class Engine {
   }
 
   private updateBustCard(card: Card) {
-    const entity = this.getEntityById<SpriteEntity>(cardSprite.layer, card.id)!;
+    const entity = this.#layers.getEntityById<SpriteEntity>(
+      cardSprite.layer,
+      card.id
+    )!;
     entity.opacity = 0.5;
     this.debug.log(`Updating ${entity.id}: { opacity: ${entity.opacity} }`);
-    this.setEntity(entity);
+    this.#layers.setEntity(entity);
   }
 
   private updateStandCard(card: Card) {
-    const entity = this.getEntityById<SpriteEntity>(cardSprite.layer, card.id)!;
+    const entity = this.#layers.getEntityById<SpriteEntity>(
+      cardSprite.layer,
+      card.id
+    )!;
     entity.sprites[entity.props.spriteIndex].x += entity.spriteWidth;
     this.debug.log(`Updating ${entity.id}`);
     this.updateEntitySprites(entity);
-    this.setEntity(entity);
+    this.#layers.setEntity(entity);
   }
 
   private updateHand(hand: Hand) {
     hand.forEach((card) => {
-      if (this.hasEntityById(cardSprite.layer, card.id)) {
+      if (this.#layers.hasEntityById(cardSprite.layer, card.id)) {
         if (hand.isBusted) this.updateBustCard(card);
         if (hand.isStand) this.updateStandCard(card);
       } else {
@@ -677,7 +650,7 @@ export class Engine {
 
   private updateHoleCard(dealer: Dealer) {
     const holeCard = dealer.hand[1];
-    const entity = this.getEntityById<SpriteEntity>(
+    const entity = this.#layers.getEntityById<SpriteEntity>(
       cardSprite.layer,
       this.#holeCardId
     );
@@ -706,7 +679,7 @@ export class Engine {
       ],
     });
 
-    this.clearEntity(entity.layer, entity.id);
+    this.#layers.removeEntity(entity.layer, entity.id);
     this.debug.log(`Updating ${entity.id}: { x: ${cardX + 512}, y: ${cardY} }`);
     return this;
   }
@@ -769,11 +742,11 @@ export class Engine {
     const cacheKey = SpriteEntity.getSpriteId(entity.src, sprite.x, sprite.y);
 
     if (this.#cache.has(cacheKey)) {
-      this.debug.log(`Cache hit for ${cacheKey}`);
+      // this.debug.log(`Cache hit for ${cacheKey}`);
       return this.#cache.get(cacheKey)!;
     }
 
-    this.debug.log(`Cache miss for ${cacheKey}, creating new bitmap`);
+    // this.debug.log(`Cache miss for ${cacheKey}, creating new bitmap`);
     const bitmap = entity.createImageBitmap(this.#spritesheets, spriteIndex);
     this.#cache.set(cacheKey, bitmap);
     return bitmap;

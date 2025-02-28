@@ -68,7 +68,7 @@ export class TextEntity extends Entity<
     if (this.phases.length === 0) {
       this.props.opacity = 1;
     }
-    this.debug.log(`Creating ${this.id}`);
+
     this.resize();
   }
 

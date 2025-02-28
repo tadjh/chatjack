@@ -48,22 +48,23 @@ export enum FONT {
   SANS_SERIF = "PressStart2P",
 }
 
-export const Fonts: Set<FontFace> = new Set([
-  new FontFace(
+export const Fonts: Map<FONT, string> = new Map([
+  [
     FONT.DISPLAY,
-    `url(${isDevelopment ? "/src" : ""}/assets/fonts/${FONT.DISPLAY}-Regular.ttf)`
-  ),
-  new FontFace(
+    `${isDevelopment ? "/src" : ""}/assets/fonts/${FONT.DISPLAY}-Regular.ttf`,
+  ],
+  [
     FONT.SANS_SERIF,
-    `url(${isDevelopment ? "/src" : ""}/assets/fonts/${FONT.SANS_SERIF}-Regular.ttf)`
-  ),
+    `${isDevelopment ? "/src" : ""}/assets/fonts/${FONT.SANS_SERIF}-Regular.ttf`,
+  ],
 ]);
 
 export enum IMAGE {
   CARDS = "cards",
-  UI = "ui",
+  // UI = "ui",
 }
 
 export const images: Map<IMAGE, string> = new Map([
   [IMAGE.CARDS, `${isDevelopment ? "/src" : ""}/assets/sprites/cards.png`],
+  // [IMAGE.UI, `${isDevelopment ? "/src" : ""}/assets/sprites/ui.png`],
 ]);

@@ -1,15 +1,21 @@
 import { Button } from "@/components/ui/button";
 import { useBlackjack } from "@/hooks/use-blackjack";
 import { useEngine } from "@/hooks/use-engine";
+import { useSearchParams } from "react-router";
 
 function App() {
+  const [searchParams] = useSearchParams();
+  const fixedDeck = searchParams.get("deck");
+  const debug = searchParams.get("debug");
+
   const { bgRef, gameRef, uiRef, engine } = useEngine();
   const {
     dealer,
     player,
-    isDealt,
+    hasDealt,
     isRevealed,
     isGameover,
+    isPlayerDone,
     deal,
     hit,
     stand,
@@ -17,72 +23,115 @@ function App() {
     decide,
     restart,
     exit,
-  } = useBlackjack(engine);
+  } = useBlackjack(engine, {
+    fixedDeck,
+    playerCount: 1,
+    playerNames: ["Chat"],
+  });
 
   return (
     <>
       <canvas ref={bgRef} />
       <canvas ref={gameRef} />
       <canvas ref={uiRef} />
-      <div className="p-4 flex gap-2 flex-col justify-between h-full absolute top-1/2 -translate-y-1/2 right-0 z-10">
-        <div className="grid gap-2">
-          <div className="flex gap-2">
-            <Button onClick={restart} disabled={!isDealt}>
-              Restart
-            </Button>
-            <Button onClick={exit} disabled={!isDealt}>
-              X
-            </Button>
-          </div>
-          <div className="flex gap-2 border p-2 items-center">
-            {!isDealt ? (
-              <Button onClick={deal}>Deal</Button>
-            ) : isRevealed ? (
-              <Button onClick={decide} disabled={isGameover}>
-                Next
+      {debug && (
+        <div className="p-4 flex gap-2 font-mono flex-col justify-center h-full fixed top-1/2 -translate-y-1/2 left-0 z-10">
+          <div className="grid gap-2">
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                className="cursor-pointer"
+                onClick={restart}
+                disabled={!hasDealt}
+              >
+                Restart
               </Button>
-            ) : (
-              <Button onClick={reveal} disabled={!player.isDone}>
-                Reveal
+              <Button
+                size="sm"
+                className="cursor-pointer"
+                onClick={exit}
+                disabled={!hasDealt}
+              >
+                X
               </Button>
-            )}
-            <div>
-              <div>Dealer</div>
+            </div>
+            <div className="grid gap-2 items-center">
+              <div className="font-bold">Dealer</div>
+              <div>{`Score: ${dealer.score} `}</div>
               <div>
-                {`Score: ${dealer.score} `}
-                {dealer.hand.map((card) => card.icon).join(" ")}
+                Hand:{" "}
+                {dealer.hand.map((card) => card.icon).join(" ") || "empty"}
+              </div>
+              <div>
+                {!hasDealt ? (
+                  <Button size="sm" className="cursor-pointer" onClick={deal}>
+                    Deal
+                  </Button>
+                ) : !isRevealed ? (
+                  <Button
+                    size="sm"
+                    className="cursor-pointer"
+                    onClick={reveal}
+                    disabled={!isPlayerDone}
+                  >
+                    Reveal
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    className="cursor-pointer"
+                    onClick={decide}
+                    disabled={isGameover}
+                  >
+                    Next
+                  </Button>
+                )}
               </div>
             </div>
           </div>
-        </div>
-        <div className="grid gap-2 border p-2">
-          <div>{player.name}</div>
-          <div className="flex gap-4">
-            {player.hands.map((hand, h) => (
-              <div key={h} className="grid gap-2">
-                <p className="h-5 text-center">
-                  {hand.map((card) => card.icon).join(" ")}
-                </p>
-                <p className="text-center min-w-18">{`Score: ${hand.score}`}</p>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => hit(player)}
-                    disabled={!isDealt || hand.isBusted || hand.isStand}
-                  >
-                    Hit
-                  </Button>
-                  <Button
-                    disabled={!isDealt || hand.isBusted || hand.isStand}
-                    onClick={() => stand(player, h)}
-                  >
-                    Stand
-                  </Button>
+          <div className="grid gap-2">
+            <div className="font-bold">{player.name}</div>
+            <div className="flex gap-4">
+              {player.hands.map((hand, h) => (
+                <div key={h} className="grid gap-2">
+                  <div>
+                    Hand: {hand.map((card) => card.icon).join(" ") || "empty"}
+                  </div>
+                  <div>{`Score: ${hand.score}`}</div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      className="cursor-pointer"
+                      onClick={() => hit(player)}
+                      disabled={
+                        !hasDealt ||
+                        hand.isBusted ||
+                        hand.isStand ||
+                        hand.isBlackjack
+                      }
+                    >
+                      Hit
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="cursor-pointer"
+                      disabled={
+                        !hasDealt ||
+                        hand.isBusted ||
+                        hand.isStand ||
+                        hand.isBlackjack
+                      }
+                      onClick={() => stand(player, h)}
+                    >
+                      Stand
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </>
   );
 }

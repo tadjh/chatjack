@@ -1,6 +1,5 @@
 ## Bugs
 
-- TODO Natural blackjack buttons should be disabled
 - TODO Natural blackjack tint needs to happen AFTER action text (callback)
 
 ## Development

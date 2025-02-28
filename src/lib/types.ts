@@ -1,4 +1,4 @@
-import { IMAGE } from "./constants";
+import { FONT, IMAGE } from "./constants";
 import { SpriteEntity } from "./entity.sprite";
 import { TextEntity } from "./entity.text";
 import { TimerEntity } from "./entity.timer";
@@ -169,7 +169,7 @@ export type TextEntityProps = BaseEntityNoProps<
   type: "text";
   text: string;
   fontSize: number;
-  fontFamily: string;
+  fontFamily: FONT;
   textBaseline: CanvasTextBaseline;
   textAlign: CanvasTextAlign;
   color: string | CanvasGradient | CanvasPattern;

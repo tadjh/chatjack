@@ -109,25 +109,19 @@ describe("Player", () => {
     const player = new Player("Alice");
     player.stand();
     const card = new Card(Suit.Clubs + Rank.Five);
-    expect(() => player.hit(card)).toThrow(
-      "Hand is not allowed to perform this action"
-    );
+    expect(() => player.hit(card)).toThrow("Alice's turn is over");
   });
 
   it("should throw an error when attempting to stand a non-playing hand", () => {
     const player = new Player("Alice");
     player.stand();
-    expect(() => player.stand()).toThrow(
-      "Hand is not allowed to perform this action"
-    );
+    expect(() => player.stand()).toThrow("Alice's turn is over");
   });
 
   it("should throw an error when attempting to split a non-playing hand", () => {
     const player = new Player("Alice");
     player.stand();
-    expect(() => player.split()).toThrow(
-      "Hand is not allowed to perform this action"
-    );
+    expect(() => player.split()).toThrow("Alice's turn is over");
   });
 });
 

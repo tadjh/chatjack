@@ -102,6 +102,7 @@ export abstract class Entity<
 
     this.speed =
       this.totalDuration > 0 ? 1 / (this.totalDuration * FPS) : 1 / 12;
+    this.debug.log("Creating:", this.id);
   }
 
   protected setPhase(): this {

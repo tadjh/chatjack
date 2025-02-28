@@ -10,7 +10,6 @@ enum DIRECTION {
 }
 
 export class LayoutManager {
-  #shouldUpdate: boolean = false;
   #layouts: Map<POSITION, Generator<number, number, number>> = new Map();
   #padding: number;
   #gutter: number;
@@ -23,19 +22,10 @@ export class LayoutManager {
   ) {
     this.#padding = padding;
     this.#gutter = gutter;
-    this.#shouldUpdate = true;
     this.debug = debug;
   }
 
-  get shouldUpdate() {
-    return this.#shouldUpdate;
-  }
-
   update(entities: TextEntity[]) {
-    if (!this.#shouldUpdate) {
-      throw new Error("Request an update before calling update");
-    }
-
     this.debug.log("Refreshing layouts");
     this.reset();
     this.init();
@@ -43,7 +33,6 @@ export class LayoutManager {
   }
 
   init() {
-    this.debug.log("Creating new layouts");
     this.#padding = getHorizontalScaleFactor() * BASELINE_PADDING;
     this.#gutter = getVerticalScaleFactor() * BASELINE_GUTTER;
     for (const position of Object.values(POSITION)) {
@@ -87,13 +76,8 @@ export class LayoutManager {
     }
   }
 
-  requestUpdate() {
-    this.#shouldUpdate = true;
-  }
-
   // TODO Extend for non-text entities.
   place(entities: TextEntity[]) {
-    this.debug.log("Placing entities");
     for (const entity of entities) {
       if (!this.#layouts.has(entity.position)) {
         throw new Error(`No layout for ${entity.position}`);
@@ -130,12 +114,9 @@ export class LayoutManager {
         `Adding ${entity.id} to layout ${entity.position} at ${entity.y}`
       );
     }
-
-    this.#shouldUpdate = false;
   }
 
   reset() {
-    this.debug.log("Pruning old layouts");
     this.#layouts.forEach((layout) => layout.return(0));
     this.#layouts.clear();
   }

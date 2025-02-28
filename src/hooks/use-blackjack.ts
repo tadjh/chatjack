@@ -1,84 +1,85 @@
-import { Blackjack } from "@/lib/blackjack";
+import { Blackjack, BlackjackOptions } from "@/lib/blackjack";
 import { Engine } from "@/lib/engine";
 import { Player } from "@/lib/player";
 import { useRef, useState } from "react";
 
-const blackjack = new Blackjack({ shoeSize: 1 });
+export function useBlackjack(engine: Engine, options: BlackjackOptions) {
+  const blackjackRef = useRef(Blackjack.create(options));
 
-export function useBlackjack(engine: Engine) {
-  const blackjackRef = useRef<Blackjack>(blackjack);
+  const blackjack = blackjackRef.current;
 
   const [gameState, setGameState] = useState({
-    dealer: blackjackRef.current.dealer,
-    player: blackjackRef.current.player,
+    dealer: blackjack.dealer,
+    player: blackjack.player,
   });
 
   function updateSnapshot() {
     setGameState({
-      dealer: blackjackRef.current.dealer,
-      player: blackjackRef.current.player,
+      dealer: blackjack.dealer,
+      player: blackjack.player,
     });
-    engine.update({
-      dealer: blackjackRef.current.dealer,
-      player: blackjackRef.current.player,
-      state: blackjackRef.current.state,
-      isGameover: blackjackRef.current.isGameover,
+    engine.event({
+      dealer: blackjack.dealer,
+      player: blackjack.player,
+      state: blackjack.state,
+      isGameover: blackjack.isGameover,
     });
   }
 
   function deal() {
-    blackjackRef.current.deal();
+    blackjack.deal();
     updateSnapshot();
   }
 
   function hit(player: Player) {
-    blackjackRef.current.hit(player);
+    blackjack.hit(player);
     updateSnapshot();
   }
 
   function stand(player: Player, i = 0) {
-    blackjackRef.current.stand(player, i);
+    blackjack.stand(player, i);
     updateSnapshot();
   }
 
   function split(player: Player) {
-    blackjackRef.current.split(player);
+    blackjack.split(player);
     updateSnapshot();
   }
 
   function reveal() {
-    blackjackRef.current.reveal();
+    blackjack.reveal();
     updateSnapshot();
   }
 
   function decide() {
-    if (blackjackRef.current.dealer.isDone) {
-      blackjackRef.current.judge();
+    if (blackjack.dealer.isDone) {
+      blackjack.judge();
     } else {
-      blackjackRef.current.decide();
+      blackjack.decide();
     }
     updateSnapshot();
   }
 
   function exit() {
-    blackjackRef.current.reset();
+    blackjack.reset();
     updateSnapshot();
   }
 
   function restart() {
     console.clear();
-    blackjackRef.current.reset();
-    blackjackRef.current.deal();
+    blackjack.reset();
+    blackjack.deal();
     updateSnapshot();
   }
 
   return {
     dealer: gameState.dealer,
     player: gameState.player,
-    isDealt: blackjackRef.current.hasDealt,
-    isRevealed: blackjackRef.current.isRevealed,
-    isGameover: blackjackRef.current.isGameover,
-    state: blackjackRef.current.state,
+    hasDealt: blackjack.hasDealt,
+    isRevealed: blackjack.isRevealed,
+    isGameover: blackjack.isGameover,
+    isPlayerDone: blackjack.isPlayerDone,
+    state: blackjack.state,
     deal,
     hit,
     stand,

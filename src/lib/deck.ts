@@ -10,17 +10,16 @@ export class Deck extends Array<Card> {
     {
       name = "Deck",
       shoeSize = 0,
-      cards,
-    }:
-      | { name?: string; shoeSize?: number; cards?: never }
-      | { name?: string; shoeSize?: never; cards: number[] } = {},
+      fixedDeck = undefined,
+    }: { name?: string; shoeSize?: number; fixedDeck?: FixedDeck | null } = {},
     debug = new Debug(name, Palette.Blue)
   ) {
     super();
     this.debug = debug;
+    this.debug.log(`Constructing ${name}`);
     this.#name = name;
-    if (cards) {
-      this.fix(cards);
+    if (fixedDeck) {
+      this.fix(fixedDeck);
     } else {
       this.init(shoeSize);
     }
@@ -35,7 +34,7 @@ export class Deck extends Array<Card> {
 
     for (let i = 0; i < shoeSize; i++) {
       this.debug.log("Adding a 52 card deck");
-      const deck = Deck.create();
+      const deck = Deck.createCards();
       this.push(...deck);
     }
     this.shuffle();
@@ -62,10 +61,11 @@ export class Deck extends Array<Card> {
     return this;
   }
 
-  fix(fixedDeck: number[]) {
+  fix(fixedDeck: FixedDeck) {
     this.debug.log("Fixing deck with cards:", fixedDeck);
-    for (let i = fixedDeck.length - 1; i >= 0; i--) {
-      this.push(new Card(fixedDeck[i]));
+    const cards = fixedDecks[fixedDeck];
+    for (let i = cards.length - 1; i >= 0; i--) {
+      this.push(new Card(cards[i]));
     }
     return this;
   }
@@ -113,7 +113,7 @@ export class Deck extends Array<Card> {
     this.debug.log(output);
   }
 
-  public static create() {
+  public static createCards() {
     const deck: Card[] = [];
     const suits = Object.values(Suit).filter((s) => typeof s === "number");
     const faces = Object.values(Rank).filter((f) => typeof f === "number");
@@ -125,6 +125,8 @@ export class Deck extends Array<Card> {
     return deck;
   }
 }
+
+export type FixedDeck = keyof typeof fixedDecks;
 
 export const fixedDecks: Record<string, number[]> = {
   "player-bust": [
@@ -178,5 +180,5 @@ export const fixedDecks: Record<string, number[]> = {
     Rank.Nine + Suit.Diamonds, // player card 2, (should stand)
     Rank.King + Suit.Clubs, // dealer hole card 2
   ],
-};
+} as const;
 

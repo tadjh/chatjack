@@ -1,9 +1,8 @@
 import { Engine } from "@/lib/engine";
 import { useEffect, useRef, useState } from "react";
 
-const engine = Engine.getInstance();
-
 export function useEngine() {
+  const engineRef = useRef(Engine.create());
   const bgRef = useRef<HTMLCanvasElement>(null);
   const gameRef = useRef<HTMLCanvasElement>(null);
   const uiRef = useRef<HTMLCanvasElement>(null);
@@ -11,6 +10,7 @@ export function useEngine() {
 
   useEffect(() => {
     let isMounted = true;
+    const engine = engineRef.current;
 
     async function setup() {
       // Only load layers if they haven't been loaded yet
@@ -47,7 +47,7 @@ export function useEngine() {
     bgRef,
     gameRef,
     uiRef,
-    engine,
+    engine: engineRef.current,
     isReady,
   };
 }

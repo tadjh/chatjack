@@ -1,6 +1,5 @@
 import { Blackjack } from "@/lib/blackjack";
 import { Card } from "@/lib/card";
-import { fixedDecks } from "@/lib/deck";
 import { State } from "@/lib/types";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
@@ -8,7 +7,7 @@ describe("Blackjack", () => {
   let game: Blackjack;
 
   beforeEach(() => {
-    game = new Blackjack();
+    game = Blackjack.create();
   });
 
   it("should create a Blackjack game with default values", () => {
@@ -83,7 +82,7 @@ describe("Blackjack", () => {
 
 describe("Blackjack with Fixed Decks", () => {
   it("should result in player bust with fixed deck 'player-bust'", () => {
-    const game = new Blackjack({ fixedDeck: fixedDecks["player-bust"] });
+    const game = Blackjack.create({ fixedDeck: "player-bust" });
     game.deal();
     // Simulate player's turn by hitting until the hand becomes busted.
     while (!game.player.hand.isBusted) {
@@ -96,7 +95,7 @@ describe("Blackjack with Fixed Decks", () => {
   });
 
   it("should result in dealer bust with fixed deck 'dealer-bust'", () => {
-    const game = new Blackjack({ fixedDeck: fixedDecks["dealer-bust"] });
+    const game = Blackjack.create({ fixedDeck: "dealer-bust" });
     game.deal();
     // Simulate player's turn: assume player has a strong hand and stands.
     game.stand(game.player);
@@ -110,7 +109,7 @@ describe("Blackjack with Fixed Decks", () => {
   });
 
   it("should result in a push with fixed deck 'push'", () => {
-    const game = new Blackjack({ fixedDeck: fixedDecks["push"] });
+    const game = Blackjack.create({ fixedDeck: "push" });
     game.deal();
     // For a push the player stands with a score equal to the dealer.
     game.stand(game.player);
@@ -123,7 +122,7 @@ describe("Blackjack with Fixed Decks", () => {
   });
 
   it("should result in a player natural blackjack with fixed deck 'natural-blackjack'", () => {
-    const game = new Blackjack({ fixedDeck: fixedDecks["natural-blackjack"] });
+    const game = Blackjack.create({ fixedDeck: "natural-blackjack" });
     game.deal();
     // Player has a natural blackjack, dealer has a weak hand.
     game.reveal();
@@ -132,7 +131,7 @@ describe("Blackjack with Fixed Decks", () => {
   });
 
   it("should result in a player blackjack with fixed deck 'player-blackjack'", () => {
-    const game = new Blackjack({ fixedDeck: fixedDecks["player-blackjack"] });
+    const game = Blackjack.create({ fixedDeck: "player-blackjack" });
     game.deal();
     // Simulate player's turn by hitting until the hand becomes blackjack.
     while (!game.player.hand.isBlackjack) {
@@ -144,7 +143,7 @@ describe("Blackjack with Fixed Decks", () => {
   });
 
   it("should result in a dealer blackjack with fixed deck 'dealer-blackjack'", () => {
-    const game = new Blackjack({ fixedDeck: fixedDecks["dealer-blackjack"] });
+    const game = Blackjack.create({ fixedDeck: "dealer-blackjack" });
     game.deal();
     // Simulate player's turn: assume player has a strong hand and stands.
     game.stand(game.player);
@@ -157,7 +156,7 @@ describe("Blackjack with Fixed Decks", () => {
   });
 
   it("should result in a player win with fixed deck 'player-win'", () => {
-    const game = new Blackjack({ fixedDeck: fixedDecks["player-win"] });
+    const game = Blackjack.create({ fixedDeck: "player-win" });
     game.deal();
     // Simulate player's turn: assume player has a strong hand and stands.
     game.stand(game.player);
@@ -170,7 +169,7 @@ describe("Blackjack with Fixed Decks", () => {
   });
 
   it("should result in a dealer win with fixed deck 'dealer-win'", () => {
-    const game = new Blackjack({ fixedDeck: fixedDecks["dealer-win"] });
+    const game = Blackjack.create({ fixedDeck: "dealer-win" });
     game.deal();
     // Simulate player's turn: assume player has a strong hand and stands.
     game.stand(game.player);

@@ -50,8 +50,7 @@ export class Dealer extends Player {
   }
 
   split(): this {
-    this.debug.log("Dealer cannot split");
-    return this;
+    throw new Error("Dealer cannot split");
   }
 }
 

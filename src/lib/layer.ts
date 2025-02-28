@@ -1,16 +1,19 @@
 import { Palette } from "./constants";
 import { Debug } from "./debug";
-import { TextEntity } from "./entity.text";
 import { EntityTypes, BaseEntityType, LAYER } from "./types";
 
-export class Layer extends Map<string, EntityTypes> {
+export abstract class Layer extends Map<string, EntityTypes> {
   readonly id: LAYER;
+  readonly type: "static" | "dynamic";
+  public shouldUpdate = true;
+  public shouldRender = true;
   #canvas: HTMLCanvasElement;
-  #ctx: CanvasRenderingContext2D;
+  protected ctx: CanvasRenderingContext2D;
   protected debug: Debug;
 
   constructor(
     id: LAYER,
+    type: "static" | "dynamic",
     canvas: HTMLCanvasElement,
     debug = new Debug(id, Palette.Tan)
   ) {
@@ -22,8 +25,9 @@ export class Layer extends Map<string, EntityTypes> {
     }
     this.id = id;
     this.debug = debug;
-    this.#ctx = ctx;
-    this.#ctx.imageSmoothingEnabled = false;
+    this.ctx = ctx;
+    this.type = type;
+    this.ctx.imageSmoothingEnabled = false;
     this.#canvas.style.position = "absolute";
     this.#canvas.style.top = "0";
     this.#canvas.style.left = "0";
@@ -34,28 +38,16 @@ export class Layer extends Map<string, EntityTypes> {
     return Array.from(this.values()).filter((entity) => entity.type === type);
   }
 
-  private clearRect() {
-    this.#ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+  public requestUpdate() {
+    this.shouldUpdate = true;
+    this.shouldRender = true;
   }
 
-  public render() {
-    this.clearRect();
-
-    let action: TextEntity | undefined;
-
-    this.forEach((entity) => {
-      if (entity.id === "action") {
-        action = entity as TextEntity;
-        return;
-      }
-      if (entity.delay > 0) return;
-      entity.render(this.#ctx);
-    });
-
-    if (action) {
-      action.render(this.#ctx);
-    }
+  protected clearRect() {
+    this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
   }
+
+  abstract render(): void;
 
   public resize() {
     this.debug.log(`Resizing ${this.id}`);
@@ -64,13 +56,17 @@ export class Layer extends Map<string, EntityTypes> {
     this.#canvas.height = window.innerHeight * ratio;
     this.#canvas.style.width = `${window.innerWidth}px`;
     this.#canvas.style.height = `${window.innerHeight}px`;
-    this.#ctx.scale(ratio, ratio);
+    this.ctx.scale(ratio, ratio);
     this.forEach((entity) => entity.resize());
   }
+
+  abstract update(): void;
 
   public clear() {
     this.debug.log(`Clearing ${this.id}`);
     super.clear();
     this.clearRect();
+    this.shouldUpdate = true;
+    this.shouldRender = true;
   }
 }
