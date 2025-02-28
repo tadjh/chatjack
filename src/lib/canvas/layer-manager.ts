@@ -1,7 +1,8 @@
-import { TextEntity } from "./entity.text";
-import { Layer } from "./layer";
-import { LayoutManager } from "./layout-manager";
-import { BaseEntityType, EntityTypes, LAYER } from "./types";
+import { TextEntity } from "@/lib/canvas/entity.text";
+import { Layer } from "@/lib/canvas/layer";
+import { LayoutManager } from "@/lib/canvas/layout-manager";
+import { LAYER } from "@/lib/types";
+import { EntityType } from "./types";
 
 export class LayerManager extends Map<LAYER, Layer> {
   #layouts: LayoutManager;
@@ -12,7 +13,7 @@ export class LayerManager extends Map<LAYER, Layer> {
     this.#layouts = layouts;
   }
 
-  public getEntityById<T extends EntityTypes>(
+  public getEntityById<T extends EntityType>(
     layer: LAYER,
     id: string
   ): T | undefined {
@@ -23,7 +24,7 @@ export class LayerManager extends Map<LAYER, Layer> {
     return this.get(layer)!.has(id);
   }
 
-  public setEntity(entity: EntityTypes) {
+  public setEntity(entity: EntityType) {
     if (entity.type === "text") {
       this.requestUpdate();
     }
@@ -34,7 +35,7 @@ export class LayerManager extends Map<LAYER, Layer> {
     this.get(layer)?.delete(id);
   }
 
-  public getEntitiesByType(type: BaseEntityType) {
+  public getEntitiesByType(type: EntityType["type"]) {
     return Array.from(this.values()).flatMap((layer) => layer.getByType(type));
   }
 

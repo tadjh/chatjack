@@ -1,7 +1,7 @@
-import { Palette } from "./constants";
-import { Debug } from "./debug";
-import { Layer } from "./layer";
-import { LAYER } from "./types";
+import { Layer } from "@/lib/canvas/layer";
+import { Palette } from "@/lib/constants";
+import { Debug } from "@/lib/debug";
+import { LAYER } from "@/lib/types";
 
 export class StaticLayer extends Layer {
   constructor(
@@ -17,10 +17,6 @@ export class StaticLayer extends Layer {
   }
 
   public update() {
-    // this.forEach((entity) => {
-    //   entity.update();
-    // });
-
     this.shouldUpdate = false;
   }
 

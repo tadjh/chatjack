@@ -1,6 +1,6 @@
-import { Palette } from "./constants";
-import { Vector3 } from "./types";
-import { rgb } from "./utils";
+import { Palette } from "@/lib/constants";
+import { Vector3 } from "@/lib/types";
+import { rgb } from "@/lib/utils";
 
 /**
  * Debug utility class for conditional console logging with colored scope labels.

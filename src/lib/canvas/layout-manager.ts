@@ -1,8 +1,8 @@
-import { BASELINE_GUTTER, BASELINE_PADDING, Palette } from "./constants";
-import { Debug } from "./debug";
-import { TextEntity } from "./entity.text";
-import { POSITION } from "./types";
-import { getHorizontalScaleFactor, getVerticalScaleFactor } from "./utils";
+import { TextEntity } from "@/lib/canvas/entity.text";
+import { BASELINE_GUTTER, BASELINE_PADDING, Palette } from "@/lib/constants";
+import { Debug } from "@/lib/debug";
+import { POSITION } from "@/lib/types";
+import { getHorizontalScaleFactor, getVerticalScaleFactor } from "@/lib/utils";
 
 enum DIRECTION {
   UP = -1,

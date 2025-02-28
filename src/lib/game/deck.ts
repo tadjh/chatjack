@@ -1,6 +1,6 @@
-import { Card, Rank, Suit } from "./card";
-import { Palette } from "./constants";
-import { Debug } from "./debug";
+import { Card, Rank, Suit } from "@/lib/game/card";
+import { Palette } from "@/lib/constants";
+import { Debug } from "@/lib/debug";
 
 export class Deck extends Array<Card> {
   #name: string;

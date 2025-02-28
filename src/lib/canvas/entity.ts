@@ -1,22 +1,96 @@
-import { BASELINE_PADDING, FPS, Palette } from "./constants";
-import { Debug } from "./debug";
-import {
-  AnimationPhase,
-  AnimationSpec,
-  BaseAnimationProps,
-  BaseEntityAnimationTypes,
-  BaseEntityProps,
-  BaseEntityType,
-  LAYER,
-  POSITION,
-} from "./types";
+import { BASELINE_PADDING, FPS, Palette } from "@/lib/constants";
+import { Debug } from "@/lib/debug";
+import { LAYER, POSITION } from "@/lib/types";
 import {
   clamp,
   easeOutCubic,
   getHorizontalScaleFactor,
   getScaleFactor,
   lerp,
-} from "./utils";
+} from "@/lib/utils";
+
+export interface AnimationPhase<
+  Phase extends string,
+  Props extends Record<string, number>,
+> {
+  name: Phase;
+  duration: number; // in seconds or ticks
+  magnitude?: number;
+  loop?: boolean;
+  easing?: (t: number) => Props;
+  // Function to compute the property value from a local progress (0 to 1)
+  interpolate?: (t: number) => Props;
+}
+export interface AnimationSpec<
+  Phase extends string,
+  Props extends Record<string, number>,
+> {
+  phases: AnimationPhase<Phase, Props>[];
+  props: Props;
+  // Optional overall callbacks:
+  onBegin?: (layer: LAYER, id: string) => void;
+  onEnd?: (layer: LAYER, id: string) => void;
+}
+
+type Shadow =
+  | {
+      shadowColor: string;
+      shadowOffsetX: number;
+      shadowOffsetY: number;
+      shadowBlur: number;
+    }
+  | {
+      shadowColor?: string;
+      shadowOffsetX?: number;
+      shadowOffsetY?: number;
+      shadowBlur?: number;
+    };
+
+export type BaseEntityProps<
+  Phase extends string,
+  Props extends Record<string, number>,
+> = AnimationSpec<Phase, Props> & {
+  id: string;
+  type: string;
+  layer: LAYER;
+  position?: POSITION;
+  delay?: number;
+  x?: number;
+  y?: number;
+  offsetX?: number;
+  offsetY?: number;
+  opacity?: number;
+} & Shadow;
+
+export type BaseEntityAnimationTypes =
+  | "slide-in-top"
+  | "slide-in-right"
+  | "slide-in-bottom"
+  | "slide-in-left"
+  | "slide-out-top"
+  | "slide-out-right"
+  | "slide-out-bottom"
+  | "slide-out-left"
+  | "fade-slide-in-top"
+  | "fade-slide-in-right"
+  | "fade-slide-in-bottom"
+  | "fade-slide-in-left"
+  | "fade-slide-out-top"
+  | "fade-slide-out-right"
+  | "fade-slide-out-bottom"
+  | "fade-slide-out-left"
+  | "float-x"
+  | "float-y";
+
+export type BaseAnimationProps = {
+  opacity: number;
+  offsetX: number;
+  offsetY: number;
+};
+export type BaseEntityNoProps<
+  AnimationTypes extends BaseEntityAnimationTypes | string,
+  AnimationProps extends BaseAnimationProps & Record<string, number>,
+> = Omit<BaseEntityProps<AnimationTypes, AnimationProps>, "props">;
 
 export abstract class Entity<
   Phase extends string,
@@ -25,7 +99,7 @@ export abstract class Entity<
     AnimationSpec<Phase | BaseEntityAnimationTypes, Props & BaseAnimationProps>
 {
   readonly id: string;
-  readonly type: BaseEntityType;
+  readonly type: string;
   readonly layer: LAYER;
   readonly position: POSITION;
   readonly speed: number;

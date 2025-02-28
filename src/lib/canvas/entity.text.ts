@@ -1,12 +1,40 @@
-import { Palette } from "./constants";
-import { Debug } from "./debug";
-import { Entity } from "./entity";
 import {
+  BaseAnimationProps,
+  BaseEntityAnimationTypes,
+  BaseEntityNoProps,
+  Entity,
+} from "@/lib/canvas/entity";
+import { FONT, Palette } from "@/lib/constants";
+import { Debug } from "@/lib/debug";
+import { easeOutCubic, font, getVerticalScaleFactor, lerp } from "@/lib/utils";
+
+type TextEntityAnimationTypes =
+  | BaseEntityAnimationTypes
+  | "fade-slide-kerning-in-bottom";
+
+type TextEntityAnimationProps = BaseAnimationProps & {
+  kerning: number;
+};
+
+type Stroke =
+  | {
+      strokeColor: string;
+      strokeWidth: number;
+    }
+  | { strokeColor: undefined; strokeWidth?: number };
+
+export type TextEntityProps = BaseEntityNoProps<
   TextEntityAnimationTypes,
-  TextEntityAnimationProps,
-  TextEntityProps,
-} from "./types";
-import { easeOutCubic, font, getVerticalScaleFactor, lerp } from "./utils";
+  TextEntityAnimationProps
+> & {
+  type: "text";
+  text: string;
+  fontSize: number;
+  fontFamily: FONT;
+  textBaseline: CanvasTextBaseline;
+  textAlign: CanvasTextAlign;
+  color: string | CanvasGradient | CanvasPattern;
+} & Stroke;
 
 export class TextEntity extends Entity<
   TextEntityAnimationTypes,

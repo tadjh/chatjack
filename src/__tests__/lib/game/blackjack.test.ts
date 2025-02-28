@@ -1,7 +1,7 @@
-import { Blackjack } from "@/lib/blackjack";
-import { Card } from "@/lib/card";
+import { Blackjack } from "@/lib/game/blackjack";
+import { Card } from "@/lib/game/card";
 import { State } from "@/lib/types";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("Blackjack", () => {
   let game: Blackjack;

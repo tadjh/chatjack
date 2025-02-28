@@ -1,6 +1,6 @@
-import { Deck } from "@/lib/deck";
-import { Card, Rank, Suit } from "@/lib/card";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { Card, Rank, Suit } from "@/lib/game/card";
+import { Deck } from "@/lib/game/deck";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("Deck", () => {
   let deck: Deck;

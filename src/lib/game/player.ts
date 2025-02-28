@@ -1,7 +1,7 @@
-import { Card } from "./card";
-import { Palette } from "./constants";
-import { Debug } from "./debug";
-import { Hand } from "./hand";
+import { Card } from "@/lib/game/card";
+import { Palette } from "@/lib/constants";
+import { Debug } from "@/lib/debug";
+import { Hand } from "@/lib/game/hand";
 
 export class Player {
   readonly name: string;

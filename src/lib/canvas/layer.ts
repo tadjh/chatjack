@@ -1,8 +1,9 @@
-import { Palette } from "./constants";
-import { Debug } from "./debug";
-import { EntityTypes, BaseEntityType, LAYER } from "./types";
+import { EntityType } from "@/lib/canvas/types";
+import { Palette } from "@/lib/constants";
+import { Debug } from "@/lib/debug";
+import { LAYER } from "@/lib/types";
 
-export abstract class Layer extends Map<string, EntityTypes> {
+export abstract class Layer extends Map<string, EntityType> {
   readonly id: LAYER;
   readonly type: "static" | "dynamic";
   public shouldUpdate = true;
@@ -34,7 +35,7 @@ export abstract class Layer extends Map<string, EntityTypes> {
     this.#canvas.style.zIndex = id;
   }
 
-  public getByType(type: BaseEntityType) {
+  public getByType(type: EntityType["type"]) {
     return Array.from(this.values()).filter((entity) => entity.type === type);
   }
 

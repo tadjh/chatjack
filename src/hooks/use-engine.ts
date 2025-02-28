@@ -1,4 +1,4 @@
-import { Engine } from "@/lib/engine";
+import { Engine } from "@/lib/canvas/engine";
 import { useEffect, useRef, useState } from "react";
 
 export function useEngine() {

@@ -1,18 +1,47 @@
-import { IMAGE, Palette } from "./constants";
-import { Debug } from "./debug";
-import { Entity } from "./entity";
 import {
-  POSITION,
-  SpriteCoordinates,
-  SpriteEntityAnimationProps,
-  SpriteEntityAnimationTypes,
-  SpriteEntityProps,
-} from "./types";
+  BaseAnimationProps,
+  BaseEntityAnimationTypes,
+  BaseEntityNoProps,
+  Entity,
+} from "@/lib/canvas/entity";
+import { IMAGE, Palette } from "@/lib/constants";
+import { Debug } from "@/lib/debug";
+import { POSITION } from "@/lib/types";
 import {
   getHorizontalScaleFactor,
   getVerticalScaleFactor,
   lerp,
-} from "./utils";
+} from "@/lib/utils";
+
+type SpriteEntityAnimationTypes =
+  | BaseEntityAnimationTypes
+  | "flip-over"
+  | "animated-float-y";
+type SpriteEntityAnimationProps = BaseAnimationProps & {
+  spriteIndex: number;
+};
+
+interface SpriteCoordinates {
+  x: number;
+  y: number;
+  flipX?: boolean;
+  flipY?: boolean;
+}
+
+export type SpriteEntityProps = BaseEntityNoProps<
+  SpriteEntityAnimationTypes,
+  SpriteEntityAnimationProps
+> & {
+  type: "sprite";
+  src: IMAGE;
+  sprites: [SpriteCoordinates, ...SpriteCoordinates[]];
+  spriteWidth: number;
+  spriteHeight: number;
+  scale?: number;
+  angle?: number;
+  spriteElapsed?: number;
+  spriteDuration?: number;
+};
 
 export class SpriteEntity extends Entity<
   SpriteEntityAnimationTypes,

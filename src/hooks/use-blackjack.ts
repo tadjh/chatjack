@@ -1,6 +1,6 @@
-import { Blackjack, BlackjackOptions } from "@/lib/blackjack";
-import { Engine } from "@/lib/engine";
-import { Player } from "@/lib/player";
+import { Engine } from "@/lib/canvas/engine";
+import { Blackjack, BlackjackOptions } from "@/lib/game/blackjack";
+import { Player } from "@/lib/game/player";
 import { useRef, useState } from "react";
 
 export function useBlackjack(engine: Engine, options: BlackjackOptions) {

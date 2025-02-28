@@ -1,6 +1,6 @@
-import { Hand } from "@/lib/hand";
-import { Card, Suit, Rank } from "@/lib/card";
-import { describe, test, expect } from "vitest";
+import { Card, Rank, Suit } from "@/lib/game/card";
+import { Hand } from "@/lib/game/hand";
+import { describe, expect, test } from "vitest";
 
 describe("Hand", () => {
   test("should create a hand with default values", () => {

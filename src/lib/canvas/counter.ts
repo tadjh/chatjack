@@ -1,5 +1,5 @@
-import { Palette } from "./constants";
-import { Debug } from "./debug";
+import { Palette } from "@/lib/constants";
+import { Debug } from "@/lib/debug";
 
 export class Counter {
   #current = 0;

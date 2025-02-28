@@ -1,5 +1,5 @@
-import { Card, Suit, Rank } from "@/lib/card";
-import { describe, it, expect } from "vitest";
+import { Card, Rank, Suit } from "@/lib/game/card";
+import { describe, expect, it } from "vitest";
 
 describe("Card", () => {
   it("should create a card with the correct suit and face", () => {

@@ -1,9 +1,9 @@
-import { Palette } from "./constants";
-import { Dealer } from "./dealer";
-import { Debug } from "./debug";
-import { Deck, FixedDeck } from "./deck";
-import { Player, Role } from "./player";
-import { State } from "./types";
+import { Palette } from "@/lib/constants";
+import { Debug } from "@/lib/debug";
+import { Dealer } from "@/lib/game/dealer";
+import { Deck, FixedDeck } from "@/lib/game/deck";
+import { Player, Role } from "@/lib/game/player";
+import { State } from "@/lib/types";
 
 export type BlackjackOptions = {
   shoeSize?: number;

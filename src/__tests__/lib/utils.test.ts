@@ -1,20 +1,20 @@
-import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
-import { BASELINE_WIDTH, BASELINE_HEIGHT } from "@/lib/constants";
+import { BASELINE_HEIGHT, BASELINE_WIDTH } from "@/lib/constants";
 import {
-  cn,
-  font,
-  rgba,
-  rgb,
-  easeOut,
-  easeOutCubic,
-  easeOutBack,
-  lerp,
   clamp,
-  radians,
+  cn,
+  easeOut,
+  easeOutBack,
+  easeOutCubic,
+  font,
+  getHorizontalScaleFactor,
   getScaleFactor,
   getVerticalScaleFactor,
-  getHorizontalScaleFactor,
+  lerp,
+  radians,
+  rgb,
+  rgba,
 } from "@/lib/utils";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("utils", () => {
   it("should merge class names correctly", () => {

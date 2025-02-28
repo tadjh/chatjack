@@ -1,6 +1,6 @@
-import { Card, Rank } from "./card";
-import { Palette } from "./constants";
-import { Debug } from "./debug";
+import { Card, Rank } from "@/lib/game/card";
+import { Palette } from "@/lib/constants";
+import { Debug } from "@/lib/debug";
 
 export type Status = "playing" | "busted" | "blackjack" | "stand" | "split";
 

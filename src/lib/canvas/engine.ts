@@ -1,35 +1,26 @@
+import { Counter } from "@/lib/canvas/counter";
 import {
   actionText,
   cardSprite,
   gameoverText,
-  titleScreen,
   scoreText,
+  titleScreen,
   turnTimer,
-} from "./entities";
-import { Card } from "./card";
-import { Palette, FPS, Fonts, images } from "./constants";
-import { Dealer } from "./dealer";
-import { Player, Role } from "./player";
-import {
-  Canvases,
-  EntityTypes,
-  LAYER,
-  POSITION,
-  SpriteEntityProps,
-  TextEntityProps,
-  EntityProps,
-  State,
-} from "./types";
-import { Hand, Status } from "./hand";
-import { Debug } from "./debug";
-import { Counter } from "./counter";
-import { TimerEntity } from "./entity.timer";
-import { TextEntity } from "./entity.text";
-import { rgb } from "./utils";
-import { SpriteEntity } from "./entity.sprite";
-import { DynamicLayer } from "./layer.dynamic";
-import { StaticLayer } from "./layer.static";
-import { LayerManager } from "./layer-manager";
+} from "@/lib/canvas/entities";
+import { SpriteEntity, SpriteEntityProps } from "@/lib/canvas/entity.sprite";
+import { TextEntity, TextEntityProps } from "@/lib/canvas/entity.text";
+import { TimerEntity, TimerEntityProps } from "@/lib/canvas/entity.timer";
+import { LayerManager } from "@/lib/canvas/layer-manager";
+import { DynamicLayer } from "@/lib/canvas/layer.dynamic";
+import { StaticLayer } from "@/lib/canvas/layer.static";
+import { FPS, Fonts, Palette, images } from "@/lib/constants";
+import { Debug } from "@/lib/debug";
+import { Card } from "@/lib/game/card";
+import { Dealer } from "@/lib/game/dealer";
+import { Hand, Status } from "@/lib/game/hand";
+import { Player, Role } from "@/lib/game/player";
+import { LAYER, POSITION, State } from "@/lib/types";
+import { rgb } from "@/lib/utils";
 
 enum ASSETS_LOADED {
   FONTS,
@@ -38,11 +29,17 @@ enum ASSETS_LOADED {
   TITLE_SCREEN,
 }
 
-export type EngineOptions = {
+type EngineOptions = {
   fps?: number;
   tickRate?: number;
   animationSpeed?: number;
 };
+
+type Canvases = [
+  HTMLCanvasElement | null,
+  HTMLCanvasElement | null,
+  HTMLCanvasElement | null,
+];
 
 export class Engine {
   private static instance: Engine | null = null;
@@ -233,8 +230,10 @@ export class Engine {
     return Promise.all([this.unloadFonts(), this.unloadImages()]);
   }
 
-  private createEntity(props: EntityProps) {
-    let entity: EntityTypes;
+  private createEntity(
+    props: SpriteEntityProps | TextEntityProps | TimerEntityProps
+  ) {
+    let entity: SpriteEntity | TextEntity | TimerEntity;
 
     switch (props.type) {
       case "sprite":

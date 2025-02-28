@@ -1,7 +1,7 @@
-import { Player, Role } from "@/lib/player";
-import { Card, Suit, Rank } from "@/lib/card";
-import { Dealer } from "@/lib/dealer";
-import { describe, it, expect } from "vitest";
+import { Card, Rank, Suit } from "@/lib/game/card";
+import { Dealer } from "@/lib/game/dealer";
+import { Player, Role } from "@/lib/game/player";
+import { describe, expect, it } from "vitest";
 
 describe("Player", () => {
   it("should create a player with default values", () => {

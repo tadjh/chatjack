@@ -1,12 +1,32 @@
-import { Palette } from "./constants";
-import { Debug } from "./debug";
-import { Entity } from "./entity";
 import {
-  TimerEntityProps,
+  BaseAnimationProps,
+  BaseEntityNoProps,
+  Entity,
+} from "@/lib/canvas/entity";
+import { Palette } from "@/lib/constants";
+import { Debug } from "@/lib/debug";
+import { easeOutBack, lerp, radians } from "@/lib/utils";
+
+type TimerEntityAnimationTypes = "zoom-in" | "countdown" | "zoom-out";
+type TimerEntityAnimationProps = BaseAnimationProps & {
+  angle: number;
+  radius: number;
+};
+export type TimerEntityProps = BaseEntityNoProps<
   TimerEntityAnimationTypes,
-  TimerEntityAnimationProps,
-} from "./types";
-import { easeOutBack, lerp, radians } from "./utils";
+  TimerEntityAnimationProps
+> & {
+  type: "timer";
+  color: string | CanvasGradient | CanvasPattern;
+  backgroundColor: string | CanvasGradient | CanvasPattern;
+  backgroundScale?: number;
+  strokeColor?: string | CanvasGradient | CanvasPattern;
+  strokeWidth?: number;
+  counterclockwise?: boolean;
+  radius: number;
+  startAngle: number;
+  rotation: number;
+};
 
 export class TimerEntity extends Entity<
   TimerEntityAnimationTypes,

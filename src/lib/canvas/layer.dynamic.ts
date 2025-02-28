@@ -1,8 +1,8 @@
-import { Palette } from "./constants";
-import { Debug } from "./debug";
-import { TextEntity } from "./entity.text";
-import { Layer } from "./layer";
-import { LAYER } from "./types";
+import { TextEntity } from "@/lib/canvas/entity.text";
+import { Layer } from "@/lib/canvas/layer";
+import { Palette } from "@/lib/constants";
+import { Debug } from "@/lib/debug";
+import { LAYER } from "@/lib/types";
 
 export class DynamicLayer extends Layer {
   constructor(

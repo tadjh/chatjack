@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { POSITION, Vector3 } from "./types";
+import { Vector3 } from "./types";
 import { BASELINE_WIDTH, BASELINE_HEIGHT } from "./constants";
 
 /**
@@ -131,70 +131,6 @@ export function clamp(value: number, min: number, max: number): number {
  */
 export function radians(degrees: number): number {
   return (degrees * Math.PI) / 180;
-}
-
-// TODO Deprecate
-export function getPadding(): number {
-  return window.innerWidth / 50;
-}
-// TODO Deprecate
-export function getPosition(
-  position: POSITION | undefined,
-  entityWidth: number,
-  entityHeight: number
-): {
-  x: number;
-  y: number;
-} {
-  const padding = getPadding();
-  switch (position) {
-    case POSITION.CENTER:
-      return {
-        x: (window.innerWidth - entityWidth) / 2,
-        y: (window.innerHeight - entityHeight) / 2,
-      };
-    case POSITION.EYELINE:
-      return {
-        x: (window.innerWidth - entityWidth) / 2,
-        y: window.innerHeight / 3 - entityHeight,
-      };
-    case POSITION.TOP:
-      return { x: (window.innerWidth - entityWidth) / 2, y: padding };
-    case POSITION.RIGHT:
-      return {
-        x: window.innerWidth - entityWidth / 2 - padding,
-        y: (window.innerHeight - entityHeight) / 2,
-      };
-    case POSITION.BOTTOM:
-      return {
-        x: (window.innerWidth - entityWidth) / 2,
-        y: window.innerHeight - entityHeight - padding,
-      };
-    case POSITION.LEFT:
-      return {
-        x: entityWidth / 2 + padding,
-        y: (window.innerHeight - entityHeight) / 2,
-      };
-    case POSITION.TOP_LEFT:
-      return { x: entityWidth / 2 + padding, y: padding };
-    case POSITION.TOP_RIGHT:
-      return {
-        x: window.innerWidth - entityWidth / 2 - padding,
-        y: padding,
-      };
-    case POSITION.BOTTOM_LEFT:
-      return {
-        x: entityWidth / 2 + padding,
-        y: window.innerHeight - entityHeight - padding,
-      };
-    case POSITION.BOTTOM_RIGHT:
-      return {
-        x: window.innerWidth - entityWidth / 2 - padding,
-        y: window.innerHeight - entityHeight - padding,
-      };
-    default:
-      return { x: padding, y: padding };
-  }
 }
 
 /**

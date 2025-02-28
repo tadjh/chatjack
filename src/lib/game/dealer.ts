@@ -1,7 +1,7 @@
-import { Card } from "./card";
-import { Palette } from "./constants";
-import { Debug } from "./debug";
-import { Player, Role } from "./player";
+import { Card } from "@/lib/game/card";
+import { Palette } from "@/lib/constants";
+import { Debug } from "@/lib/debug";
+import { Player, Role } from "@/lib/game/player";
 
 export class Dealer extends Player {
   constructor(debug = new Debug("Dealer", Palette.Red)) {
