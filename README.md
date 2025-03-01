@@ -9,3 +9,4 @@
 
 - TODO Bust and opacity drop should happen AFTER card finishes animating
 - TODO Bust opacity could be lower
+- TODO use-canvas should return composite component Canvas instead of the individual refs

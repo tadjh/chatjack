@@ -33,5 +33,16 @@ export class Debug {
       console.log(`%c${this.scope}`, this.color, message, ...optionalParams);
     }
   }
+
+  /**
+   * Logs an error message with the debug instance's scope and color if in development environment.
+   * @param message - The main message to log
+   * @param optionalParams - Additional parameters to log after the main message
+   */
+  public error(message?: unknown, ...optionalParams: unknown[]) {
+    if (process.env.NODE_ENV === "development") {
+      console.error(`%c${this.scope}`, this.color, message, ...optionalParams);
+    }
+  }
 }
 

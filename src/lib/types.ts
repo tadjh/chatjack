@@ -19,20 +19,44 @@ export enum POSITION {
   BOTTOM_RIGHT = "bottom right",
 }
 
-export enum State {
-  Init,
-  Dealing,
-  PlayerHit,
-  PlayerStand,
-  PlayerSplit,
-  RevealHoleCard,
-  DealerHit,
-  DealerStand,
-  PlayerBust,
-  DealerBust,
-  Push,
-  PlayerBlackjack,
-  DealerBlackjack,
-  PlayerWin,
-  DealerWin,
+export enum STATE {
+  INIT,
+  DEALING,
+  PLAYER_HIT,
+  PLAYER_STAND,
+  PLAYER_SPLIT,
+  REVEAL_HOLE_CARD,
+  DEALER_HIT,
+  DEALER_STAND,
+  PLAYER_BUST,
+  DEALER_BUST,
+  PUSH,
+  PLAYER_BLACKJACK,
+  DEALER_BLACKJACK,
+  PLAYER_WIN,
+  DEALER_WIN,
+}
+
+export enum COMMAND {
+  HIT = "hit",
+  STAND = "stand",
+  START = "start",
+  RESTART = "restart",
+  STOP = "stop",
+}
+
+export type DEFAULT_COMMAND = COMMAND.STAND;
+
+export enum EVENT {
+  CONNECTED = "connected",
+  DISCONNECTED = "disconnected",
+  WAIT_FOR_START = "waitForStart",
+  START = "start",
+  DEALING = "dealing",
+  VOTE_UPDATE = "voteUpdate",
+  VOTE_END = "voteEnd",
+  PLAYER_TURN = "playerAction",
+  REVEAL_HOLE_CARD = "revealHoleCard",
+  DEALER_TURN = "dealerTurn",
+  JUDGE = "judge",
 }

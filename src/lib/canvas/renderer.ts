@@ -15,11 +15,12 @@ import { DynamicLayer } from "@/lib/canvas/layer.dynamic";
 import { StaticLayer } from "@/lib/canvas/layer.static";
 import { FPS, Fonts, Palette, images } from "@/lib/constants";
 import { Debug } from "@/lib/debug";
+import { AnimationEvents, eventBus, EventBus } from "@/lib/event-bus";
 import { Card } from "@/lib/game/card";
 import { Dealer } from "@/lib/game/dealer";
 import { Hand, Status } from "@/lib/game/hand";
 import { Player, Role } from "@/lib/game/player";
-import { LAYER, POSITION, State } from "@/lib/types";
+import { COMMAND, EVENT, LAYER, POSITION, STATE } from "@/lib/types";
 import { rgb } from "@/lib/utils";
 
 enum ASSETS_LOADED {
@@ -29,7 +30,7 @@ enum ASSETS_LOADED {
   TITLE_SCREEN,
 }
 
-type EngineOptions = {
+type RendererOptions = {
   fps?: number;
   tickRate?: number;
   animationSpeed?: number;
@@ -41,9 +42,9 @@ type Canvases = [
   HTMLCanvasElement | null,
 ];
 
-export class Engine {
-  private static instance: Engine | null = null;
-  public static readonly defaults: Required<EngineOptions> = {
+export class Renderer {
+  private static instance: Renderer | null = null;
+  public static readonly defaults: Required<RendererOptions> = {
     fps: FPS,
     tickRate: 1000 / FPS,
     animationSpeed: 1 / FPS,
@@ -53,7 +54,6 @@ export class Engine {
   readonly baseAnimSpeed: number;
   protected debug: Debug;
   #lastTick = 0;
-  #hasDealt = false;
   #spritesheets: Map<string, HTMLImageElement> = new Map();
   #cache = new Map<string, ImageBitmap>();
   #counter: Counter | null = null;
@@ -63,20 +63,22 @@ export class Engine {
   #isReady = false;
   #assetsLoaded = new Map<ASSETS_LOADED, boolean>();
   #holeCardId: string = "";
+  #eventBus: EventBus;
 
-  public static create(options?: EngineOptions): Engine {
-    if (!Engine.instance) {
-      Engine.instance = new Engine(options);
+  public static create(options?: RendererOptions): Renderer {
+    if (!Renderer.instance) {
+      Renderer.instance = new Renderer(options);
     }
-    return Engine.instance;
+    return Renderer.instance;
   }
 
   private constructor(
     {
-      fps = Engine.defaults.fps,
-      tickRate = Engine.defaults.tickRate,
-      animationSpeed = Engine.defaults.animationSpeed,
-    }: EngineOptions = Engine.defaults,
+      fps = Renderer.defaults.fps,
+      tickRate = Renderer.defaults.tickRate,
+      animationSpeed = Renderer.defaults.animationSpeed,
+    }: RendererOptions = Renderer.defaults,
+    eventBusInstance = eventBus,
     layers = new LayerManager(),
     debug = new Debug("Engine", Palette.Orange)
   ) {
@@ -86,7 +88,9 @@ export class Engine {
     this.tickRate = tickRate;
     this.baseAnimSpeed = animationSpeed;
     this.#layers = layers;
+    this.#eventBus = eventBusInstance;
     this.init();
+    this.setup();
   }
 
   get isLoading() {
@@ -108,6 +112,14 @@ export class Engine {
   async init() {
     this.#isLoading = true;
     await this.loadAssets();
+  }
+
+  setup() {
+    this.#eventBus.subscribe("animate", this.handleAnimate);
+  }
+
+  destroy() {
+    this.#eventBus.unsubscribe("animate", this.handleAnimate);
   }
 
   checkIsReady() {
@@ -313,7 +325,6 @@ export class Engine {
     this.debug.log("Engine resetting");
     this.#layers.clear();
     this.loadTitleScreen();
-    this.#hasDealt = false;
     if (this.#counter) {
       this.#counter.destroy();
       this.#counter = null;
@@ -321,60 +332,14 @@ export class Engine {
     this.resize();
   }
 
-  public event({
-    dealer,
-    player,
-    state,
-    isGameover,
-  }: {
-    dealer: Dealer;
-    player: Player;
-    state: State;
-    isGameover: boolean;
-  }) {
-    this.debug.log("Animating State:", State[state]);
-
-    if (isGameover) {
-      this.createGameoverText(state);
-      return;
+  private restart() {
+    this.debug.log("Restarting engine");
+    this.#layers.clear();
+    if (this.#counter) {
+      this.#counter.destroy();
+      this.#counter = null;
     }
-
-    switch (state) {
-      case State.Init:
-        this.reset();
-        break;
-      case State.Dealing:
-        if (this.#hasDealt) {
-          this.reset();
-        }
-        this.#hasDealt = true;
-        this.#layers.clear();
-        this.createScores(dealer, player);
-        this.createHands(dealer, player);
-        break;
-      case State.PlayerHit:
-      case State.PlayerBust:
-      case State.PlayerStand:
-      case State.PlayerBlackjack:
-        this.updateHand(player.hand);
-        this.createActionText(state, Role.Player);
-        this.updateScores(player);
-        break;
-      case State.RevealHoleCard:
-        this.updateHoleCard(dealer);
-        this.updateScores(dealer);
-        break;
-      case State.DealerHit:
-      case State.DealerStand:
-      case State.DealerBust:
-      case State.DealerBlackjack:
-        this.updateHand(dealer.hand);
-        this.createActionText(state, Role.Dealer);
-        this.updateScores(dealer);
-        break;
-      default:
-        break;
-    }
+    this.resize();
   }
 
   private createTimer = (onEnd: (layer: LAYER, id: string) => void) => {
@@ -499,14 +464,13 @@ export class Engine {
     this.createEntity(props);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private createCounter(count: number, callback: (...any: any[]) => void) {
+  private createCounter(count: number, callback: (...any: unknown[]) => void) {
     const counter = new Counter("create-hands", count, callback);
     this.#counter = counter;
     return counter;
   }
 
-  private createHands(dealer: Dealer, player: Player) {
+  private createHands(dealer: Dealer, player: Player, onComplete?: () => void) {
     const delay = 8;
     let count = 0;
     const dealerHand = dealer.hand;
@@ -532,12 +496,13 @@ export class Engine {
             this.updateEntitySprites(entity);
           });
 
-          this.createActionText(State.PlayerBlackjack, Role.Player);
+          this.createActionText(STATE.PLAYER_BLACKJACK, Role.Player);
         } else {
           this.createTimer((layer: LAYER, id: string) =>
             this.#layers.removeEntity(layer, id)
           );
         }
+        if (onComplete) onComplete();
       }
     );
 
@@ -552,7 +517,7 @@ export class Engine {
     }
   }
 
-  private createActionText(state: State, role: Role) {
+  private createActionText(state: STATE, role: Role) {
     const props: TextEntityProps = {
       ...actionText,
     };
@@ -586,23 +551,23 @@ export class Engine {
     }
 
     switch (state) {
-      case State.PlayerHit:
-      case State.DealerHit:
+      case STATE.PLAYER_HIT:
+      case STATE.DEALER_HIT:
         props.text = "Hit!";
         props.color = rgb(Palette.White);
         break;
-      case State.PlayerStand:
-      case State.DealerStand:
+      case STATE.PLAYER_STAND:
+      case STATE.DEALER_STAND:
         props.text = "Stand!";
         props.color = rgb(Palette.LightestGrey);
         break;
-      case State.PlayerBust:
-      case State.DealerBust:
+      case STATE.PLAYER_BUST:
+      case STATE.DEALER_BUST:
         props.text = "Bust!";
         props.color = rgb(Palette.Red);
         break;
-      case State.PlayerBlackjack:
-      case State.DealerBlackjack:
+      case STATE.PLAYER_BLACKJACK:
+      case STATE.DEALER_BLACKJACK:
         props.text = "Blackjack!";
         props.color = rgb(Palette.Blue);
         break;
@@ -634,18 +599,19 @@ export class Engine {
     this.#layers.setEntity(entity);
   }
 
-  private updateHand(hand: Hand) {
+  private updateHand(hand: Hand, onComplete?: () => void) {
     hand.forEach((card) => {
       if (this.#layers.hasEntityById(cardSprite.layer, card.id)) {
         if (hand.isBusted) this.updateBustCard(card);
         if (hand.isStand) this.updateStandCard(card);
+        if (onComplete) onComplete();
       } else {
-        this.createCard(card, 0, hand.status);
+        this.createCard(card, 0, hand.status, onComplete);
       }
     });
   }
 
-  private updateHoleCard(dealer: Dealer) {
+  private updateHoleCard(dealer: Dealer, onComplete?: () => void) {
     const holeCard = dealer.hand[1];
     const entity = this.#layers.getEntityById<SpriteEntity>(
       cardSprite.layer,
@@ -674,6 +640,9 @@ export class Engine {
         { x: cardX + 256, y: cardY },
         { x: cardX + 512, y: cardY },
       ],
+      onEnd: () => {
+        if (onComplete) onComplete();
+      },
     });
 
     this.#layers.removeEntity(entity.layer, entity.id);
@@ -681,35 +650,35 @@ export class Engine {
     return this;
   }
 
-  private createGameoverText(state: State) {
+  private createGameoverText(state: STATE, callback?: () => void) {
     let title;
     let subtitle;
     switch (state) {
-      case State.PlayerBust:
+      case STATE.PLAYER_BUST:
         title = "Chat Bust!";
         subtitle = "Better luck next time!";
         break;
-      case State.DealerBust:
+      case STATE.DEALER_BUST:
         title = "Dealer Bust!";
         subtitle = "How unfortunate...";
         break;
-      case State.Push:
+      case STATE.PUSH:
         title = "Push!";
         subtitle = "No winner...";
         break;
-      case State.PlayerBlackjack:
+      case STATE.PLAYER_BLACKJACK:
         title = "Blackjack!";
         subtitle = "Chat Wins!";
         break;
-      case State.DealerBlackjack:
+      case STATE.DEALER_BLACKJACK:
         title = "Dealer hit 21!";
         subtitle = "Better luck next time!";
         break;
-      case State.PlayerWin:
+      case STATE.PLAYER_WIN:
         title = "Chat Wins!";
         subtitle = "Your hand is stronger!";
         break;
-      case State.DealerWin:
+      case STATE.DEALER_WIN:
         title = "Dealer Wins!";
         subtitle = "Better luck next time!";
         break;
@@ -722,8 +691,11 @@ export class Engine {
         props.text = title;
       } else if (props.id === "subtitle") {
         props.text = subtitle;
+      } else if (props.id === "play-again") {
+        props.onEnd = () => {
+          if (callback) callback();
+        };
       }
-
       this.createEntity(props);
     }
   }
@@ -777,4 +749,82 @@ export class Engine {
   public updateEntitySprites(entity: SpriteEntity): void {
     this.cacheEntityBitmaps(entity);
   }
+
+  private handleDealing = ({
+    dealer,
+    player,
+  }: {
+    dealer: Dealer;
+    player: Player;
+  }) => {
+    this.debug.log("Dealing");
+    this.restart();
+    this.createScores(dealer, player);
+    this.createHands(dealer, player, () => {
+      this.#eventBus.emit("animationComplete", EVENT.DEALING);
+    });
+  };
+
+  private handleVoteUpdate = ({
+    command,
+    count,
+  }: {
+    command: COMMAND;
+    count: number;
+  }) => {
+    this.debug.log("Handling vote update", command, count);
+    // TODO Show votes on screen
+  };
+
+  handlePlayerTurn = ({ player, state }: { player: Player; state: STATE }) => {
+    this.createActionText(state, player.role);
+    this.updateScores(player);
+    this.updateHand(player.hand, () => {
+      if (!player.isDone) {
+        this.createTimer((layer: LAYER, id: string) =>
+          this.#layers.removeEntity(layer, id)
+        );
+      }
+      this.#eventBus.emit("animationComplete", EVENT.PLAYER_TURN);
+    });
+  };
+
+  handleRevealHoleCard = ({ dealer }: { dealer: Dealer }) => {
+    this.updateScores(dealer);
+    this.updateHoleCard(dealer, () => {
+      this.#eventBus.emit("animationComplete", EVENT.REVEAL_HOLE_CARD);
+    });
+  };
+
+  handleDealerTurn = ({ dealer, state }: { dealer: Dealer; state: STATE }) => {
+    this.createActionText(state, dealer.role);
+    this.updateScores(dealer);
+    this.updateHand(dealer.hand, () => {
+      this.#eventBus.emit("animationComplete", EVENT.DEALER_TURN);
+    });
+  };
+
+  handleJudge = ({ state }: { state: STATE }) => {
+    this.createGameoverText(state, () => {
+      this.#eventBus.emit("animationComplete", EVENT.JUDGE);
+    });
+  };
+
+  handleAnimate = ({ type, data }: AnimationEvents) => {
+    switch (type) {
+      case EVENT.DEALING:
+        this.init();
+        return this.handleDealing(data);
+      case EVENT.VOTE_UPDATE:
+        return this.handleVoteUpdate(data);
+      case EVENT.PLAYER_TURN:
+        return this.handlePlayerTurn(data);
+      case EVENT.REVEAL_HOLE_CARD:
+        return this.handleRevealHoleCard(data);
+      case EVENT.DEALER_TURN:
+        return this.handleDealerTurn(data);
+      case EVENT.JUDGE:
+        return this.handleJudge(data);
+    }
+  };
 }

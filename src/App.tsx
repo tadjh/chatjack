@@ -1,14 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { useBlackjack } from "@/hooks/use-blackjack";
-import { useEngine } from "@/hooks/use-engine";
+import { useCanvas } from "@/hooks/use-canvas";
 import { useSearchParams } from "react-router";
+import { useTwitch } from "./hooks/use-twtich";
+import { useMediator } from "@/hooks/use-mediator";
+import { useEventBus } from "@/hooks/use-event-bus";
 
 function App() {
   const [searchParams] = useSearchParams();
   const fixedDeck = searchParams.get("deck");
   const debug = searchParams.get("debug");
+  const channel = searchParams.get("channel");
+  const isDebug = debug !== null && debug !== "false";
 
-  const { bgRef, gameRef, uiRef, engine } = useEngine();
+  const { bgRef, gameRef, uiRef } = useCanvas();
   const {
     dealer,
     player,
@@ -23,18 +28,21 @@ function App() {
     decide,
     restart,
     exit,
-  } = useBlackjack(engine, {
+  } = useBlackjack({
     fixedDeck,
     playerCount: 1,
     playerNames: ["Chat"],
   });
+  useTwitch({ channel: channel ?? "", voteDuration: 10, debug: isDebug });
+  useMediator();
+  useEventBus();
 
   return (
     <>
       <canvas ref={bgRef} />
       <canvas ref={gameRef} />
       <canvas ref={uiRef} />
-      {debug && (
+      {isDebug && (
         <div className="p-4 flex gap-2 font-mono flex-col justify-center h-full fixed top-1/2 -translate-y-1/2 left-0 z-10">
           <div className="grid gap-2">
             <div className="flex gap-2">

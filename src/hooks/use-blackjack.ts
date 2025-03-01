@@ -1,9 +1,8 @@
-import { Engine } from "@/lib/canvas/engine";
 import { Blackjack, BlackjackOptions } from "@/lib/game/blackjack";
 import { Player } from "@/lib/game/player";
 import { useRef, useState } from "react";
 
-export function useBlackjack(engine: Engine, options: BlackjackOptions) {
+export function useBlackjack(options: BlackjackOptions) {
   const blackjackRef = useRef(Blackjack.create(options));
 
   const blackjack = blackjackRef.current;
@@ -18,16 +17,10 @@ export function useBlackjack(engine: Engine, options: BlackjackOptions) {
       dealer: blackjack.dealer,
       player: blackjack.player,
     });
-    engine.event({
-      dealer: blackjack.dealer,
-      player: blackjack.player,
-      state: blackjack.state,
-      isGameover: blackjack.isGameover,
-    });
   }
 
   function deal() {
-    blackjack.deal();
+    blackjack.handleStart();
     updateSnapshot();
   }
 

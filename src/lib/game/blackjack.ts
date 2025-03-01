@@ -1,9 +1,10 @@
 import { Palette } from "@/lib/constants";
 import { Debug } from "@/lib/debug";
+import { eventBus, EventBus } from "@/lib/event-bus";
 import { Dealer } from "@/lib/game/dealer";
 import { Deck, FixedDeck } from "@/lib/game/deck";
 import { Player, Role } from "@/lib/game/player";
-import { State } from "@/lib/types";
+import { COMMAND, EVENT, STATE } from "@/lib/types";
 
 export type BlackjackOptions = {
   shoeSize?: number;
@@ -29,9 +30,10 @@ export class Blackjack {
   protected debug: Debug;
   #isGameover = false;
   #isRevealed = false;
-  #state: State = State.Init;
+  #state: STATE = STATE.INIT;
   #table: Table;
   #shoe: Deck;
+  #eventBus: EventBus;
 
   public static create(options?: BlackjackOptions): Blackjack {
     if (!Blackjack.instance) {
@@ -47,6 +49,7 @@ export class Blackjack {
       playerCount = Blackjack.defaults.playerCount,
       playerNames = Blackjack.defaults.playerNames,
     }: BlackjackOptions = Blackjack.defaults,
+    eventBusInstance = eventBus,
     debug = new Debug("Blackjack", Palette.Green)
   ) {
     this.debug = debug;
@@ -57,7 +60,9 @@ export class Blackjack {
     this.playerNames = playerNames;
     this.#table = this.createTable({ playerCount, playerNames });
     this.#shoe = this.createShoe({ shoeSize, fixedDeck });
-    this.state = State.Init;
+    this.state = STATE.INIT;
+    this.#eventBus = eventBusInstance;
+    this.setup();
   }
 
   get numberOfPlayers() {
@@ -73,7 +78,7 @@ export class Blackjack {
   }
 
   get hasDealt() {
-    return this.#state > State.Init;
+    return this.#state > STATE.INIT;
   }
 
   get isPlayerDone() {
@@ -81,7 +86,7 @@ export class Blackjack {
   }
 
   get isDealerTurn() {
-    return this.state === State.RevealHoleCard;
+    return this.state === STATE.REVEAL_HOLE_CARD;
   }
 
   get cardsRemaining() {
@@ -92,8 +97,8 @@ export class Blackjack {
     return this.#state;
   }
 
-  private set state(state: State) {
-    this.debug.log("State:", State[state]);
+  private set state(state: STATE) {
+    this.debug.log("State:", STATE[state]);
     this.#state = state;
   }
 
@@ -103,6 +108,20 @@ export class Blackjack {
 
   get isRevealed() {
     return this.#isRevealed;
+  }
+
+  setup() {
+    this.#eventBus.subscribe("start", this.handleStart);
+    this.#eventBus.subscribe("playerAction", this.handlePlayerTurn);
+    this.#eventBus.subscribe("dealerTurn", this.handleDealerTurn);
+    this.#eventBus.subscribe("judge", this.handleJudge);
+  }
+
+  destroy() {
+    this.#eventBus.unsubscribe("start", this.handleStart);
+    this.#eventBus.unsubscribe("playerAction", this.handlePlayerTurn);
+    this.#eventBus.unsubscribe("dealerTurn", this.handleDealerTurn);
+    this.#eventBus.unsubscribe("judge", this.handleJudge);
   }
 
   private createTable({
@@ -146,39 +165,50 @@ export class Blackjack {
   }
 
   public deal() {
-    if (this.#state !== State.Init) {
+    if (this.#state !== STATE.INIT) {
       throw new Error("Game has already started");
     }
-    this.state = State.Dealing;
+    this.state = STATE.DEALING;
     this.player.hit(this.draw());
     this.dealer.hit(this.draw());
     this.player.hit(this.draw());
     this.dealer.hit(this.draw(true));
+
     return this;
   }
 
-  public hit(player: Player, index = 0) {
+  public hit(player: Player, index = 0, callback?: () => void) {
     player.hit(this.draw(), index);
     // TODO Support hitting a split hand
     if (player.hand.isBusted) {
-      this.state =
-        player.role === Role.Dealer ? State.DealerBust : State.PlayerBust;
+      if (player.role === Role.Dealer) {
+        this.state = STATE.DEALER_BUST;
+      } else {
+        this.state = STATE.PLAYER_BUST;
+        if (callback) callback();
+      }
     } else if (player.hand.isBlackjack) {
-      this.state =
-        player.role === Role.Dealer
-          ? State.DealerBlackjack
-          : State.PlayerBlackjack;
+      if (player.role === Role.Dealer) {
+        this.state = STATE.DEALER_BLACKJACK;
+      } else {
+        this.state = STATE.PLAYER_BLACKJACK;
+        if (callback) callback();
+      }
     } else {
-      this.state =
-        player.role === Role.Dealer ? State.DealerHit : State.PlayerHit;
+      if (player.role === Role.Dealer) {
+        this.state = STATE.DEALER_HIT;
+      } else {
+        this.state = STATE.PLAYER_HIT;
+        if (callback) callback();
+      }
     }
     return this;
   }
 
-  public stand(player: Player, index = 0) {
+  public stand(player: Player, index = 0, callback?: () => void) {
     player.stand(index);
-    this.state = State.PlayerStand;
-
+    this.state = STATE.PLAYER_STAND;
+    if (callback) callback();
     // TODO Handle multiple players
     // this.#playerTurn++;
     return this;
@@ -192,7 +222,7 @@ export class Blackjack {
   public reveal() {
     this.dealer.reveal();
     this.#isRevealed = true;
-    this.state = State.RevealHoleCard;
+    this.state = STATE.REVEAL_HOLE_CARD;
     return this;
   }
 
@@ -209,7 +239,7 @@ export class Blackjack {
 
     if (decision === "stand") {
       this.dealer.stand();
-      this.state = State.DealerStand;
+      this.state = STATE.DEALER_STAND;
       return this;
     }
 
@@ -221,22 +251,22 @@ export class Blackjack {
   public judge() {
     // TODO Support player with a split hand
     if (this.player.hand.status === "busted") {
-      this.state = State.PlayerBust;
+      this.state = STATE.PLAYER_BUST;
     } else if (this.dealer.hand.status === "busted") {
-      this.state = State.DealerBust;
+      this.state = STATE.DEALER_BUST;
     } else if (this.player.hand.score === this.dealer.hand.score) {
-      this.state = State.Push;
+      this.state = STATE.PUSH;
     } else if (this.player.hand.status === "blackjack") {
-      this.state = State.PlayerBlackjack;
+      this.state = STATE.PLAYER_BLACKJACK;
     } else if (this.dealer.hand.status === "blackjack") {
-      this.state = State.DealerBlackjack;
+      this.state = STATE.DEALER_BLACKJACK;
     } else if (this.player.hand.score > this.dealer.hand.score) {
-      this.state = State.PlayerWin;
+      this.state = STATE.PLAYER_WIN;
     } else if (this.dealer.hand.score > this.player.hand.score) {
-      this.state = State.DealerWin;
+      this.state = STATE.DEALER_WIN;
     }
 
-    this.debug.log("Judging:", State[this.#state]);
+    this.debug.log("Judging:", STATE[this.#state]);
 
     this.#isGameover = true;
 
@@ -258,8 +288,71 @@ export class Blackjack {
       shoeSize: this.shoeSize,
       fixedDeck: this.fixedDeck,
     });
-    this.state = State.Init;
+    this.state = STATE.INIT;
     return this;
   }
+
+  handleStart = () => {
+    this.debug.log("Starting game");
+    this.reset();
+    this.deal();
+    this.#eventBus.emit("gamestate", {
+      type: EVENT.DEALING,
+      data: {
+        dealer: this.dealer,
+        player: this.player,
+      },
+    });
+  };
+
+  handlePlayerTurn = (command: COMMAND) => {
+    this.debug.log("Player turn", command);
+    const callback = () =>
+      this.#eventBus.emit("gamestate", {
+        type: EVENT.PLAYER_TURN,
+        data: {
+          player: this.player,
+          state: this.state,
+        },
+      });
+    if (command === COMMAND.HIT) {
+      this.hit(this.player, 0, callback);
+    } else if (command === COMMAND.STAND) {
+      this.stand(this.player, 0, callback);
+    }
+  };
+
+  handleDealerTurn = () => {
+    this.debug.log("Dealer turn");
+    if (!this.#isRevealed) {
+      this.reveal();
+      this.#eventBus.emit("gamestate", {
+        type: EVENT.REVEAL_HOLE_CARD,
+        data: {
+          dealer: this.dealer,
+        },
+      });
+    } else {
+      this.decide();
+      this.#eventBus.emit("gamestate", {
+        type: EVENT.DEALER_TURN,
+        data: {
+          dealer: this.dealer,
+          state: this.state,
+        },
+      });
+    }
+  };
+
+  handleJudge = () => {
+    this.debug.log("Judge");
+    this.judge();
+    this.#eventBus.emit("gamestate", {
+      type: EVENT.JUDGE,
+      data: {
+        state: this.state,
+      },
+    });
+  };
 }
 

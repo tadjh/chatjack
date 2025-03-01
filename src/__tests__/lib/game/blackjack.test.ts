@@ -1,6 +1,6 @@
 import { Blackjack } from "@/lib/game/blackjack";
 import { Card } from "@/lib/game/card";
-import { State } from "@/lib/types";
+import { STATE } from "@/lib/types";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("Blackjack", () => {
@@ -91,7 +91,7 @@ describe("Blackjack with Fixed Decks", () => {
     game.reveal();
     // Judge outcome
     game.judge();
-    expect(game.state).toBe(State.PlayerBust);
+    expect(game.state).toBe(STATE.PLAYER_BUST);
   });
 
   it("should result in dealer bust with fixed deck 'dealer-bust'", () => {
@@ -105,7 +105,7 @@ describe("Blackjack with Fixed Decks", () => {
       game.decide();
     }
     game.judge();
-    expect(game.state).toBe(State.DealerBust);
+    expect(game.state).toBe(STATE.DEALER_BUST);
   });
 
   it("should result in a push with fixed deck 'push'", () => {
@@ -118,7 +118,7 @@ describe("Blackjack with Fixed Decks", () => {
       game.decide();
     }
     game.judge();
-    expect(game.state).toBe(State.Push);
+    expect(game.state).toBe(STATE.PUSH);
   });
 
   it("should result in a player natural blackjack with fixed deck 'natural-blackjack'", () => {
@@ -127,7 +127,7 @@ describe("Blackjack with Fixed Decks", () => {
     // Player has a natural blackjack, dealer has a weak hand.
     game.reveal();
     game.judge();
-    expect(game.state).toBe(State.PlayerBlackjack);
+    expect(game.state).toBe(STATE.PLAYER_BLACKJACK);
   });
 
   it("should result in a player blackjack with fixed deck 'player-blackjack'", () => {
@@ -139,7 +139,7 @@ describe("Blackjack with Fixed Decks", () => {
     }
     game.reveal();
     game.judge();
-    expect(game.state).toBe(State.PlayerBlackjack);
+    expect(game.state).toBe(STATE.PLAYER_BLACKJACK);
   });
 
   it("should result in a dealer blackjack with fixed deck 'dealer-blackjack'", () => {
@@ -152,7 +152,7 @@ describe("Blackjack with Fixed Decks", () => {
       game.decide();
     }
     game.judge();
-    expect(game.state).toBe(State.DealerBlackjack);
+    expect(game.state).toBe(STATE.DEALER_BLACKJACK);
   });
 
   it("should result in a player win with fixed deck 'player-win'", () => {
@@ -165,7 +165,7 @@ describe("Blackjack with Fixed Decks", () => {
       game.decide();
     }
     game.judge();
-    expect(game.state).toBe(State.PlayerWin);
+    expect(game.state).toBe(STATE.PLAYER_WIN);
   });
 
   it("should result in a dealer win with fixed deck 'dealer-win'", () => {
@@ -178,7 +178,7 @@ describe("Blackjack with Fixed Decks", () => {
       game.decide();
     }
     game.judge();
-    expect(game.state).toBe(State.DealerWin);
+    expect(game.state).toBe(STATE.DEALER_WIN);
   });
 });
 
