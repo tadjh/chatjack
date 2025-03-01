@@ -110,7 +110,7 @@ function App() {
                     <Button
                       size="sm"
                       className="cursor-pointer"
-                      onClick={() => hit(player)}
+                      onClick={hit}
                       disabled={
                         !hasDealt ||
                         hand.isBusted ||
@@ -129,7 +129,7 @@ function App() {
                         hand.isStand ||
                         hand.isBlackjack
                       }
-                      onClick={() => stand(player, h)}
+                      onClick={stand}
                     >
                       Stand
                     </Button>

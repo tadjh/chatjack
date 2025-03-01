@@ -92,6 +92,7 @@ export class Mediator {
         break;
       case EVENT.REVEAL_HOLE_CARD:
         this.debug.log("Revealing hole card");
+        this.#isDealerDone = event.data.dealer.isDone;
         this.#eventBus.emit("animate", event);
         break;
       case EVENT.DEALER_TURN:

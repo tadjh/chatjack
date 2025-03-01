@@ -1,5 +1,10 @@
 ## Bugs
 
+- TODO Player Turn Animation seems to be happening after hole card reveal?
+- TODO Entity onEnd seems to fire instantly
+- TODO Restart button doesn't work
+- TODO X button doesn't work
+
 ## Development
 
 - TODO show chat actions on the opposite side of the scores "!hit or !stand", hide when no longer chat's turn

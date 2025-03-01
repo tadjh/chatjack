@@ -1,5 +1,5 @@
 import { Blackjack, BlackjackOptions } from "@/lib/game/blackjack";
-import { Player } from "@/lib/game/player";
+import { COMMAND } from "@/lib/types";
 import { useRef, useState } from "react";
 
 export function useBlackjack(options: BlackjackOptions) {
@@ -24,31 +24,31 @@ export function useBlackjack(options: BlackjackOptions) {
     updateSnapshot();
   }
 
-  function hit(player: Player) {
-    blackjack.hit(player);
+  function hit() {
+    blackjack.handlePlayerTurn(COMMAND.HIT);
     updateSnapshot();
   }
 
-  function stand(player: Player, i = 0) {
-    blackjack.stand(player, i);
+  function stand() {
+    blackjack.handlePlayerTurn(COMMAND.STAND);
     updateSnapshot();
   }
 
-  function split(player: Player) {
-    blackjack.split(player);
-    updateSnapshot();
-  }
+  // function split() {
+  //   blackjack.handlePlayerTurn(COMMAND.SPLIT);
+  //   updateSnapshot();
+  // }
 
   function reveal() {
-    blackjack.reveal();
+    blackjack.handleDealerTurn();
     updateSnapshot();
   }
 
   function decide() {
     if (blackjack.dealer.isDone) {
-      blackjack.judge();
+      blackjack.handleJudge();
     } else {
-      blackjack.decide();
+      blackjack.handleDealerTurn();
     }
     updateSnapshot();
   }
@@ -76,7 +76,7 @@ export function useBlackjack(options: BlackjackOptions) {
     deal,
     hit,
     stand,
-    split,
+    // split,
     reveal,
     decide,
     exit,
