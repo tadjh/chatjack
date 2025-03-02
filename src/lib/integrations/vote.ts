@@ -68,12 +68,11 @@ export class Vote<T extends COMMAND = COMMAND> {
     let winner: T = defaultCommand;
     let max = 0;
     for (const [command, count] of this.#totals) {
-      if (count > max) {
-        max = count;
-        winner = command;
-      }
       if (count === max) {
         winner = defaultCommand;
+      } else if (count > max) {
+        max = count;
+        winner = command;
       }
     }
     return winner;

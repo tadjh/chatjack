@@ -51,7 +51,7 @@ export class Twitch extends tmi.Client {
     this.setup();
   }
 
-  async setup() {
+  private async setup() {
     if (!this.#channel) {
       this.debug.error("Channel is not set");
       return;
@@ -66,7 +66,7 @@ export class Twitch extends tmi.Client {
     await this.connect();
   }
 
-  async destroy() {
+  private async destroy() {
     this.removeListener("connected", this.handleConnected);
     this.removeListener("disconnected", this.handleDisconnected);
     await this.disconnect();
