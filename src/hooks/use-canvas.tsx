@@ -41,6 +41,5 @@ export function useCanvas() {
     bgRef,
     gameRef,
     uiRef,
-    renderer: rendererRef.current,
   };
 }

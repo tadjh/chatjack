@@ -1,8 +1,30 @@
 import { Blackjack, BlackjackOptions } from "@/lib/game/blackjack";
-import { COMMAND } from "@/lib/types";
+import { Dealer } from "@/lib/game/dealer";
+import { Player } from "@/lib/game/player";
+import { COMMAND, STATE } from "@/lib/types";
 import { useRef, useState } from "react";
 
-export function useBlackjack(options: BlackjackOptions) {
+export interface UseBlackjackReturnType {
+  dealer: Dealer;
+  player: Player;
+  hasDealt: boolean;
+  isRevealed: boolean;
+  isGameover: boolean;
+  isPlayerDone: boolean;
+  state: STATE;
+  deal: () => void;
+  hit: () => void;
+  stand: () => void;
+  // split: () => void;
+  reveal: () => void;
+  decide: () => void;
+  exit: () => void;
+  restart: () => void;
+}
+
+export function useBlackjack(
+  options: BlackjackOptions
+): UseBlackjackReturnType {
   const blackjackRef = useRef(Blackjack.create(options));
 
   const blackjack = blackjackRef.current;
