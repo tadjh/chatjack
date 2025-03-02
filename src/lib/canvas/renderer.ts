@@ -522,13 +522,17 @@ export class Renderer {
             this.updateEntitySprites(entity);
           });
 
-          this.createActionText(STATE.PLAYER_BLACKJACK, Role.Player);
+          this.createActionText(
+            STATE.PLAYER_BLACKJACK,
+            Role.Player,
+            onComplete
+          );
         } else {
           this.createTimer((layer: LAYER, id: string) =>
             this.#layers.removeEntity(layer, id)
           );
+          if (onComplete) onComplete();
         }
-        if (onComplete) onComplete();
       }
     );
 
@@ -555,6 +559,7 @@ export class Renderer {
     };
 
     if (role === Role.Player) {
+      props.id = "player-action-text";
       props.position = POSITION.BOTTOM;
       props.phases = [
         {
@@ -563,11 +568,12 @@ export class Renderer {
         },
         {
           name: "fade-slide-out-bottom",
-          duration: 1.5,
+          duration: 0.5,
         },
       ];
       props.offsetY = -32;
     } else if (role === Role.Dealer) {
+      props.id = "dealer-action-text";
       props.position = POSITION.TOP;
       props.phases = [
         {
@@ -576,7 +582,7 @@ export class Renderer {
         },
         {
           name: "fade-slide-out-top",
-          duration: 1.5,
+          duration: 0.5,
         },
       ];
       props.offsetY = 64;
@@ -836,11 +842,11 @@ export class Renderer {
   };
 
   private handleDealerAction = (event: EventType<EVENT.DEALER_ACTION>) => {
+    this.updateScores(event.data.dealer);
+    this.updateHand(event.data.dealer.hand);
     this.createActionText(event.data.state, event.data.dealer.role, () => {
       this.#eventBus.emit("animationComplete", event);
     });
-    this.updateScores(event.data.dealer);
-    this.updateHand(event.data.dealer.hand);
   };
 
   private handleJudge = (event: EventType<EVENT.JUDGE>) => {

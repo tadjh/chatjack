@@ -1,11 +1,8 @@
 ## Bugs
 
-- TODO Player Turn Animation seems to be happening after hole card reveal?
-- TODO Entity onEnd seems to fire instantly
-- TODO Restart button doesn't work
+- TODO Screen flickers on restart (missing render call)
 - TODO X button doesn't work
 - TODO Timer isn't destroyed when early player action occurs (button press)
-- TODO Player turn animation complete is firing twice
 
 ## Development
 

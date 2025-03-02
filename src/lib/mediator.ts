@@ -90,23 +90,23 @@ export class Mediator {
         break;
       case EVENT.REVEAL_HOLE_CARD:
         this.debug.log("Reveal hole card animation complete");
-        // if (event.data.dealer.isDone) {
-        //   this.#eventBus.emit("judge");
-        // } else {
-        //   this.#eventBus.emit("dealerAction");
-        // }
+        if (event.data.dealer.isDone) {
+          this.#eventBus.emit("judge");
+        } else {
+          this.#eventBus.emit("dealerAction");
+        }
         break;
       case EVENT.DEALER_ACTION:
         this.debug.log("Dealer action animation complete");
-        // if (event.data.dealer.isDone) {
-        //   this.#eventBus.emit("judge");
-        // } else {
-        //   this.#eventBus.emit("dealerAction");
-        // }
+        if (event.data.dealer.isDone) {
+          this.#eventBus.emit("judge");
+        } else {
+          this.#eventBus.emit("dealerAction");
+        }
         break;
       case EVENT.JUDGE:
         this.debug.log("Judge animation complete");
-        // this.#eventBus.emit("waitForStart");
+        this.#eventBus.emit("waitForStart");
         break;
     }
   };
