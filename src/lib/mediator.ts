@@ -18,6 +18,13 @@ export class Mediator {
     return Mediator.#instance;
   }
 
+  public static destroy() {
+    if (Mediator.#instance) {
+      Mediator.#instance.teardown();
+    }
+    Mediator.#instance = null;
+  }
+
   private constructor(
     eventBusInstance = eventBus,
     debug = new Debug("Mediator", "Yellow")
@@ -28,12 +35,12 @@ export class Mediator {
     this.setup();
   }
 
-  setup() {
+  private setup() {
     this.#eventBus.subscribe("chat", this.handleChat);
     this.#eventBus.subscribe("animationComplete", this.handleAnimationComplete);
   }
 
-  destroy() {
+  private teardown() {
     this.#eventBus.unsubscribe("chat", this.handleChat);
     this.#eventBus.unsubscribe(
       "animationComplete",
@@ -41,7 +48,7 @@ export class Mediator {
     );
   }
 
-  handleChat = (event: ChatEvent) => {
+  public handleChat = (event: ChatEvent) => {
     switch (event.type) {
       case EVENT.CONNECTED:
         this.debug.log("Waiting for start");
@@ -54,7 +61,7 @@ export class Mediator {
     }
   };
 
-  handleAnimationComplete = (event: AnimationEvent) => {
+  public handleAnimationComplete = (event: AnimationEvent) => {
     switch (event.type) {
       case EVENT.DEALING:
         this.debug.log("Dealing animation complete");
