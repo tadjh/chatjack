@@ -30,7 +30,8 @@ export abstract class Layer extends Map<string, EntityType> {
     this.#canvas.style.position = "absolute";
     this.#canvas.style.top = "0";
     this.#canvas.style.left = "0";
-    this.#canvas.style.zIndex = id;
+    this.#canvas.style.zIndex =
+      id === LAYER.BG ? "0" : id === LAYER.GAME ? "1" : "2";
   }
 
   public getByType(type: EntityType["type"]) {
