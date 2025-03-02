@@ -1,8 +1,7 @@
 import { TextEntity } from "@/lib/canvas/entity.text";
 import { Layer } from "@/lib/canvas/layer";
 import { LayoutManager } from "@/lib/canvas/layout-manager";
-import { LAYER } from "@/lib/types";
-import { EntityType } from "./types";
+import { EntityType, LAYER } from "@/lib/canvas/types";
 
 export class LayerManager extends Map<LAYER, Layer> {
   #layouts: LayoutManager;

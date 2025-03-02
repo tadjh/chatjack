@@ -1,10 +1,8 @@
+import { Debug } from "@/lib/debug";
+import { EventBus, eventBus } from "@/lib/event-bus";
+import { Vote } from "@/lib/integrations/vote";
+import { COMMAND, EVENT } from "@/lib/types";
 import * as tmi from "tmi.js";
-import { Palette } from "../constants";
-import { Debug } from "../debug";
-import { EventBus } from "../event-bus";
-import { eventBus } from "../event-bus";
-import { COMMAND, EVENT } from "../types";
-import { Vote } from "../vote";
 
 export type TwitchOptions = {
   channel: string;
@@ -32,7 +30,7 @@ export class Twitch extends tmi.Client {
     options: TwitchOptions = { channel: "", voteDuration: 10, debug: false },
     vote = new Vote(),
     events = eventBus,
-    debug = new Debug("Twitch", Palette.Purple)
+    debug = new Debug("Twitch", "Purple")
   ) {
     super({
       options: {

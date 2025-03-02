@@ -1,8 +1,11 @@
+import { BASELINE_GUTTER, BASELINE_PADDING } from "@/lib/canvas/constants";
 import { TextEntity } from "@/lib/canvas/entity.text";
-import { BASELINE_GUTTER, BASELINE_PADDING, Palette } from "@/lib/constants";
+import { POSITION } from "@/lib/canvas/types";
+import {
+  getHorizontalScaleFactor,
+  getVerticalScaleFactor,
+} from "@/lib/canvas/utils";
 import { Debug } from "@/lib/debug";
-import { POSITION } from "@/lib/types";
-import { getHorizontalScaleFactor, getVerticalScaleFactor } from "@/lib/utils";
 
 enum DIRECTION {
   UP = -1,
@@ -18,7 +21,7 @@ export class LayoutManager {
   constructor(
     padding: number = getHorizontalScaleFactor() * BASELINE_PADDING,
     gutter: number = getVerticalScaleFactor() * BASELINE_GUTTER,
-    debug = new Debug("LayoutManager", Palette.DarkTan)
+    debug = new Debug("LayoutManager", "DarkTan")
   ) {
     this.#padding = padding;
     this.#gutter = gutter;

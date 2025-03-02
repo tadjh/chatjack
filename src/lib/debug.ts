@@ -1,6 +1,5 @@
+import { rgb } from "@/lib/canvas/utils";
 import { Palette } from "@/lib/constants";
-import { Vector3 } from "@/lib/types";
-import { rgb } from "@/lib/utils";
 
 /**
  * Debug utility class for conditional console logging with colored scope labels.
@@ -18,9 +17,9 @@ export class Debug {
    * @param scope - The scope name to identify this debug instance's logs
    * @param color - RGB color vector for the scope label (defaults to Palette.Green)
    */
-  constructor(scope: string, color: Vector3 = Palette.Green) {
+  constructor(scope: string, color: keyof typeof Palette = "Green") {
     this.scope = `[${scope}]`;
-    this.color = `color: ${rgb(color)}`;
+    this.color = `color: ${rgb(Palette[color])}`;
   }
 
   /**

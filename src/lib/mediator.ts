@@ -1,4 +1,3 @@
-import { Palette } from "@/lib/constants";
 import { Debug } from "@/lib/debug";
 import { AnimationEvent, ChatEvent, EventBus, eventBus } from "@/lib/event-bus";
 import { EVENT } from "@/lib/types";
@@ -21,7 +20,7 @@ export class Mediator {
 
   private constructor(
     eventBusInstance = eventBus,
-    debug = new Debug("Mediator", Palette.Yellow)
+    debug = new Debug("Mediator", "Yellow")
   ) {
     this.debug = debug;
     this.#eventBus = eventBusInstance;

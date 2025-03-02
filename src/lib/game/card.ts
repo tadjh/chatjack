@@ -1,4 +1,3 @@
-import { Palette } from "@/lib/constants";
 import { Debug } from "@/lib/debug";
 
 export enum Suit {
@@ -62,7 +61,7 @@ export class Card extends Number {
   constructor(
     card: number,
     hidden = false,
-    debug = new Debug("Card", Palette.DarkBlue)
+    debug = new Debug("Card", "DarkBlue")
   ) {
     if (card < 0 || card > 52) {
       throw new Error("Invalid card");

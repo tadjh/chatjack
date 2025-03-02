@@ -3,9 +3,8 @@ import {
   BaseEntityNoProps,
   Entity,
 } from "@/lib/canvas/entity";
-import { Palette } from "@/lib/constants";
+import { easeOutBack, lerp, radians } from "@/lib/canvas/utils";
 import { Debug } from "@/lib/debug";
-import { easeOutBack, lerp, radians } from "@/lib/utils";
 
 type TimerEntityAnimationTypes = "zoom-in" | "countdown" | "zoom-out";
 type TimerEntityAnimationProps = BaseAnimationProps & {
@@ -46,7 +45,7 @@ export class TimerEntity extends Entity<
 
   constructor(
     props: TimerEntityProps,
-    debug = new Debug("TimerEntity", Palette.LightGrey)
+    debug = new Debug("TimerEntity", "LightGrey")
   ) {
     super(
       {

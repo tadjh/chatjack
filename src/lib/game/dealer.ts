@@ -1,10 +1,9 @@
 import { Card } from "@/lib/game/card";
-import { Palette } from "@/lib/constants";
 import { Debug } from "@/lib/debug";
 import { Player, Role } from "@/lib/game/player";
 
 export class Dealer extends Player {
-  constructor(debug = new Debug("Dealer", Palette.Red)) {
+  constructor(debug = new Debug("Dealer", "Red")) {
     super("Dealer", 0, Role.Dealer, debug);
   }
 

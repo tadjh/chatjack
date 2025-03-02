@@ -1,4 +1,3 @@
-import { Palette } from "@/lib/constants";
 import { Debug } from "@/lib/debug";
 
 export class Counter {
@@ -12,7 +11,7 @@ export class Counter {
     name: string,
     targetCount: number,
     callback: () => void,
-    debug = new Debug("Counter", Palette.DarkGrey)
+    debug = new Debug("Counter", "DarkGrey")
   ) {
     this.#name = name;
     this.#targetCount = targetCount;

@@ -1,13 +1,12 @@
 import { Layer } from "@/lib/canvas/layer";
-import { Palette } from "@/lib/constants";
+import { LAYER } from "@/lib/canvas/types";
 import { Debug } from "@/lib/debug";
-import { LAYER } from "@/lib/types";
 
 export class StaticLayer extends Layer {
   constructor(
     id: LAYER,
     canvas: HTMLCanvasElement,
-    debug = new Debug("StaticLayer", Palette.Tan)
+    debug = new Debug("StaticLayer", "Tan")
   ) {
     super(id, "static", canvas, debug);
   }

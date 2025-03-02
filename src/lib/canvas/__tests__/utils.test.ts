@@ -1,7 +1,6 @@
-import { BASELINE_HEIGHT, BASELINE_WIDTH } from "@/lib/constants";
+import { BASELINE_HEIGHT, BASELINE_WIDTH } from "@/lib/canvas/constants";
 import {
   clamp,
-  cn,
   easeOut,
   easeOutBack,
   easeOutCubic,
@@ -13,16 +12,10 @@ import {
   radians,
   rgb,
   rgba,
-} from "@/lib/utils";
+} from "@/lib/canvas/utils";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("utils", () => {
-  it("should merge class names correctly", () => {
-    expect(cn("foo", "bar")).toBe("foo bar");
-    expect(cn("foo", { bar: true })).toBe("foo bar");
-    expect(cn("foo", { bar: false })).toBe("foo");
-  });
-
   it("should create font string", () => {
     expect(font(16, "Arial")).toBe("16px Arial");
     expect(font(24, "Helvetica")).toBe("24px Helvetica");

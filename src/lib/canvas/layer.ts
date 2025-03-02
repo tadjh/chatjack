@@ -1,7 +1,5 @@
-import { EntityType } from "@/lib/canvas/types";
-import { Palette } from "@/lib/constants";
+import { EntityType, LAYER } from "@/lib/canvas/types";
 import { Debug } from "@/lib/debug";
-import { LAYER } from "@/lib/types";
 
 export abstract class Layer extends Map<string, EntityType> {
   readonly id: LAYER;
@@ -16,7 +14,7 @@ export abstract class Layer extends Map<string, EntityType> {
     id: LAYER,
     type: "static" | "dynamic",
     canvas: HTMLCanvasElement,
-    debug = new Debug(id, Palette.Tan)
+    debug = new Debug(id, "Tan")
   ) {
     super();
     this.#canvas = canvas;

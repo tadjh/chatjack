@@ -1,14 +1,13 @@
 import { TextEntity } from "@/lib/canvas/entity.text";
 import { Layer } from "@/lib/canvas/layer";
-import { Palette } from "@/lib/constants";
+import { LAYER } from "@/lib/canvas/types";
 import { Debug } from "@/lib/debug";
-import { LAYER } from "@/lib/types";
 
 export class DynamicLayer extends Layer {
   constructor(
     id: LAYER,
     canvas: HTMLCanvasElement,
-    debug = new Debug("DynamicLayer", Palette.Tan)
+    debug = new Debug("DynamicLayer", "Tan")
   ) {
     super(id, "dynamic", canvas, debug);
   }

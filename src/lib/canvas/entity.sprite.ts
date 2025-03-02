@@ -4,14 +4,14 @@ import {
   BaseEntityNoProps,
   Entity,
 } from "@/lib/canvas/entity";
-import { IMAGE, Palette } from "@/lib/constants";
 import { Debug } from "@/lib/debug";
-import { POSITION } from "@/lib/types";
+import { POSITION } from "@/lib/canvas/types";
 import {
   getHorizontalScaleFactor,
   getVerticalScaleFactor,
   lerp,
-} from "@/lib/utils";
+} from "@/lib/canvas/utils";
+import { IMAGE } from "@/lib/canvas/constants";
 
 type SpriteEntityAnimationTypes =
   | BaseEntityAnimationTypes
@@ -64,7 +64,7 @@ export class SpriteEntity extends Entity<
   #spriteProgress: number = 0;
   constructor(
     props: SpriteEntityProps,
-    debug = new Debug("SpriteEntity", Palette.Pink)
+    debug = new Debug("SpriteEntity", "Pink")
   ) {
     super(
       {

@@ -1,4 +1,3 @@
-import { Palette } from "@/lib/constants";
 import { Debug } from "@/lib/debug";
 import { eventBus, EventBus } from "@/lib/event-bus";
 import { Dealer } from "@/lib/game/dealer";
@@ -50,7 +49,7 @@ export class Blackjack {
       playerNames = Blackjack.defaults.playerNames,
     }: BlackjackOptions = Blackjack.defaults,
     eventBusInstance = eventBus,
-    debug = new Debug("Blackjack", Palette.Green)
+    debug = new Debug("Blackjack", "Green")
   ) {
     this.debug = debug;
     this.debug.log("Creating Blackjack instance");
@@ -122,6 +121,7 @@ export class Blackjack {
     this.#eventBus.unsubscribe("playerAction", this.handlePlayerAction);
     this.#eventBus.unsubscribe("dealerAction", this.handleDealerAction);
     this.#eventBus.unsubscribe("judge", this.handleJudge);
+    Blackjack.instance = null;
   }
 
   private createTable({
@@ -292,7 +292,7 @@ export class Blackjack {
     return this;
   }
 
-  handleStart = () => {
+  public handleStart = () => {
     this.debug.log("Starting game");
     this.reset();
     this.deal();
@@ -305,7 +305,7 @@ export class Blackjack {
     });
   };
 
-  handlePlayerAction = (command: COMMAND) => {
+  public handlePlayerAction = (command: COMMAND) => {
     this.debug.log("Player turn", command);
     const callback = () =>
       this.#eventBus.emit("gamestate", {
@@ -322,7 +322,7 @@ export class Blackjack {
     }
   };
 
-  handleDealerAction = () => {
+  public handleDealerAction = () => {
     this.debug.log("Dealer turn");
     if (!this.#isRevealed) {
       this.reveal();
@@ -344,7 +344,7 @@ export class Blackjack {
     }
   };
 
-  handleJudge = () => {
+  public handleJudge = () => {
     this.judge();
     this.#eventBus.emit("gamestate", {
       type: EVENT.JUDGE,

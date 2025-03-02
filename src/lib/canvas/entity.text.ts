@@ -1,12 +1,17 @@
+import { FONT } from "@/lib/canvas/constants";
 import {
   BaseAnimationProps,
   BaseEntityAnimationTypes,
   BaseEntityNoProps,
   Entity,
 } from "@/lib/canvas/entity";
-import { FONT, Palette } from "@/lib/constants";
+import {
+  easeOutCubic,
+  font,
+  getVerticalScaleFactor,
+  lerp,
+} from "@/lib/canvas/utils";
 import { Debug } from "@/lib/debug";
-import { easeOutCubic, font, getVerticalScaleFactor, lerp } from "@/lib/utils";
 
 type TextEntityAnimationTypes =
   | BaseEntityAnimationTypes
@@ -59,7 +64,7 @@ export class TextEntity extends Entity<
 
   constructor(
     props: TextEntityProps,
-    debug = new Debug("TextEntity", Palette.LightGrey)
+    debug = new Debug("TextEntity", "LightGrey")
   ) {
     super(
       {

@@ -1,9 +1,10 @@
+import { FONT, IMAGE } from "@/lib/canvas/constants";
 import { SpriteEntityProps } from "@/lib/canvas/entity.sprite";
 import { TextEntityProps } from "@/lib/canvas/entity.text";
 import { TimerEntityProps } from "@/lib/canvas/entity.timer";
-import { FONT, IMAGE, Palette } from "@/lib/constants";
-import { LAYER, POSITION } from "@/lib/types";
-import { rgb } from "@/lib/utils";
+import { LAYER, POSITION } from "@/lib/canvas/types";
+import { rgb } from "@/lib/canvas/utils";
+import { Palette } from "@/lib/constants";
 
 const SPRITE_WIDTH = 256;
 const SPRITE_HEIGHT = 384;

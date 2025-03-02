@@ -1,14 +1,13 @@
-import { BASELINE_PADDING, FPS, Palette } from "@/lib/constants";
-import { Debug } from "@/lib/debug";
-import { LAYER, POSITION } from "@/lib/types";
+import { BASELINE_PADDING, FPS } from "@/lib/canvas/constants";
+import { LAYER, POSITION } from "@/lib/canvas/types";
 import {
   clamp,
   easeOutCubic,
   getHorizontalScaleFactor,
   getScaleFactor,
   lerp,
-} from "@/lib/utils";
-
+} from "@/lib/canvas/utils";
+import { Debug } from "@/lib/debug";
 export interface AnimationPhase<
   Phase extends string,
   Props extends Record<string, number>,
@@ -144,7 +143,7 @@ export abstract class Entity<
       Phase | BaseEntityAnimationTypes,
       Props & BaseAnimationProps
     >,
-    debug = new Debug("Entity", Palette.Black)
+    debug = new Debug("Entity", "Black")
   ) {
     this.id = props.id;
     this.type = props.type;

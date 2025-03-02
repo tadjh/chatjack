@@ -1,5 +1,4 @@
 import { Card, Rank, Suit } from "@/lib/game/card";
-import { Palette } from "@/lib/constants";
 import { Debug } from "@/lib/debug";
 
 export class Deck extends Array<Card> {
@@ -12,7 +11,7 @@ export class Deck extends Array<Card> {
       shoeSize = 0,
       fixedDeck = undefined,
     }: { name?: string; shoeSize?: number; fixedDeck?: FixedDeck | null } = {},
-    debug = new Debug(name, Palette.Blue)
+    debug = new Debug(name, "Blue")
   ) {
     super();
     this.debug = debug;

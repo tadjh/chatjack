@@ -1,13 +1,5 @@
 import { Vector3 } from "./types";
 
-const isDevelopment = import.meta.env.MODE === "development";
-export const FPS = 12;
-export const PADDING_MULTIPLIER = 2 / 100;
-export const BASELINE_PADDING = 16;
-export const BASELINE_GUTTER = 8;
-export const BASELINE_WIDTH = 800;
-export const BASELINE_HEIGHT = 400;
-
 export const Palette: Record<string, Vector3> = {
   White: [255, 255, 255], // "#ffffff"
   LightestGrey: [192, 203, 220], // "#c0cbdc"
@@ -42,29 +34,3 @@ export const Palette: Record<string, Vector3> = {
   YellowOrange: [254, 174, 52], // "#feae34"
   Orange: [247, 118, 34], // "#f77622"
 } as const;
-
-export enum FONT {
-  DISPLAY = "Jacquard24",
-  SANS_SERIF = "PressStart2P",
-}
-
-export const Fonts: Map<FONT, string> = new Map([
-  [
-    FONT.DISPLAY,
-    `${isDevelopment ? "/src" : ""}/assets/fonts/${FONT.DISPLAY}-Regular.ttf`,
-  ],
-  [
-    FONT.SANS_SERIF,
-    `${isDevelopment ? "/src" : ""}/assets/fonts/${FONT.SANS_SERIF}-Regular.ttf`,
-  ],
-]);
-
-export enum IMAGE {
-  CARDS = "cards",
-  // UI = "ui",
-}
-
-export const images: Map<IMAGE, string> = new Map([
-  [IMAGE.CARDS, `${isDevelopment ? "/src" : ""}/assets/sprites/cards.png`],
-  // [IMAGE.UI, `${isDevelopment ? "/src" : ""}/assets/sprites/ui.png`],
-]);

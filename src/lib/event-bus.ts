@@ -2,7 +2,6 @@
 import { Dealer } from "@/lib/game/dealer";
 import { Player } from "@/lib/game/player";
 import { STATE, COMMAND, EVENT } from "./types";
-import { Palette } from "@/lib/constants";
 import { Debug } from "@/lib/debug";
 
 export type EventCallback<T> = T extends void
@@ -87,7 +86,7 @@ export class EventBus<Events extends Record<string, any> = EventMap> {
     return EventBus.instance as EventBus<T>;
   }
 
-  private constructor(debug = new Debug("EventBus", Palette.LightBlue)) {
+  private constructor(debug = new Debug("EventBus", "LightBlue")) {
     this.#events = {};
     this.debug = debug;
   }

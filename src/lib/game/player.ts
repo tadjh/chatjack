@@ -1,5 +1,4 @@
 import { Card } from "@/lib/game/card";
-import { Palette } from "@/lib/constants";
 import { Debug } from "@/lib/debug";
 import { Hand } from "@/lib/game/hand";
 
@@ -16,7 +15,7 @@ export class Player {
     name = "Player",
     seat = 1,
     role = Role.Player,
-    debug = new Debug(name, Palette.Red)
+    debug = new Debug(name, "Red")
   ) {
     this.name = name;
     this.seat = seat;

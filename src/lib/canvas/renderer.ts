@@ -1,3 +1,4 @@
+import { Fonts, FPS, images } from "@/lib/canvas/constants";
 import { Counter } from "@/lib/canvas/counter";
 import {
   actionText,
@@ -13,7 +14,9 @@ import { TimerEntity, TimerEntityProps } from "@/lib/canvas/entity.timer";
 import { LayerManager } from "@/lib/canvas/layer-manager";
 import { DynamicLayer } from "@/lib/canvas/layer.dynamic";
 import { StaticLayer } from "@/lib/canvas/layer.static";
-import { FPS, Fonts, Palette, images } from "@/lib/constants";
+import { LAYER, POSITION } from "@/lib/canvas/types";
+import { rgb } from "@/lib/canvas/utils";
+import { Palette } from "@/lib/constants";
 import { Debug } from "@/lib/debug";
 import {
   AnimationEvent,
@@ -26,8 +29,7 @@ import { Card } from "@/lib/game/card";
 import { Dealer } from "@/lib/game/dealer";
 import { Hand, Status } from "@/lib/game/hand";
 import { Player, Role } from "@/lib/game/player";
-import { EVENT, LAYER, POSITION, STATE } from "@/lib/types";
-import { rgb } from "@/lib/utils";
+import { EVENT, STATE } from "@/lib/types";
 
 enum ASSETS_LOADED {
   FONTS,
@@ -86,7 +88,7 @@ export class Renderer {
     }: RendererOptions = Renderer.defaults,
     eventBusInstance = eventBus,
     layers = new LayerManager(),
-    debug = new Debug("Engine", Palette.Orange)
+    debug = new Debug("Engine", "Orange")
   ) {
     this.debug = debug;
     this.debug.log("Creating Engine instance");
