@@ -1,11 +1,11 @@
 import { Debug } from "@/lib/debug";
 
 export class Counter {
-  #current = 0;
-  #name: string;
-  #targetCount: number;
-  #callback: () => void;
+  readonly name: string;
+  readonly targetCount: number;
   protected debug: Debug;
+  #current = 0;
+  #callback: (() => void) | null = null;
 
   constructor(
     name: string,
@@ -13,8 +13,8 @@ export class Counter {
     callback: () => void,
     debug = new Debug("Counter", "DarkGrey")
   ) {
-    this.#name = name;
-    this.#targetCount = targetCount;
+    this.name = name;
+    this.targetCount = targetCount;
     this.#callback = callback;
     this.debug = debug;
   }
@@ -23,21 +23,25 @@ export class Counter {
     return this.#current;
   }
 
+  get callback() {
+    return this.#callback;
+  }
+
   // Call this when one unit of work is completed
-  tick = () => {
+  public tick = () => {
     this.#current++;
-    if (this.current >= this.#targetCount) {
-      this.#callback();
+    if (this.current >= this.targetCount) {
+      if (this.#callback) {
+        this.#callback();
+      }
       this.destroy();
     }
   };
 
-  destroy() {
-    this.#current = this.#targetCount;
-    this.#callback = () => {
-      this.debug.log(`Destroying Counter: ${this.#name}`);
-    };
-    this.#callback();
+  public destroy() {
+    this.debug.log(`Destroying Counter: ${this.name}`);
+    this.#current = this.targetCount;
+    this.#callback = null;
   }
 }
 
