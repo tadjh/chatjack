@@ -28,14 +28,14 @@ export class LayoutManager {
     this.debug = debug;
   }
 
-  update(entities: TextEntity[]) {
+  public update(entities: TextEntity[]) {
     this.debug.log("Refreshing layouts");
     this.reset();
     this.init();
     this.place(entities);
   }
 
-  init() {
+  private init() {
     this.#padding = getHorizontalScaleFactor() * BASELINE_PADDING;
     this.#gutter = getVerticalScaleFactor() * BASELINE_GUTTER;
     for (const position of Object.values(POSITION)) {
@@ -80,7 +80,7 @@ export class LayoutManager {
   }
 
   // TODO Extend for non-text entities.
-  place(entities: TextEntity[]) {
+  private place(entities: TextEntity[]) {
     for (const entity of entities) {
       if (!this.#layouts.has(entity.position)) {
         throw new Error(`No layout for ${entity.position}`);
@@ -119,13 +119,13 @@ export class LayoutManager {
     }
   }
 
-  reset() {
+  private reset() {
     this.#layouts.forEach((layout) => layout.return(0));
     this.#layouts.clear();
   }
 }
 
-function* verticalLayoutGenerator(
+export function* verticalLayoutGenerator(
   initialY: number,
   gutter: number = 10,
   direction: DIRECTION = DIRECTION.DOWN
