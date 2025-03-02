@@ -41,6 +41,13 @@ export class Blackjack {
     return Blackjack.instance;
   }
 
+  public static destroy() {
+    if (Blackjack.instance) {
+      Blackjack.instance.teardown();
+    }
+    Blackjack.instance = null;
+  }
+
   private constructor(
     {
       shoeSize = Blackjack.defaults.shoeSize,
@@ -59,13 +66,9 @@ export class Blackjack {
     this.playerNames = playerNames;
     this.#table = this.createTable({ playerCount, playerNames });
     this.#shoe = this.createShoe({ shoeSize, fixedDeck });
-    this.state = STATE.INIT;
     this.#eventBus = eventBusInstance;
+    this.state = STATE.INIT;
     this.setup();
-  }
-
-  get numberOfPlayers() {
-    return this.#table.length;
   }
 
   get dealer() {
@@ -77,15 +80,11 @@ export class Blackjack {
   }
 
   get hasDealt() {
-    return this.#state > STATE.INIT;
+    return this.#state !== STATE.INIT;
   }
 
   get isPlayerDone() {
     return this.player.isDone;
-  }
-
-  get isDealerTurn() {
-    return this.state === STATE.REVEAL_HOLE_CARD;
   }
 
   get cardsRemaining() {
@@ -109,19 +108,18 @@ export class Blackjack {
     return this.#isRevealed;
   }
 
-  setup() {
-    this.#eventBus.subscribe("start", this.handleStart);
+  private setup() {
+    this.#eventBus.subscribe("start", this.handleDeal);
     this.#eventBus.subscribe("playerAction", this.handlePlayerAction);
     this.#eventBus.subscribe("dealerAction", this.handleDealerAction);
     this.#eventBus.subscribe("judge", this.handleJudge);
   }
 
-  destroy() {
-    this.#eventBus.unsubscribe("start", this.handleStart);
+  private teardown() {
+    this.#eventBus.unsubscribe("start", this.handleDeal);
     this.#eventBus.unsubscribe("playerAction", this.handlePlayerAction);
     this.#eventBus.unsubscribe("dealerAction", this.handleDealerAction);
     this.#eventBus.unsubscribe("judge", this.handleJudge);
-    Blackjack.instance = null;
   }
 
   private createTable({
@@ -155,29 +153,20 @@ export class Blackjack {
     });
   }
 
-  draw(isHidden = false) {
+  private draw(isHidden = false) {
     return this.#shoe.draw(isHidden);
   }
 
-  public empty() {
-    this.#shoe.empty();
-    return this;
-  }
-
-  public deal() {
-    if (this.#state !== STATE.INIT) {
-      throw new Error("Game has already started");
-    }
+  private deal() {
     this.state = STATE.DEALING;
     this.player.hit(this.draw());
     this.dealer.hit(this.draw());
     this.player.hit(this.draw());
     this.dealer.hit(this.draw(true));
-
     return this;
   }
 
-  public hit(player: Player, index = 0, callback?: () => void) {
+  private hit(player: Player, index = 0, callback?: () => void) {
     player.hit(this.draw(), index);
     // TODO Support hitting a split hand
     if (player.hand.isBusted) {
@@ -205,7 +194,7 @@ export class Blackjack {
     return this;
   }
 
-  public stand(player: Player, index = 0, callback?: () => void) {
+  private stand(player: Player, index = 0, callback?: () => void) {
     player.stand(index);
     this.state = STATE.PLAYER_STAND;
     if (callback) callback();
@@ -214,19 +203,19 @@ export class Blackjack {
     return this;
   }
 
-  public split(player: Player) {
-    player.split();
-    return this;
-  }
+  // private split(player: Player) {
+  //   player.split();
+  //   return this;
+  // }
 
-  public reveal() {
+  private reveal() {
     this.dealer.reveal();
     this.#isRevealed = true;
     this.state = STATE.REVEAL_HOLE_CARD;
     return this;
   }
 
-  public decide() {
+  private decide() {
     if (this.dealer.isDone) {
       throw new Error("Dealer has already played");
     }
@@ -248,7 +237,7 @@ export class Blackjack {
     return this;
   }
 
-  public judge() {
+  private judge() {
     // TODO Support player with a split hand
     if (this.player.hand.status === "busted") {
       this.state = STATE.PLAYER_BUST;
@@ -292,9 +281,11 @@ export class Blackjack {
     return this;
   }
 
-  public handleStart = () => {
+  public handleDeal = () => {
     this.debug.log("Starting game");
-    this.reset();
+    if (this.#state !== STATE.INIT) {
+      this.reset();
+    }
     this.deal();
     this.#eventBus.emit("gamestate", {
       type: EVENT.DEALING,

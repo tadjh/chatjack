@@ -20,7 +20,7 @@ export function useBlackjack(options: BlackjackOptions) {
   }
 
   function deal() {
-    blackjack.handleStart();
+    blackjack.handleDeal();
     updateSnapshot();
   }
 
@@ -61,7 +61,7 @@ export function useBlackjack(options: BlackjackOptions) {
   function restart() {
     console.clear();
     blackjack.reset();
-    blackjack.deal();
+    blackjack.handleDeal();
     updateSnapshot();
   }
 
