@@ -235,7 +235,7 @@ export const gameoverText: [TextEntityProps, TextEntityProps, TextEntityProps] =
       fontFamily: FONT.SANS_SERIF,
       textBaseline: "middle",
       textAlign: "center",
-      delay: 32,
+      delay: 24,
       offsetY: -25,
       color: rgb(Palette.Yellow),
       shadowColor: rgb(Palette.DarkestGreen),

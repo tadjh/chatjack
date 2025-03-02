@@ -476,7 +476,7 @@ export class Renderer {
       phases: [
         {
           name: isDealer ? "slide-in-top" : "slide-in-bottom",
-          duration: 1,
+          duration: 0.75,
           magnitude: 300,
         },
       ],
