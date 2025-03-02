@@ -196,6 +196,8 @@ export class TimerEntity extends Entity<
 
   public destroy(): this {
     super.destroy();
+    this.props.radius = 0;
+    this.props.angle = 0;
     this.#radius = 0;
     return this;
   }
