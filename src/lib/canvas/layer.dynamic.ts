@@ -36,19 +36,19 @@ export class DynamicLayer extends Layer {
   public render() {
     this.clearRect();
 
-    let action: TextEntity | undefined;
+    const actions: TextEntity[] = [];
 
     this.forEach((entity) => {
       if (entity.id === actionText.id) {
-        action = entity as TextEntity;
+        actions.push(entity as TextEntity);
         return;
       }
       if (entity.delay > 0) return;
       entity.render(this.ctx);
     });
 
-    if (action) {
-      action.render(this.ctx);
+    if (actions.length > 0) {
+      actions.forEach((action) => action.render(this.ctx));
     }
   }
 

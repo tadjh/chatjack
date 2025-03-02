@@ -2,7 +2,8 @@ import { Blackjack, BlackjackOptions } from "@/lib/game/blackjack";
 import { Dealer } from "@/lib/game/dealer";
 import { Player } from "@/lib/game/player";
 import { COMMAND, STATE } from "@/lib/types";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import { eventBus } from "@/lib/event-bus";
 
 export interface UseBlackjackReturnType {
   dealer: Dealer;
@@ -26,13 +27,55 @@ export function useBlackjack(
   options: BlackjackOptions
 ): UseBlackjackReturnType {
   const blackjackRef = useRef(Blackjack.create(options));
-
   const blackjack = blackjackRef.current;
 
   const [gameState, setGameState] = useState({
     dealer: blackjack.dealer,
     player: blackjack.player,
   });
+
+  // Add a state update effect that runs when events occur
+  useEffect(() => {
+    const blackjack = blackjackRef.current;
+
+    // Function to update the state from the blackjack instance
+    const updateFromInstance = () => {
+      setGameState({
+        dealer: blackjack.dealer,
+        player: blackjack.player,
+      });
+    };
+
+    // Subscribe to events that should trigger state updates
+    const unsubscribeDealerAction = eventBus.subscribe(
+      "dealerAction",
+      updateFromInstance,
+      "useBlackjack"
+    );
+    const unsubscribeGamestate = eventBus.subscribe(
+      "gamestate",
+      updateFromInstance,
+      "useBlackjack"
+    );
+    const unsubscribePlayerAction = eventBus.subscribe(
+      "playerAction",
+      updateFromInstance,
+      "useBlackjack"
+    );
+    const unsubscribeJudge = eventBus.subscribe(
+      "judge",
+      updateFromInstance,
+      "useBlackjack"
+    );
+
+    // Clean up subscriptions when the hook unmounts
+    return () => {
+      unsubscribeDealerAction();
+      unsubscribeGamestate();
+      unsubscribePlayerAction();
+      unsubscribeJudge();
+    };
+  }, []);
 
   function updateSnapshot() {
     setGameState({

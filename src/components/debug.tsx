@@ -25,6 +25,7 @@ export function Debug({
     restart,
     exit,
   } = blackjack;
+
   return (
     <div className="p-4 flex gap-2 font-mono flex-col justify-center h-full fixed top-1/2 -translate-y-1/2 left-0 z-10">
       <div className="grid gap-2">
