@@ -10,7 +10,6 @@ describe("Deck", () => {
   });
 
   it("should create a deck with a valid count", () => {
-    deck = new Deck();
     // A single deck should have 52 cards.
     expect(deck.length).toBe(52);
   });
