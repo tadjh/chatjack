@@ -21,9 +21,6 @@ export type ChatEvent =
       type: EVENT.DISCONNECTED;
     }
   | {
-      type: EVENT.START;
-    }
-  | {
       type: EVENT.VOTE_UPDATE;
       data: { command: COMMAND; count: number };
     }
@@ -38,7 +35,7 @@ export type GameEvent =
       data: { dealer: Dealer; player: Player };
     }
   | {
-      type: EVENT.PLAYER_TURN;
+      type: EVENT.PLAYER_ACTION;
       data: { player: Player; state: STATE };
     }
   | {
@@ -46,7 +43,7 @@ export type GameEvent =
       data: { dealer: Dealer };
     }
   | {
-      type: EVENT.DEALER_TURN;
+      type: EVENT.DEALER_ACTION;
       data: { dealer: Dealer; state: STATE };
     }
   | {
@@ -54,57 +51,23 @@ export type GameEvent =
       data: { state: STATE };
     };
 
-export type AnimationEvents =
-  | {
-      type: EVENT.DEALING;
-      data: { dealer: Dealer; player: Player };
-    }
-  | {
-      type: EVENT.VOTE_UPDATE;
-      data: { command: COMMAND; count: number };
-    }
-  | {
-      type: EVENT.VOTE_END;
-      data: { command: COMMAND };
-    }
-  | {
-      type: EVENT.PLAYER_TURN;
-      data: { player: Player; state: STATE };
-    }
-  | {
-      type: EVENT.REVEAL_HOLE_CARD;
-      data: { dealer: Dealer };
-    }
-  | {
-      type: EVENT.DEALER_TURN;
-      data: { dealer: Dealer; state: STATE };
-    }
-  | {
-      type: EVENT.JUDGE;
-      data: { state: STATE };
-    };
+export type AnimationEvent = ChatEvent | GameEvent;
 
-export type AnimationCompleteEvent =
-  | EVENT.DEALING
-  | EVENT.PLAYER_TURN
-  | EVENT.REVEAL_HOLE_CARD
-  | EVENT.DEALER_TURN
-  | EVENT.JUDGE;
+export type EventType<T extends EVENT> = Extract<AnimationEvent, { type: T }>;
 
 interface MediatorEvents {
   waitForStart: void;
   start: void;
-  animate: AnimationEvents;
   vote: void;
   playerAction: COMMAND;
-  dealerTurn: void;
+  dealerAction: void;
   judge: void;
 }
 
 export type EventMap = MediatorEvents & {
   chat: ChatEvent;
   gamestate: GameEvent;
-  animationComplete: EVENT;
+  animationComplete: AnimationEvent;
 };
 
 export class EventBus<Events extends Record<string, any> = EventMap> {

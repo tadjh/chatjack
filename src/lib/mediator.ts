@@ -1,12 +1,6 @@
 import { Palette } from "@/lib/constants";
 import { Debug } from "@/lib/debug";
-import {
-  AnimationCompleteEvent,
-  ChatEvent,
-  EventBus,
-  eventBus,
-  GameEvent,
-} from "@/lib/event-bus";
+import { AnimationEvent, ChatEvent, EventBus, eventBus } from "@/lib/event-bus";
 import { EVENT } from "@/lib/types";
 
 export type MediatorOptions = {
@@ -17,8 +11,6 @@ export class Mediator {
   static #instance: Mediator | null = null;
   protected debug: Debug;
   #eventBus: EventBus;
-  #isPlayerDone: boolean = false;
-  #isDealerDone: boolean = false;
 
   public static create(): Mediator {
     if (!Mediator.#instance) {
@@ -39,13 +31,11 @@ export class Mediator {
 
   setup() {
     this.#eventBus.subscribe("chat", this.handleChat);
-    this.#eventBus.subscribe("gamestate", this.handleGamestate);
     this.#eventBus.subscribe("animationComplete", this.handleAnimationComplete);
   }
 
   destroy() {
     this.#eventBus.unsubscribe("chat", this.handleChat);
-    this.#eventBus.unsubscribe("gamestate", this.handleGamestate);
     this.#eventBus.unsubscribe(
       "animationComplete",
       this.handleAnimationComplete
@@ -58,18 +48,6 @@ export class Mediator {
         this.debug.log("Waiting for start");
         this.#eventBus.emit("waitForStart");
         break;
-      case EVENT.START:
-        this.debug.log("Starting game");
-        this.#eventBus.emit("start");
-        break;
-      case EVENT.VOTE_UPDATE:
-        this.debug.log("Voting");
-        this.#eventBus.emit("animate", event);
-        break;
-      case EVENT.VOTE_END:
-        this.debug.log("Player action", event.data.command);
-        this.#eventBus.emit("playerAction", event.data.command);
-        break;
       case EVENT.DISCONNECTED:
         this.debug.log("Disconnected");
         this.#eventBus.emit("waitForStart");
@@ -77,64 +55,38 @@ export class Mediator {
     }
   };
 
-  handleGamestate = (event: GameEvent) => {
+  handleAnimationComplete = (event: AnimationEvent) => {
     switch (event.type) {
       case EVENT.DEALING:
-        this.debug.log("Dealing");
-        this.#isPlayerDone = event.data.player.isDone;
-        this.#isDealerDone = event.data.dealer.isDone;
-        this.#eventBus.emit("animate", event);
-        break;
-      case EVENT.PLAYER_TURN:
-        this.debug.log("Player turn", event.data.player.isDone);
-        this.#isPlayerDone = event.data.player.isDone;
-        this.#eventBus.emit("animate", event);
-        break;
-      case EVENT.REVEAL_HOLE_CARD:
-        this.debug.log("Revealing hole card");
-        this.#isDealerDone = event.data.dealer.isDone;
-        this.#eventBus.emit("animate", event);
-        break;
-      case EVENT.DEALER_TURN:
-        this.debug.log("Dealer turn", event.data.dealer.isDone);
-        this.#isDealerDone = event.data.dealer.isDone;
-        this.#eventBus.emit("animate", event);
-        break;
-      case EVENT.JUDGE:
-        this.debug.log("Judge");
-        this.#eventBus.emit("animate", event);
-        break;
-    }
-  };
-
-  handleAnimationComplete = (event: AnimationCompleteEvent) => {
-    switch (event) {
-      case EVENT.DEALING:
         this.debug.log("Dealing animation complete");
-        if (!this.#isPlayerDone) {
-          this.#eventBus.emit("vote");
+        if (event.data.player.isDone) {
+          this.#eventBus.emit("dealerAction");
         } else {
-          this.#eventBus.emit("dealerTurn");
+          this.#eventBus.emit("vote");
         }
         break;
-      case EVENT.PLAYER_TURN:
+      case EVENT.PLAYER_ACTION:
         this.debug.log("Player turn animation complete");
-        if (!this.#isPlayerDone) {
-          this.#eventBus.emit("vote");
+        if (event.data.player.isDone) {
+          this.#eventBus.emit("dealerAction");
         } else {
-          this.#eventBus.emit("dealerTurn");
+          this.#eventBus.emit("vote");
         }
         break;
       case EVENT.REVEAL_HOLE_CARD:
         this.debug.log("Reveal hole card animation complete");
-        this.#eventBus.emit("dealerTurn");
-        break;
-      case EVENT.DEALER_TURN:
-        this.debug.log("Dealer turn animation complete");
-        if (!this.#isDealerDone) {
-          this.#eventBus.emit("dealerTurn");
-        } else {
+        if (event.data.dealer.isDone) {
           this.#eventBus.emit("judge");
+        } else {
+          this.#eventBus.emit("dealerAction");
+        }
+        break;
+      case EVENT.DEALER_ACTION:
+        this.debug.log("Dealer turn animation complete");
+        if (event.data.dealer.isDone) {
+          this.#eventBus.emit("judge");
+        } else {
+          this.#eventBus.emit("dealerAction");
         }
         break;
       case EVENT.JUDGE:

@@ -113,9 +113,7 @@ export class Twitch extends tmi.Client {
       this.debug.log(channel, user, message);
       const command = this.parseMessage(message);
       if (command !== COMMAND.START) return;
-      this.#eventBus.emit("chat", {
-        type: EVENT.START,
-      });
+      this.#eventBus.emit(EVENT.START);
       this.removeListener("message", waitForStart);
     };
 
@@ -144,10 +142,7 @@ export class Twitch extends tmi.Client {
 
     this.addListener("message", handleVote);
     this.startVoteTimer((command) => {
-      this.#eventBus.emit("chat", {
-        type: EVENT.VOTE_END,
-        data: { command },
-      });
+      this.#eventBus.emit("playerAction", command);
       this.removeListener("message", handleVote);
     });
   };

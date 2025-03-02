@@ -112,15 +112,15 @@ export class Blackjack {
 
   setup() {
     this.#eventBus.subscribe("start", this.handleStart);
-    this.#eventBus.subscribe("playerAction", this.handlePlayerTurn);
-    this.#eventBus.subscribe("dealerTurn", this.handleDealerTurn);
+    this.#eventBus.subscribe("playerAction", this.handlePlayerAction);
+    this.#eventBus.subscribe("dealerAction", this.handleDealerAction);
     this.#eventBus.subscribe("judge", this.handleJudge);
   }
 
   destroy() {
     this.#eventBus.unsubscribe("start", this.handleStart);
-    this.#eventBus.unsubscribe("playerAction", this.handlePlayerTurn);
-    this.#eventBus.unsubscribe("dealerTurn", this.handleDealerTurn);
+    this.#eventBus.unsubscribe("playerAction", this.handlePlayerAction);
+    this.#eventBus.unsubscribe("dealerAction", this.handleDealerAction);
     this.#eventBus.unsubscribe("judge", this.handleJudge);
   }
 
@@ -305,11 +305,11 @@ export class Blackjack {
     });
   };
 
-  handlePlayerTurn = (command: COMMAND) => {
+  handlePlayerAction = (command: COMMAND) => {
     this.debug.log("Player turn", command);
     const callback = () =>
       this.#eventBus.emit("gamestate", {
-        type: EVENT.PLAYER_TURN,
+        type: EVENT.PLAYER_ACTION,
         data: {
           player: this.player,
           state: this.state,
@@ -322,7 +322,7 @@ export class Blackjack {
     }
   };
 
-  handleDealerTurn = () => {
+  handleDealerAction = () => {
     this.debug.log("Dealer turn");
     if (!this.#isRevealed) {
       this.reveal();
@@ -335,7 +335,7 @@ export class Blackjack {
     } else {
       this.decide();
       this.#eventBus.emit("gamestate", {
-        type: EVENT.DEALER_TURN,
+        type: EVENT.DEALER_ACTION,
         data: {
           dealer: this.dealer,
           state: this.state,
@@ -345,7 +345,6 @@ export class Blackjack {
   };
 
   handleJudge = () => {
-    this.debug.log("Judge");
     this.judge();
     this.#eventBus.emit("gamestate", {
       type: EVENT.JUDGE,

@@ -25,12 +25,12 @@ export function useBlackjack(options: BlackjackOptions) {
   }
 
   function hit() {
-    blackjack.handlePlayerTurn(COMMAND.HIT);
+    blackjack.handlePlayerAction(COMMAND.HIT);
     updateSnapshot();
   }
 
   function stand() {
-    blackjack.handlePlayerTurn(COMMAND.STAND);
+    blackjack.handlePlayerAction(COMMAND.STAND);
     updateSnapshot();
   }
 
@@ -40,7 +40,7 @@ export function useBlackjack(options: BlackjackOptions) {
   // }
 
   function reveal() {
-    blackjack.handleDealerTurn();
+    blackjack.handleDealerAction();
     updateSnapshot();
   }
 
@@ -48,7 +48,7 @@ export function useBlackjack(options: BlackjackOptions) {
     if (blackjack.dealer.isDone) {
       blackjack.handleJudge();
     } else {
-      blackjack.handleDealerTurn();
+      blackjack.handleDealerAction();
     }
     updateSnapshot();
   }

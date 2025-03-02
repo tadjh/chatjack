@@ -15,12 +15,18 @@ import { DynamicLayer } from "@/lib/canvas/layer.dynamic";
 import { StaticLayer } from "@/lib/canvas/layer.static";
 import { FPS, Fonts, Palette, images } from "@/lib/constants";
 import { Debug } from "@/lib/debug";
-import { AnimationEvents, eventBus, EventBus } from "@/lib/event-bus";
+import {
+  AnimationEvent,
+  ChatEvent,
+  eventBus,
+  EventBus,
+  EventType,
+} from "@/lib/event-bus";
 import { Card } from "@/lib/game/card";
 import { Dealer } from "@/lib/game/dealer";
 import { Hand, Status } from "@/lib/game/hand";
 import { Player, Role } from "@/lib/game/player";
-import { COMMAND, EVENT, LAYER, POSITION, STATE } from "@/lib/types";
+import { EVENT, LAYER, POSITION, STATE } from "@/lib/types";
 import { rgb } from "@/lib/utils";
 
 enum ASSETS_LOADED {
@@ -115,11 +121,13 @@ export class Renderer {
   }
 
   setup() {
-    this.#eventBus.subscribe("animate", this.handleAnimate);
+    this.#eventBus.subscribe("gamestate", this.handleGamestate);
+    this.#eventBus.subscribe("chat", this.handleChat);
   }
 
   destroy() {
-    this.#eventBus.unsubscribe("animate", this.handleAnimate);
+    this.#eventBus.unsubscribe("gamestate", this.handleGamestate);
+    this.#eventBus.unsubscribe("chat", this.handleChat);
   }
 
   checkIsReady() {
@@ -750,81 +758,92 @@ export class Renderer {
     this.cacheEntityBitmaps(entity);
   }
 
-  private handleDealing = ({
-    dealer,
-    player,
-  }: {
-    dealer: Dealer;
-    player: Player;
-  }) => {
+  private handleDealing = (event: EventType<EVENT.DEALING>) => {
     this.debug.log("Dealing");
     this.restart();
-    this.createScores(dealer, player);
-    this.createHands(dealer, player, () => {
-      this.#eventBus.emit("animationComplete", EVENT.DEALING);
+    this.createScores(event.data.dealer, event.data.player);
+    this.createHands(event.data.dealer, event.data.player, () => {
+      this.#eventBus.emit("animationComplete", event);
     });
   };
 
-  private handleVoteUpdate = ({
-    command,
-    count,
-  }: {
-    command: COMMAND;
-    count: number;
-  }) => {
-    this.debug.log("Handling vote update", command, count);
+  private handleVoteUpdate = (event: EventType<EVENT.VOTE_UPDATE>) => {
+    this.debug.log(
+      "Handling vote update",
+      event.data.command,
+      event.data.count
+    );
     // TODO Show votes on screen
   };
 
-  handlePlayerTurn = ({ player, state }: { player: Player; state: STATE }) => {
-    this.createActionText(state, player.role);
-    this.updateScores(player);
-    this.updateHand(player.hand, () => {
-      if (!player.isDone) {
+  private handleVoteEnd = (event: EventType<EVENT.VOTE_END>) => {
+    this.debug.log("Handling vote end", event.data.command);
+    // TODO Hide votes on screen
+  };
+
+  handlePlayerAction = (event: EventType<EVENT.PLAYER_ACTION>) => {
+    this.createActionText(event.data.state, event.data.player.role);
+    this.updateScores(event.data.player);
+    this.updateHand(event.data.player.hand, () => {
+      if (!event.data.player.isDone) {
         this.createTimer((layer: LAYER, id: string) =>
           this.#layers.removeEntity(layer, id)
         );
       }
-      this.#eventBus.emit("animationComplete", EVENT.PLAYER_TURN);
+      this.#eventBus.emit("animationComplete", event);
     });
   };
 
-  handleRevealHoleCard = ({ dealer }: { dealer: Dealer }) => {
-    this.updateScores(dealer);
-    this.updateHoleCard(dealer, () => {
-      this.#eventBus.emit("animationComplete", EVENT.REVEAL_HOLE_CARD);
+  handleRevealHoleCard = (event: EventType<EVENT.REVEAL_HOLE_CARD>) => {
+    this.updateScores(event.data.dealer);
+    this.updateHoleCard(event.data.dealer, () => {
+      this.#eventBus.emit("animationComplete", event);
     });
   };
 
-  handleDealerTurn = ({ dealer, state }: { dealer: Dealer; state: STATE }) => {
-    this.createActionText(state, dealer.role);
-    this.updateScores(dealer);
-    this.updateHand(dealer.hand, () => {
-      this.#eventBus.emit("animationComplete", EVENT.DEALER_TURN);
+  handleDealerAction = (event: EventType<EVENT.DEALER_ACTION>) => {
+    this.createActionText(event.data.state, event.data.dealer.role);
+    this.updateScores(event.data.dealer);
+    this.updateHand(event.data.dealer.hand, () => {
+      this.#eventBus.emit("animationComplete", event);
     });
   };
 
-  handleJudge = ({ state }: { state: STATE }) => {
-    this.createGameoverText(state, () => {
-      this.#eventBus.emit("animationComplete", EVENT.JUDGE);
+  handleJudge = (event: EventType<EVENT.JUDGE>) => {
+    this.createGameoverText(event.data.state, () => {
+      this.#eventBus.emit("animationComplete", event);
     });
   };
 
-  handleAnimate = ({ type, data }: AnimationEvents) => {
-    switch (type) {
+  handleGamestate = (event: AnimationEvent) => {
+    switch (event.type) {
       case EVENT.DEALING:
         this.init();
-        return this.handleDealing(data);
-      case EVENT.VOTE_UPDATE:
-        return this.handleVoteUpdate(data);
-      case EVENT.PLAYER_TURN:
-        return this.handlePlayerTurn(data);
+        return this.handleDealing(event);
+      case EVENT.PLAYER_ACTION:
+        return this.handlePlayerAction(event);
       case EVENT.REVEAL_HOLE_CARD:
-        return this.handleRevealHoleCard(data);
-      case EVENT.DEALER_TURN:
-        return this.handleDealerTurn(data);
+        return this.handleRevealHoleCard(event);
+      case EVENT.DEALER_ACTION:
+        return this.handleDealerAction(event);
       case EVENT.JUDGE:
-        return this.handleJudge(data);
+        return this.handleJudge(event);
+    }
+  };
+
+  handleChat = (event: ChatEvent) => {
+    this.debug.log("Handling chat", event);
+    switch (event.type) {
+      // case EVENT.CONNECTED:
+      //   this.init();
+      //   break;
+      // case EVENT.DISCONNECTED:
+      //   this.reset();
+      //   break;
+      case EVENT.VOTE_UPDATE:
+        return this.handleVoteUpdate(event);
+      case EVENT.VOTE_END:
+        return this.handleVoteEnd(event);
     }
   };
 }
