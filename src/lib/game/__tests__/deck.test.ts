@@ -6,17 +6,18 @@ describe("Deck", () => {
   let deck: Deck;
 
   beforeEach(() => {
-    deck = new Deck();
+    deck = new Deck({ shoeSize: 1 });
   });
 
   it("should create a deck with a valid count", () => {
+    deck = new Deck();
     // A single deck should have 52 cards.
     expect(deck.length).toBe(52);
   });
 
   it("should throw an error when creating a deck with an invalid count", () => {
-    expect(() => new Deck({ shoeSize: -1 })).toThrow("Invalid deck count");
-    expect(() => new Deck({ shoeSize: 9 })).toThrow("Invalid deck count");
+    expect(() => new Deck({ shoeSize: -1 })).toThrow("Invalid deck shoe size");
+    expect(() => new Deck({ shoeSize: 9 })).toThrow("Invalid deck shoe size");
   });
 
   it("should shuffle the deck", () => {
