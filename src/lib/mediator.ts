@@ -7,6 +7,7 @@ export type MediatorOptions = {
 };
 
 export class Mediator {
+  public static readonly name = "Mediator";
   static #instance: Mediator | null = null;
   protected debug: Debug;
   #eventBus: EventBus;
@@ -27,17 +28,25 @@ export class Mediator {
 
   private constructor(
     eventBusInstance = eventBus,
-    debug = new Debug("Mediator", "Yellow")
+    debug = new Debug(Mediator.name, "Yellow")
   ) {
     this.debug = debug;
     this.#eventBus = eventBusInstance;
-    this.debug.log("Mediator initialized");
+    this.init();
+  }
+
+  private init() {
+    this.debug.log(`Creating: ${Mediator.name} instance`);
     this.setup();
   }
 
   private setup() {
-    this.#eventBus.subscribe("chat", this.handleChat);
-    this.#eventBus.subscribe("animationComplete", this.handleAnimationComplete);
+    this.#eventBus.subscribe("chat", this.handleChat, Mediator.name);
+    this.#eventBus.subscribe(
+      "animationComplete",
+      this.handleAnimationComplete,
+      Mediator.name
+    );
   }
 
   private teardown() {
@@ -65,11 +74,11 @@ export class Mediator {
     switch (event.type) {
       case EVENT.DEALING:
         this.debug.log("Dealing animation complete");
-        if (event.data.player.isDone) {
-          this.#eventBus.emit("dealerAction");
-        } else {
-          this.#eventBus.emit("vote");
-        }
+        // if (event.data.player.isDone) {
+        //   this.#eventBus.emit("dealerAction");
+        // } else {
+        //   this.#eventBus.emit("vote");
+        // }
         break;
       case EVENT.PLAYER_ACTION:
         this.debug.log("Player turn animation complete");

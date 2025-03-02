@@ -142,8 +142,6 @@ export class SpriteEntity extends Entity<
   }
 
   public addSprite(coords: SpriteCoordinates, setActive = false): this {
-    console.log(this.props.spriteIndex);
-
     this.debug.log(
       `Updating ${this.id}: { x: ${this.#sprites[this.#sprites.length - 1].x}, y: ${this.#sprites[this.#sprites.length - 1].y} }`
     );
@@ -151,8 +149,6 @@ export class SpriteEntity extends Entity<
     if (setActive) {
       this.props.spriteIndex = this.#sprites.length - 1;
     }
-
-    console.log(this.props.spriteIndex);
 
     return this;
   }

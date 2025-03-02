@@ -18,8 +18,8 @@ export function Canvas({ fixedDeck, channel, debug }: CanvasProps) {
     playerCount: 1,
     playerNames: ["Chat"],
   });
-  useTwitch({ channel: channel ?? "", voteDuration: 10, debug: isDebug });
   useMediator();
+  useTwitch({ channel: channel ?? "", voteDuration: 10, debug: isDebug });
 
   return (
     <>

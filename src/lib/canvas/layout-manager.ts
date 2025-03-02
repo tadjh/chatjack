@@ -113,9 +113,7 @@ export class LayoutManager {
 
       entity.y = nextY - offsetY;
 
-      this.debug.log(
-        `Adding ${entity.id} to layout ${entity.position} at ${entity.y}`
-      );
+      this.debug.log(`Adding ${entity.id} to layout: ${entity.position}`);
     }
   }
 

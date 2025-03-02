@@ -174,7 +174,12 @@ export abstract class Entity<
 
     this.speed =
       this.totalDuration > 0 ? 1 / (this.totalDuration * FPS) : 1 / 12;
+    this.init();
+  }
+
+  protected init(): this {
     this.debug.log("Creating:", this.id);
+    return this;
   }
 
   protected setPhase(): this {
@@ -294,7 +299,7 @@ export abstract class Entity<
   }
 
   public resize(): this {
-    this.debug.log("Resizing", this.id);
+    // this.debug.log("Resizing:", this.id);
     this.scaleFactor = getScaleFactor();
     this.padding = getHorizontalScaleFactor() * BASELINE_PADDING;
     return this;

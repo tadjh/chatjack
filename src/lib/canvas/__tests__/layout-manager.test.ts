@@ -126,10 +126,10 @@ describe("LayoutManager", () => {
     // Verify debug logs were called
     expect(debugSpy).toHaveBeenCalledWith("Refreshing layouts");
     expect(debugSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Adding entity1 to layout top")
+      expect.stringContaining("Adding entity1 to layout: top")
     );
     expect(debugSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Adding entity2 to layout bottom")
+      expect.stringContaining("Adding entity2 to layout: bottom")
     );
 
     // Verify entity positions were updated

@@ -51,12 +51,13 @@ type Canvases = [
 ];
 
 export class Renderer {
-  private static instance: Renderer | null = null;
+  public static readonly name = "Renderer";
   public static readonly defaults: Required<RendererOptions> = {
     fps: FPS,
     tickRate: 1000 / FPS,
     animationSpeed: 1 / FPS,
   };
+  static #instance: Renderer | null = null;
   readonly fps: number;
   readonly tickRate: number;
   readonly baseAnimSpeed: number;
@@ -74,17 +75,17 @@ export class Renderer {
   #eventBus: EventBus;
 
   public static create(options?: RendererOptions): Renderer {
-    if (!Renderer.instance) {
-      Renderer.instance = new Renderer(options);
+    if (!Renderer.#instance) {
+      Renderer.#instance = new Renderer(options);
     }
-    return Renderer.instance;
+    return Renderer.#instance;
   }
 
   public static destroy() {
-    if (Renderer.instance) {
-      Renderer.instance.teardown();
+    if (Renderer.#instance) {
+      Renderer.#instance.teardown();
     }
-    Renderer.instance = null;
+    Renderer.#instance = null;
   }
 
   private constructor(
@@ -95,10 +96,9 @@ export class Renderer {
     }: RendererOptions = Renderer.defaults,
     eventBusInstance = eventBus,
     layers = new LayerManager(),
-    debug = new Debug("Engine", "Orange")
+    debug = new Debug(Renderer.name, "Orange")
   ) {
     this.debug = debug;
-    this.debug.log("Creating Engine instance");
     this.fps = fps;
     this.tickRate = tickRate;
     this.baseAnimSpeed = animationSpeed;
@@ -124,13 +124,16 @@ export class Renderer {
   }
 
   private init() {
+    this.debug.log(`Creating: ${Renderer.name} instance`);
     this.setup();
+    return this;
   }
 
   private async setup() {
     await this.loadAssets();
-    this.#eventBus.subscribe("gamestate", this.handleGamestate);
-    this.#eventBus.subscribe("chat", this.handleChat);
+    this.#eventBus.subscribe("gamestate", this.handleGamestate, Renderer.name);
+    this.#eventBus.subscribe("chat", this.handleChat, Renderer.name);
+    return this;
   }
 
   private async teardown() {
@@ -139,6 +142,7 @@ export class Renderer {
     this.unloadLayers();
     this.#eventBus.unsubscribe("gamestate", this.handleGamestate);
     this.#eventBus.unsubscribe("chat", this.handleChat);
+    return this;
   }
 
   private checkIsReady() {
@@ -151,9 +155,10 @@ export class Renderer {
     } else {
       this.#isReady = false;
     }
+    return this;
   }
 
-  private async loadFonts(): Promise<void> {
+  private async loadFonts() {
     this.debug.log("Loading fonts");
     for (const [font, url] of Fonts) {
       const fontFace = new FontFace(font, `url(${url})`);
@@ -343,7 +348,7 @@ export class Renderer {
   }
 
   private reset() {
-    this.debug.log("Engine resetting");
+    this.debug.log("Resetting");
     this.#layers.clear();
     this.loadTitleScreen();
     if (this.#counter) {
@@ -354,7 +359,7 @@ export class Renderer {
   }
 
   private restart() {
-    this.debug.log("Restarting engine");
+    this.debug.log("Restarting");
     this.#layers.clear();
     if (this.#counter) {
       this.#counter.destroy();
@@ -778,7 +783,6 @@ export class Renderer {
 
   private handleDealing = (event: EventType<EVENT.DEALING>) => {
     this.debug.log("Dealing");
-    this.restart();
     this.createScores(event.data.dealer, event.data.player);
     this.createHands(event.data.dealer, event.data.player, () => {
       this.#eventBus.emit("animationComplete", event);
@@ -836,7 +840,7 @@ export class Renderer {
   public handleGamestate = (event: AnimationEvent) => {
     switch (event.type) {
       case EVENT.DEALING:
-        this.init();
+        this.restart();
         return this.handleDealing(event);
       case EVENT.PLAYER_ACTION:
         return this.handlePlayerAction(event);

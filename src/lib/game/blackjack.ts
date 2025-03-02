@@ -15,13 +15,14 @@ export type BlackjackOptions = {
 export type Table = [Dealer, ...Player[]];
 
 export class Blackjack {
+  public static readonly name = "Blackjack";
   public static defaults: Required<BlackjackOptions> = {
     shoeSize: 1,
     fixedDeck: null,
     playerCount: 1,
     playerNames: [],
   };
-  private static instance: Blackjack | null = null;
+  static #instance: Blackjack | null = null;
   readonly shoeSize: number;
   readonly fixedDeck: FixedDeck | null;
   readonly playerCount: number;
@@ -35,17 +36,17 @@ export class Blackjack {
   #eventBus: EventBus;
 
   public static create(options?: BlackjackOptions): Blackjack {
-    if (!Blackjack.instance) {
-      Blackjack.instance = new Blackjack(options);
+    if (!Blackjack.#instance) {
+      Blackjack.#instance = new Blackjack(options);
     }
-    return Blackjack.instance;
+    return Blackjack.#instance;
   }
 
   public static destroy() {
-    if (Blackjack.instance) {
-      Blackjack.instance.teardown();
+    if (Blackjack.#instance) {
+      Blackjack.#instance.teardown();
     }
-    Blackjack.instance = null;
+    Blackjack.#instance = null;
   }
 
   private constructor(
@@ -56,19 +57,17 @@ export class Blackjack {
       playerNames = Blackjack.defaults.playerNames,
     }: BlackjackOptions = Blackjack.defaults,
     eventBusInstance = eventBus,
-    debug = new Debug("Blackjack", "Green")
+    debug = new Debug(Blackjack.name, "Green")
   ) {
     this.debug = debug;
-    this.debug.log("Creating Blackjack instance");
     this.shoeSize = shoeSize;
     this.fixedDeck = fixedDeck;
     this.playerCount = playerCount;
     this.playerNames = playerNames;
+    this.#eventBus = eventBusInstance;
+    this.init();
     this.#table = this.createTable({ playerCount, playerNames });
     this.#shoe = this.createShoe({ shoeSize, fixedDeck });
-    this.#eventBus = eventBusInstance;
-    this.state = STATE.INIT;
-    this.setup();
   }
 
   get dealer() {
@@ -108,11 +107,27 @@ export class Blackjack {
     return this.#isRevealed;
   }
 
+  private init() {
+    this.debug.log(`Creating: ${Blackjack.name} instance`);
+    this.state = STATE.INIT;
+    this.setup();
+    return this;
+  }
+
   private setup() {
-    this.#eventBus.subscribe("start", this.handleDeal);
-    this.#eventBus.subscribe("playerAction", this.handlePlayerAction);
-    this.#eventBus.subscribe("dealerAction", this.handleDealerAction);
-    this.#eventBus.subscribe("judge", this.handleJudge);
+    this.#eventBus.subscribe("start", this.handleDeal, Blackjack.name);
+    this.#eventBus.subscribe(
+      "playerAction",
+      this.handlePlayerAction,
+      Blackjack.name
+    );
+    this.#eventBus.subscribe(
+      "dealerAction",
+      this.handleDealerAction,
+      Blackjack.name
+    );
+    this.#eventBus.subscribe("judge", this.handleJudge, Blackjack.name);
+    return this;
   }
 
   private teardown() {
@@ -120,6 +135,7 @@ export class Blackjack {
     this.#eventBus.unsubscribe("playerAction", this.handlePlayerAction);
     this.#eventBus.unsubscribe("dealerAction", this.handleDealerAction);
     this.#eventBus.unsubscribe("judge", this.handleJudge);
+    return this;
   }
 
   private createTable({
@@ -198,8 +214,6 @@ export class Blackjack {
     player.stand(index);
     this.state = STATE.PLAYER_STAND;
     if (callback) callback();
-    // TODO Handle multiple players
-    // this.#playerTurn++;
     return this;
   }
 

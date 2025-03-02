@@ -311,13 +311,9 @@ describe("Entity", () => {
       const originalScaleFactor = entityInstance.scaleFactor;
       const originalPadding = entityInstance.padding;
 
-      console.log(window.innerWidth, window.innerHeight);
-
       // Mock different window size
       Object.defineProperty(window, "innerWidth", { value: 2048 });
       Object.defineProperty(window, "innerHeight", { value: 1536 });
-
-      console.log(window.innerWidth, window.innerHeight);
 
       entity.resize();
 

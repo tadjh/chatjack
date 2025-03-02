@@ -11,6 +11,7 @@ export type TwitchOptions = {
 };
 
 export class Twitch extends tmi.Client {
+  public static readonly name = "Twitch";
   static #instance: Twitch | null = null;
   protected debug: Debug;
   #eventBus: EventBus;
@@ -26,11 +27,18 @@ export class Twitch extends tmi.Client {
     return Twitch.#instance;
   }
 
+  public static destroy() {
+    if (Twitch.#instance) {
+      Twitch.#instance.destroy();
+    }
+    Twitch.#instance = null;
+  }
+
   private constructor(
     options: TwitchOptions = { channel: "", voteDuration: 10, debug: false },
     vote = new Vote(),
     events = eventBus,
-    debug = new Debug("Twitch", "Purple")
+    debug = new Debug(Twitch.name, "Purple")
   ) {
     super({
       options: {
@@ -60,8 +68,12 @@ export class Twitch extends tmi.Client {
     this.addListener("connected", this.handleConnected);
     this.addListener("disconnected", this.handleDisconnected);
 
-    this.#eventBus.subscribe("waitForStart", this.handleWaitForStart);
-    this.#eventBus.subscribe("vote", this.handleVoteStart);
+    this.#eventBus.subscribe(
+      "waitForStart",
+      this.handleWaitForStart,
+      Twitch.name
+    );
+    this.#eventBus.subscribe("vote", this.handleVoteStart, Twitch.name);
 
     await this.connect();
   }
