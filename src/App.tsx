@@ -4,7 +4,6 @@ import { useCanvas } from "@/hooks/use-canvas";
 import { useSearchParams } from "react-router";
 import { useTwitch } from "./hooks/use-twtich";
 import { useMediator } from "@/hooks/use-mediator";
-import { useEventBus } from "@/hooks/use-event-bus";
 
 function App() {
   const [searchParams] = useSearchParams();
@@ -35,7 +34,6 @@ function App() {
   });
   useTwitch({ channel: channel ?? "", voteDuration: 10, debug: isDebug });
   useMediator();
-  useEventBus();
 
   return (
     <>
