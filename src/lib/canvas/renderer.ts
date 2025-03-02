@@ -80,6 +80,13 @@ export class Renderer {
     return Renderer.instance;
   }
 
+  public static destroy() {
+    if (Renderer.instance) {
+      Renderer.instance.teardown();
+    }
+    Renderer.instance = null;
+  }
+
   private constructor(
     {
       fps = Renderer.defaults.fps,
@@ -98,7 +105,6 @@ export class Renderer {
     this.#layers = layers;
     this.#eventBus = eventBusInstance;
     this.init();
-    this.setup();
   }
 
   get isLoading() {
@@ -120,19 +126,20 @@ export class Renderer {
   async init() {
     this.#isLoading = true;
     await this.loadAssets();
+    this.setup();
   }
 
-  setup() {
+  private setup() {
     this.#eventBus.subscribe("gamestate", this.handleGamestate);
     this.#eventBus.subscribe("chat", this.handleChat);
   }
 
-  destroy() {
+  private teardown() {
     this.#eventBus.unsubscribe("gamestate", this.handleGamestate);
     this.#eventBus.unsubscribe("chat", this.handleChat);
   }
 
-  checkIsReady() {
+  private checkIsReady() {
     if (
       this.#assetsLoaded.get(ASSETS_LOADED.FONTS) &&
       this.#assetsLoaded.get(ASSETS_LOADED.IMAGES) &&
@@ -761,7 +768,7 @@ export class Renderer {
   }
 
   // Add a method to update sprite bitmaps when sprites change
-  public updateEntitySprites(entity: SpriteEntity): void {
+  private updateEntitySprites(entity: SpriteEntity): void {
     this.cacheEntityBitmaps(entity);
   }
 
@@ -788,7 +795,7 @@ export class Renderer {
     // TODO Hide votes on screen
   };
 
-  handlePlayerAction = (event: EventType<EVENT.PLAYER_ACTION>) => {
+  private handlePlayerAction = (event: EventType<EVENT.PLAYER_ACTION>) => {
     this.createActionText(event.data.state, event.data.player.role);
     this.updateScores(event.data.player);
     this.updateHand(event.data.player.hand, () => {
@@ -801,14 +808,14 @@ export class Renderer {
     });
   };
 
-  handleRevealHoleCard = (event: EventType<EVENT.REVEAL_HOLE_CARD>) => {
+  private handleRevealHoleCard = (event: EventType<EVENT.REVEAL_HOLE_CARD>) => {
     this.updateScores(event.data.dealer);
     this.updateHoleCard(event.data.dealer, () => {
       this.#eventBus.emit("animationComplete", event);
     });
   };
 
-  handleDealerAction = (event: EventType<EVENT.DEALER_ACTION>) => {
+  private handleDealerAction = (event: EventType<EVENT.DEALER_ACTION>) => {
     this.createActionText(event.data.state, event.data.dealer.role);
     this.updateScores(event.data.dealer);
     this.updateHand(event.data.dealer.hand, () => {
@@ -816,13 +823,13 @@ export class Renderer {
     });
   };
 
-  handleJudge = (event: EventType<EVENT.JUDGE>) => {
+  private handleJudge = (event: EventType<EVENT.JUDGE>) => {
     this.createGameoverText(event.data.state, () => {
       this.#eventBus.emit("animationComplete", event);
     });
   };
 
-  handleGamestate = (event: AnimationEvent) => {
+  public handleGamestate = (event: AnimationEvent) => {
     switch (event.type) {
       case EVENT.DEALING:
         this.init();
@@ -838,7 +845,7 @@ export class Renderer {
     }
   };
 
-  handleChat = (event: ChatEvent) => {
+  public handleChat = (event: ChatEvent) => {
     this.debug.log("Handling chat", event);
     switch (event.type) {
       // case EVENT.CONNECTED:
