@@ -603,7 +603,12 @@ export class Renderer {
       cardSprite.layer,
       card.id
     )!;
-    entity.sprites[entity.props.spriteIndex].x += entity.spriteWidth;
+    const spriteIndex = entity.props.spriteIndex;
+    const coords = entity.getSprite(spriteIndex);
+    entity.setSprite(spriteIndex, {
+      x: coords.x + entity.spriteWidth,
+      y: coords.y,
+    });
     this.debug.log(`Updating ${entity.id}`);
     this.updateEntitySprites(entity);
     this.#layers.setEntity(entity);
@@ -717,7 +722,7 @@ export class Renderer {
     entity: SpriteEntity,
     spriteIndex: number
   ): ImageBitmap {
-    const sprite = entity.sprites[spriteIndex];
+    const sprite = entity.getSprite(spriteIndex);
     const cacheKey = SpriteEntity.formatSpriteId(
       entity.src,
       sprite.x,
@@ -740,13 +745,13 @@ export class Renderer {
    */
   private cacheEntityBitmaps(entity: SpriteEntity): void {
     this.debug.log(
-      `Caching ${entity.sprites.length} sprite(s) for ${entity.id}`
+      `Caching ${entity.getSpriteCount()} sprite(s) for ${entity.id}`
     );
 
     const bitmaps: ImageBitmap[] = [];
 
     // Get or create bitmaps for each sprite
-    for (let i = 0; i < entity.sprites.length; i++) {
+    for (let i = 0; i < entity.getSpriteCount(); i++) {
       const bitmap = this.getCachedBitmap(entity, i);
       bitmaps.push(bitmap);
     }

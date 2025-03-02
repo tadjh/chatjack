@@ -193,5 +193,11 @@ export class TimerEntity extends Entity<
     ctx.fill();
     return this;
   }
+
+  public destroy(): this {
+    super.destroy();
+    this.#radius = 0;
+    return this;
+  }
 }
 

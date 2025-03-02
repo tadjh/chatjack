@@ -49,11 +49,11 @@ export class SpriteEntity extends Entity<
 > {
   readonly type = "sprite";
   readonly src: IMAGE;
-  sprites: [SpriteCoordinates, ...SpriteCoordinates[]];
   readonly spriteWidth: number;
   readonly spriteHeight: number;
   readonly scale: number;
   readonly angle: number;
+  #sprites: [SpriteCoordinates, ...SpriteCoordinates[]];
   #bitmaps: ImageBitmap[] = [];
   #x: number = 0;
   #y: number = 0;
@@ -80,7 +80,7 @@ export class SpriteEntity extends Entity<
       debug
     );
     this.src = props.src;
-    this.sprites = props.sprites;
+    this.#sprites = props.sprites;
     this.spriteWidth = props.spriteWidth;
     this.spriteHeight = props.spriteHeight;
     this.scale = props.scale ?? 1;
@@ -118,7 +118,7 @@ export class SpriteEntity extends Entity<
       throw new Error("2d rendering context not supported");
     }
     offCtx.imageSmoothingEnabled = false;
-    const { x, y } = this.sprites[index];
+    const { x, y } = this.#sprites[index];
     offCtx.drawImage(
       image,
       x,
@@ -141,15 +141,15 @@ export class SpriteEntity extends Entity<
     return `${src}-sprite-x-${x}-y-${y}`;
   }
 
-  addSprite(coords: SpriteCoordinates, setActive = false): this {
+  public addSprite(coords: SpriteCoordinates, setActive = false): this {
     console.log(this.props.spriteIndex);
 
     this.debug.log(
-      `Updating ${this.id}: { x: ${this.sprites[this.sprites.length - 1].x}, y: ${this.sprites[this.sprites.length - 1].y} }`
+      `Updating ${this.id}: { x: ${this.#sprites[this.#sprites.length - 1].x}, y: ${this.#sprites[this.#sprites.length - 1].y} }`
     );
-    this.sprites.push(coords);
+    this.#sprites.push(coords);
     if (setActive) {
-      this.props.spriteIndex = this.sprites.length - 1;
+      this.props.spriteIndex = this.#sprites.length - 1;
     }
 
     console.log(this.props.spriteIndex);
@@ -157,7 +157,26 @@ export class SpriteEntity extends Entity<
     return this;
   }
 
-  setY(y: number): this {
+  public getSprite(index: number): SpriteCoordinates {
+    if (index >= this.#sprites.length) {
+      throw new Error(`Sprite index out of bounds: ${index}`);
+    }
+    return this.#sprites[index];
+  }
+
+  public setSprite(index: number, coords: SpriteCoordinates): this {
+    if (index >= this.#sprites.length) {
+      throw new Error(`Sprite index out of bounds: ${index}`);
+    }
+    this.#sprites[index] = coords;
+    return this;
+  }
+
+  public getSpriteCount(): number {
+    return this.#sprites.length;
+  }
+
+  private setY(y: number): this {
     switch (this.position) {
       case POSITION.TOP:
         this.y = y - this.#halfHeight;
@@ -232,13 +251,13 @@ export class SpriteEntity extends Entity<
               (this.#spriteProgress + this.baseAnimSpeed / 6) % 1;
 
             this.props.spriteIndex = Math.floor(
-              lerp(0, this.sprites.length - 1, this.#spriteProgress)
+              lerp(0, this.#sprites.length - 1, this.#spriteProgress)
             );
           }
           break;
         case "flip-over":
           this.props.spriteIndex = Math.floor(
-            lerp(0, this.sprites.length - 1, this.localProgress)
+            lerp(0, this.#sprites.length - 1, this.localProgress)
           );
           // this.props.spriteIndex = this.props.spriteIndex === 0 ? 1 : 0;
           break;
@@ -272,7 +291,7 @@ export class SpriteEntity extends Entity<
     this.#x = this.x + this.#offsetX + this.props.offsetX;
     this.#y = this.y + this.#offsetY + this.props.offsetY;
 
-    const { flipX, flipY } = this.sprites[spriteIndex];
+    const { flipX, flipY } = this.#sprites[spriteIndex];
 
     ctx.save();
 
@@ -303,6 +322,20 @@ export class SpriteEntity extends Entity<
       this.height
     );
     ctx.restore();
+    return this;
+  }
+
+  public destroy(): this {
+    super.destroy();
+    this.#bitmaps = [];
+    this.#x = 0;
+    this.#y = 0;
+    this.#offsetX = 0;
+    this.#offsetY = 0;
+    this.#halfWidth = 0;
+    this.#halfHeight = 0;
+    this.#spriteProgress = 0;
+    this.#sprites = [{} as SpriteCoordinates];
     return this;
   }
 }

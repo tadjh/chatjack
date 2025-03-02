@@ -57,7 +57,7 @@ export class TextEntity extends Entity<
   #fontSize: number;
   #offsetX: number;
   #offsetY: number;
-  #offCtx: OffscreenCanvasRenderingContext2D;
+  #offCtx: OffscreenCanvasRenderingContext2D | null = null;
   #x: number = 0;
   #y: number = 0;
   #strokeWidth: number = 0;
@@ -106,6 +106,9 @@ export class TextEntity extends Entity<
   }
 
   private getFontSize(): number {
+    if (!this.#offCtx) {
+      throw new Error("Offscreen context not initialized");
+    }
     let fontSize = this.scaleFactor * this.fontSize;
     this.#offCtx.font = font(fontSize, this.fontFamily);
     const textWidth = this.#offCtx.measureText(this.text).width;
@@ -120,6 +123,9 @@ export class TextEntity extends Entity<
     width: number;
     height: number;
   } {
+    if (!this.#offCtx) {
+      throw new Error("Offscreen context not initialized");
+    }
     const { width, fontBoundingBoxAscent, fontBoundingBoxDescent } =
       this.#offCtx.measureText(this.text);
     return {
@@ -136,7 +142,7 @@ export class TextEntity extends Entity<
     return this;
   }
 
-  setX(x: number): this {
+  private setX(x: number): this {
     this.x =
       this.textAlign === "start" || this.textAlign === "left"
         ? x
@@ -146,15 +152,15 @@ export class TextEntity extends Entity<
     return this;
   }
 
-  setY(y: number): this {
-    this.y =
-      this.textBaseline === "top"
-        ? y
-        : this.textBaseline === "middle"
-          ? y + this.height / 2
-          : y + this.height;
-    return this;
-  }
+  // private setY(y: number): this {
+  //   this.y =
+  //     this.textBaseline === "top"
+  //       ? y
+  //       : this.textBaseline === "middle"
+  //         ? y + this.height / 2
+  //         : y + this.height;
+  //   return this;
+  // }
 
   public resize(): this {
     super.resize();
@@ -260,6 +266,20 @@ export class TextEntity extends Entity<
     // ctx.fillRect(0, (window.innerHeight / 4) * 3, window.innerWidth, 10);
 
     ctx.restore();
+    return this;
+  }
+
+  public destroy(): this {
+    super.destroy();
+    this.#offCtx = null;
+    this.#fontSize = 0;
+    this.#offsetX = 0;
+    this.#offsetY = 0;
+    this.#strokeWidth = 0;
+    this.#x = 0;
+    this.#y = 0;
+    this.text = "";
+    this.color = "";
     return this;
   }
 }

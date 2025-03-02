@@ -121,6 +121,7 @@ export abstract class Entity<
   >[];
   public props: Props & BaseAnimationProps;
   public opacity: number;
+  public startTime: number = 0;
   protected totalDuration: number;
   protected phaseStart: number = 0;
   protected localProgress: number = 0;
@@ -131,8 +132,6 @@ export abstract class Entity<
   protected padding: number = getScaleFactor() * BASELINE_PADDING;
   protected scaleFactor: number = getScaleFactor();
   protected debug: Debug;
-  public startTime: number = 0;
-  protected lastTime: number = performance.now();
   protected hasBeginFired: boolean = false;
   protected hasEndFired: boolean = false;
   onBegin: ((layer: LAYER, id: string) => void) | undefined;
@@ -301,11 +300,6 @@ export abstract class Entity<
     return this;
   }
 
-  public destroy(): this {
-    this.debug.log("Destroying", this.id);
-    return this;
-  }
-
   protected easing(): this {
     if (!this.current) {
       throw new Error(`No current phase to ease for ${this.id}`);
@@ -441,6 +435,28 @@ export abstract class Entity<
     this.localProgress = 0;
     this.phaseStart = 0;
     this.current = null;
+    return this;
+  }
+
+  public destroy(): this {
+    this.debug.log("Destroying", this.id);
+    this.current = null;
+    this.phases = [];
+    this.props = {} as Props & BaseAnimationProps;
+    this.opacity = 0;
+    this.x = 0;
+    this.y = 0;
+    this.width = 0;
+    this.height = 0;
+    this.startTime = 0;
+    this.totalDuration = 0;
+    this.phaseStart = 0;
+    this.localProgress = 0;
+    this.phaseStart = 0;
+    this.onBegin = undefined;
+    this.onEnd = undefined;
+    this.hasBeginFired = false;
+    this.hasEndFired = false;
     return this;
   }
 }
