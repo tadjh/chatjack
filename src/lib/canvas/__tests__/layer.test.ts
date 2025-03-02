@@ -349,7 +349,7 @@ describe("Layer", () => {
 
     // Create an action entity
     const actionEntity = new TextEntity({
-      id: "action",
+      id: "action-text",
       type: "text",
       text: "Action",
       fontSize: 16,

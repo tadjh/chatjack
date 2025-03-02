@@ -1,3 +1,4 @@
+import { actionText } from "@/lib/canvas/entities";
 import { TextEntity } from "@/lib/canvas/entity.text";
 import { Layer } from "@/lib/canvas/layer";
 import { LAYER } from "@/lib/canvas/types";
@@ -38,7 +39,7 @@ export class DynamicLayer extends Layer {
     let action: TextEntity | undefined;
 
     this.forEach((entity) => {
-      if (entity.id === "action") {
+      if (entity.id === actionText.id) {
         action = entity as TextEntity;
         return;
       }

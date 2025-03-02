@@ -79,7 +79,7 @@ vi.mock("@/lib/canvas/entities", () => {
       { id: "title", layer: LAYER.UI, type: "text" },
       { id: "subtitle", layer: LAYER.UI, type: "text" },
     ],
-    actionText: { id: "action", layer: LAYER.UI, type: "text" },
+    actionText: { id: "action-text", layer: LAYER.UI, type: "text" },
     cardSprite: { id: "card", layer: LAYER.GAME, type: "sprite" },
     gameoverText: [
       { id: "title", layer: LAYER.UI, type: "text" },

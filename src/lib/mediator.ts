@@ -74,14 +74,14 @@ export class Mediator {
     switch (event.type) {
       case EVENT.DEALING:
         this.debug.log("Dealing animation complete");
-        // if (event.data.player.isDone) {
-        //   this.#eventBus.emit("dealerAction");
-        // } else {
-        //   this.#eventBus.emit("vote");
-        // }
+        if (event.data.player.isDone) {
+          this.#eventBus.emit("dealerAction");
+        } else {
+          this.#eventBus.emit("vote");
+        }
         break;
       case EVENT.PLAYER_ACTION:
-        this.debug.log("Player turn animation complete");
+        this.debug.log("Player action animation complete");
         if (event.data.player.isDone) {
           this.#eventBus.emit("dealerAction");
         } else {
@@ -90,23 +90,23 @@ export class Mediator {
         break;
       case EVENT.REVEAL_HOLE_CARD:
         this.debug.log("Reveal hole card animation complete");
-        if (event.data.dealer.isDone) {
-          this.#eventBus.emit("judge");
-        } else {
-          this.#eventBus.emit("dealerAction");
-        }
+        // if (event.data.dealer.isDone) {
+        //   this.#eventBus.emit("judge");
+        // } else {
+        //   this.#eventBus.emit("dealerAction");
+        // }
         break;
       case EVENT.DEALER_ACTION:
-        this.debug.log("Dealer turn animation complete");
-        if (event.data.dealer.isDone) {
-          this.#eventBus.emit("judge");
-        } else {
-          this.#eventBus.emit("dealerAction");
-        }
+        this.debug.log("Dealer action animation complete");
+        // if (event.data.dealer.isDone) {
+        //   this.#eventBus.emit("judge");
+        // } else {
+        //   this.#eventBus.emit("dealerAction");
+        // }
         break;
       case EVENT.JUDGE:
         this.debug.log("Judge animation complete");
-        this.#eventBus.emit("waitForStart");
+        // this.#eventBus.emit("waitForStart");
         break;
     }
   };

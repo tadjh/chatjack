@@ -4,6 +4,8 @@
 - TODO Entity onEnd seems to fire instantly
 - TODO Restart button doesn't work
 - TODO X button doesn't work
+- TODO Timer isn't destroyed when early player action occurs (button press)
+- TODO Player turn animation complete is firing twice
 
 ## Development
 

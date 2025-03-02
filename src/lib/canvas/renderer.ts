@@ -25,7 +25,7 @@ import {
   EventBus,
   EventType,
 } from "@/lib/event-bus";
-import { Card } from "@/lib/game/card";
+import { Card, Rank } from "@/lib/game/card";
 import { Dealer } from "@/lib/game/dealer";
 import { Hand, Status } from "@/lib/game/hand";
 import { Player, Role } from "@/lib/game/player";
@@ -542,10 +542,16 @@ export class Renderer {
       );
     }
   }
-
-  private createActionText(state: STATE, role: Role) {
+  private createActionText(state: STATE, role: Role, onEnd?: () => void): this;
+  private createActionText(state: string, role: Role, onEnd?: () => void): this;
+  private createActionText(
+    state: STATE | string,
+    role: Role,
+    onEnd?: () => void
+  ): this {
     const props: TextEntityProps = {
       ...actionText,
+      onEnd,
     };
 
     if (role === Role.Player) {
@@ -576,32 +582,37 @@ export class Renderer {
       props.offsetY = 64;
     }
 
-    switch (state) {
-      case STATE.PLAYER_HIT:
-      case STATE.DEALER_HIT:
-        props.text = "Hit!";
-        props.color = rgb(Palette.White);
-        break;
-      case STATE.PLAYER_STAND:
-      case STATE.DEALER_STAND:
-        props.text = "Stand!";
-        props.color = rgb(Palette.LightestGrey);
-        break;
-      case STATE.PLAYER_BUST:
-      case STATE.DEALER_BUST:
-        props.text = "Bust!";
-        props.color = rgb(Palette.Red);
-        break;
-      case STATE.PLAYER_BLACKJACK:
-      case STATE.DEALER_BLACKJACK:
-        props.text = "Blackjack!";
-        props.color = rgb(Palette.Blue);
-        break;
-      default:
-        throw new Error(`Cannot create action text for state: ${state}`);
+    if (typeof state === "string") {
+      props.text = state;
+    } else {
+      switch (state) {
+        case STATE.PLAYER_HIT:
+        case STATE.DEALER_HIT:
+          props.text = "Hit!";
+          props.color = rgb(Palette.White);
+          break;
+        case STATE.PLAYER_STAND:
+        case STATE.DEALER_STAND:
+          props.text = "Stand!";
+          props.color = rgb(Palette.LightestGrey);
+          break;
+        case STATE.PLAYER_BUST:
+        case STATE.DEALER_BUST:
+          props.text = "Bust!";
+          props.color = rgb(Palette.Red);
+          break;
+        case STATE.PLAYER_BLACKJACK:
+        case STATE.DEALER_BLACKJACK:
+          props.text = "Blackjack!";
+          props.color = rgb(Palette.Blue);
+          break;
+        default:
+          throw new Error(`Cannot create action text for state: ${state}`);
+      }
     }
 
     this.createEntity(props);
+    return this;
   }
 
   private updateBustCard(card: Card) {
@@ -630,19 +641,18 @@ export class Renderer {
     this.#layers.setEntity(entity);
   }
 
-  private updateHand(hand: Hand, onComplete?: () => void) {
+  private updateHand(hand: Hand) {
     hand.forEach((card) => {
       if (this.#layers.hasEntityById(cardSprite.layer, card.id)) {
         if (hand.isBusted) this.updateBustCard(card);
         if (hand.isStand) this.updateStandCard(card);
-        if (onComplete) onComplete();
       } else {
-        this.createCard(card, 0, hand.status, onComplete);
+        this.createCard(card, 0, hand.status);
       }
     });
   }
 
-  private updateHoleCard(dealer: Dealer, onComplete?: () => void) {
+  private updateHoleCard(dealer: Dealer) {
     const holeCard = dealer.hand[1];
     const entity = this.#layers.getEntityById<SpriteEntity>(
       cardSprite.layer,
@@ -671,9 +681,6 @@ export class Renderer {
         { x: cardX + 256, y: cardY },
         { x: cardX + 512, y: cardY },
       ],
-      onEnd: () => {
-        if (onComplete) onComplete();
-      },
     });
 
     this.#layers.removeEntity(entity.layer, entity.id);
@@ -804,9 +811,7 @@ export class Renderer {
   };
 
   private handlePlayerAction = (event: EventType<EVENT.PLAYER_ACTION>) => {
-    this.createActionText(event.data.state, event.data.player.role);
-    this.updateScores(event.data.player);
-    this.updateHand(event.data.player.hand, () => {
+    this.createActionText(event.data.state, event.data.player.role, () => {
       if (!event.data.player.isDone) {
         this.createTimer((layer: LAYER, id: string) =>
           this.#layers.removeEntity(layer, id)
@@ -814,21 +819,28 @@ export class Renderer {
       }
       this.#eventBus.emit("animationComplete", event);
     });
+    this.updateScores(event.data.player);
+    this.updateHand(event.data.player.hand);
   };
 
   private handleRevealHoleCard = (event: EventType<EVENT.REVEAL_HOLE_CARD>) => {
     this.updateScores(event.data.dealer);
-    this.updateHoleCard(event.data.dealer, () => {
-      this.#eventBus.emit("animationComplete", event);
-    });
+    this.updateHoleCard(event.data.dealer);
+    this.createActionText(
+      Rank[event.data.dealer.hand[1].rank],
+      event.data.dealer.role,
+      () => {
+        this.#eventBus.emit("animationComplete", event);
+      }
+    );
   };
 
   private handleDealerAction = (event: EventType<EVENT.DEALER_ACTION>) => {
-    this.createActionText(event.data.state, event.data.dealer.role);
-    this.updateScores(event.data.dealer);
-    this.updateHand(event.data.dealer.hand, () => {
+    this.createActionText(event.data.state, event.data.dealer.role, () => {
       this.#eventBus.emit("animationComplete", event);
     });
+    this.updateScores(event.data.dealer);
+    this.updateHand(event.data.dealer.hand);
   };
 
   private handleJudge = (event: EventType<EVENT.JUDGE>) => {

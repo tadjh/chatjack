@@ -260,7 +260,7 @@ export const gameoverText: [TextEntityProps, TextEntityProps, TextEntityProps] =
   ];
 
 export const actionText: TextEntityProps = {
-  id: "action",
+  id: "action-text",
   type: "text",
   text: "",
   layer: LAYER.GAME,

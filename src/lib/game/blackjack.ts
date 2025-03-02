@@ -311,7 +311,7 @@ export class Blackjack {
   };
 
   public handlePlayerAction = (command: COMMAND) => {
-    this.debug.log("Player turn", command);
+    this.debug.log("Player action:", command);
     const callback = () =>
       this.#eventBus.emit("gamestate", {
         type: EVENT.PLAYER_ACTION,
@@ -328,8 +328,8 @@ export class Blackjack {
   };
 
   public handleDealerAction = () => {
-    this.debug.log("Dealer turn");
     if (!this.#isRevealed) {
+      this.debug.log("Dealer action: reveal");
       this.reveal();
       this.#eventBus.emit("gamestate", {
         type: EVENT.REVEAL_HOLE_CARD,
@@ -339,6 +339,7 @@ export class Blackjack {
       });
     } else {
       this.decide();
+      this.debug.log("Dealer action:", this.state);
       this.#eventBus.emit("gamestate", {
         type: EVENT.DEALER_ACTION,
         data: {
