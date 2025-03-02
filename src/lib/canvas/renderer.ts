@@ -123,18 +123,20 @@ export class Renderer {
     return this.#assetsLoaded.get(ASSETS_LOADED.LAYERS);
   }
 
-  async init() {
-    this.#isLoading = true;
-    await this.loadAssets();
+  private init() {
     this.setup();
   }
 
-  private setup() {
+  private async setup() {
+    await this.loadAssets();
     this.#eventBus.subscribe("gamestate", this.handleGamestate);
     this.#eventBus.subscribe("chat", this.handleChat);
   }
 
-  private teardown() {
+  private async teardown() {
+    await this.unloadAssets();
+    this.unloadTitleScreen();
+    this.unloadLayers();
     this.#eventBus.unsubscribe("gamestate", this.handleGamestate);
     this.#eventBus.unsubscribe("chat", this.handleChat);
   }
@@ -252,6 +254,7 @@ export class Renderer {
   }
 
   private loadAssets() {
+    this.#isLoading = true;
     return Promise.all([this.loadFonts(), this.loadImages()]);
   }
 
@@ -283,7 +286,7 @@ export class Renderer {
     this.#layers.setEntity(entity);
   }
 
-  public resize = () => {
+  private resize = () => {
     this.debug.log("Resizing");
     this.#layers.resize();
     this.render();
@@ -335,6 +338,7 @@ export class Renderer {
   public stop() {
     this.debug.log("Stopping engine");
     this.#isRunning = false;
+    this.unloadTitleScreen();
     window.removeEventListener("resize", this.resize);
   }
 
@@ -848,12 +852,6 @@ export class Renderer {
   public handleChat = (event: ChatEvent) => {
     this.debug.log("Handling chat", event);
     switch (event.type) {
-      // case EVENT.CONNECTED:
-      //   this.init();
-      //   break;
-      // case EVENT.DISCONNECTED:
-      //   this.reset();
-      //   break;
       case EVENT.VOTE_UPDATE:
         return this.handleVoteUpdate(event);
       case EVENT.VOTE_END:
