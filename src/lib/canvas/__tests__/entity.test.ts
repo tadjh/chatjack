@@ -21,6 +21,11 @@ class TestEntity extends Entity<TestPhase, TestProps> {
     // Simple implementation for testing
     return this;
   }
+
+  // Add a getter to access the protected property for testing
+  get currentPhase() {
+    return this.current;
+  }
 }
 
 describe("Entity", () => {
@@ -360,6 +365,38 @@ describe("Entity", () => {
         localProgress: number;
       };
       expect(loopingEntityInstance.localProgress).toBeCloseTo(0.5, 5);
+    });
+
+    it("should handle forcing the next phase", () => {
+      const nextPhaseEntity = new TestEntity({
+        id: "next-phase",
+        type: "test",
+        layer: LAYER.UI,
+        phases: [
+          {
+            name: "idle",
+            duration: 1,
+          },
+          {
+            name: "active",
+            duration: 1,
+          },
+        ],
+        props: {
+          opacity: 1,
+          offsetX: 0,
+          offsetY: 0,
+          scale: 1,
+          rotation: 0,
+        },
+      });
+      nextPhaseEntity.update();
+      expect(nextPhaseEntity.currentPhase?.name).toBe("idle");
+      nextPhaseEntity.update();
+      nextPhaseEntity.nextPhase();
+      expect(nextPhaseEntity.currentPhase?.name).toBe("active");
+      nextPhaseEntity.nextPhase();
+      expect(nextPhaseEntity.currentPhase?.name).toBe("idle");
     });
 
     it("should handle custom easing functions", () => {

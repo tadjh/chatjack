@@ -199,6 +199,29 @@ export abstract class Entity<
     return this;
   }
 
+  private getPhaseIndex(): number {
+    return this.phases.findIndex((p) => p.name === this.current?.name);
+  }
+
+  public nextPhase(): this {
+    if (!this.current || !this.phases.length) {
+      throw new Error("No current phase to advance");
+    }
+    const index = this.getPhaseIndex();
+    if (index === -1) {
+      throw new Error("No current phase to advance");
+    }
+
+    this.phaseStart += this.current.duration;
+    this.current =
+      index === this.phases.length - 1
+        ? this.phases[0]
+        : this.phases[index + 1];
+    this.progress = this.phaseStart / this.totalDuration;
+
+    return this;
+  }
+
   protected setLocalProgress(): this {
     if (this.current === null) {
       throw new Error("No current phase for local progress");

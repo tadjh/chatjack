@@ -368,8 +368,25 @@ export class Renderer {
     this.resize();
   }
 
-  private createTimer = (onEnd: (layer: LAYER, id: string) => void) => {
-    this.createEntity({ ...turnTimer, onEnd });
+  private createTimer = () => {
+    this.createEntity({
+      ...turnTimer,
+      onEnd: (layer: LAYER, id: string) => this.#layers.removeEntity(layer, id),
+    });
+  };
+
+  private destroyTimer = () => {
+    const timer = this.#layers.getEntityById<TimerEntity>(
+      turnTimer.layer,
+      turnTimer.id
+    );
+    if (timer) {
+      timer.nextPhase();
+      timer.onEnd = () => {
+        timer.destroy();
+        this.#layers.removeEntity(turnTimer.layer, turnTimer.id);
+      };
+    }
   };
 
   private createScores(dealer: Dealer, player: Player) {
@@ -528,9 +545,7 @@ export class Renderer {
             onComplete
           );
         } else {
-          this.createTimer((layer: LAYER, id: string) =>
-            this.#layers.removeEntity(layer, id)
-          );
+          this.createTimer();
           if (onComplete) onComplete();
         }
       }
@@ -564,7 +579,7 @@ export class Renderer {
       props.phases = [
         {
           name: "fade-slide-in-bottom",
-          duration: 1.5,
+          duration: 1.0,
         },
         {
           name: "fade-slide-out-bottom",
@@ -578,7 +593,7 @@ export class Renderer {
       props.phases = [
         {
           name: "fade-slide-in-top",
-          duration: 1.5,
+          duration: 1.0,
         },
         {
           name: "fade-slide-out-top",
@@ -595,7 +610,7 @@ export class Renderer {
         case STATE.PLAYER_HIT:
         case STATE.DEALER_HIT:
           props.text = "Hit!";
-          props.color = rgb(Palette.White);
+          props.color = rgb(Palette.LightestGrey);
           break;
         case STATE.PLAYER_STAND:
         case STATE.DEALER_STAND:
@@ -817,11 +832,10 @@ export class Renderer {
   };
 
   private handlePlayerAction = (event: EventType<EVENT.PLAYER_ACTION>) => {
+    this.destroyTimer();
     this.createActionText(event.data.state, event.data.player.role, () => {
       if (!event.data.player.isDone) {
-        this.createTimer((layer: LAYER, id: string) =>
-          this.#layers.removeEntity(layer, id)
-        );
+        this.createTimer();
       }
       this.#eventBus.emit("animationComplete", event);
     });
@@ -830,6 +844,7 @@ export class Renderer {
   };
 
   private handleRevealHoleCard = (event: EventType<EVENT.REVEAL_HOLE_CARD>) => {
+    this.destroyTimer();
     this.updateScores(event.data.dealer);
     this.updateHoleCard(event.data.dealer);
     this.createActionText(
