@@ -127,7 +127,6 @@ describe("DynamicLayer", () => {
       color: "white",
       position: POSITION.TOP,
       layer: LAYER.GAME,
-      phases: [],
       strokeColor: "black",
       strokeWidth: 1,
     });
@@ -156,7 +155,6 @@ describe("DynamicLayer", () => {
       color: "white",
       position: POSITION.TOP,
       layer: LAYER.GAME,
-      phases: [],
       strokeColor: "black",
       strokeWidth: 1,
     });
@@ -189,7 +187,6 @@ describe("DynamicLayer", () => {
       color: "white",
       position: POSITION.TOP,
       layer: LAYER.GAME,
-      phases: [],
       strokeColor: "black",
       strokeWidth: 1,
     });
@@ -225,7 +222,6 @@ describe("DynamicLayer", () => {
       color: "white",
       position: POSITION.TOP,
       layer: LAYER.GAME,
-      phases: [],
       strokeColor: "black",
       strokeWidth: 1,
     });
@@ -256,7 +252,6 @@ describe("DynamicLayer", () => {
       color: "white",
       position: POSITION.TOP,
       layer: LAYER.GAME,
-      phases: [],
       strokeColor: "black",
       strokeWidth: 1,
     });
@@ -273,7 +268,6 @@ describe("DynamicLayer", () => {
       color: "white",
       position: POSITION.TOP,
       layer: LAYER.GAME,
-      phases: [],
       strokeColor: "black",
       strokeWidth: 1,
     });
@@ -312,7 +306,6 @@ describe("DynamicLayer", () => {
       color: "white",
       position: POSITION.TOP,
       layer: LAYER.GAME,
-      phases: [],
       strokeColor: "black",
       strokeWidth: 1,
     });
@@ -328,7 +321,6 @@ describe("DynamicLayer", () => {
       color: "white",
       position: POSITION.BOTTOM,
       layer: LAYER.GAME,
-      phases: [],
       strokeColor: "black",
       strokeWidth: 1,
     });
@@ -369,7 +361,6 @@ describe("DynamicLayer", () => {
       color: "white",
       position: POSITION.TOP,
       layer: LAYER.GAME,
-      phases: [],
       strokeColor: "black",
       strokeWidth: 1,
     });
@@ -379,7 +370,6 @@ describe("DynamicLayer", () => {
       type: "sprite",
       position: POSITION.CENTER,
       layer: LAYER.GAME,
-      phases: [],
       src: IMAGE.CARDS,
       sprites: [{ x: 0, y: 0 }],
       spriteWidth: 32,
@@ -421,7 +411,6 @@ describe("DynamicLayer", () => {
       color: "white",
       position: POSITION.TOP,
       layer: LAYER.GAME,
-      phases: [],
       strokeColor: "black",
       strokeWidth: 1,
     });
@@ -431,7 +420,6 @@ describe("DynamicLayer", () => {
       type: "sprite",
       position: POSITION.CENTER,
       layer: LAYER.GAME,
-      phases: [],
       src: IMAGE.CARDS,
       sprites: [{ x: 0, y: 0 }],
       spriteWidth: 32,

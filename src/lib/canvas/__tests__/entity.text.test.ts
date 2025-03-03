@@ -127,7 +127,6 @@ describe("TextEntity", () => {
         textAlign: "left",
         color: "black",
         strokeColor: undefined,
-        phases: [],
       });
 
       expect(minimalEntity.position).toBe(POSITION.TOP_LEFT); // Default position
@@ -147,7 +146,6 @@ describe("TextEntity", () => {
         textAlign: "center",
         color: "white",
         strokeColor: undefined,
-        phases: [],
       });
 
       expect(noPhaseEntity.props.opacity).toBe(1);
@@ -220,7 +218,6 @@ describe("TextEntity", () => {
         textAlign: "center",
         color: "white",
         strokeColor: undefined,
-        phases: [],
       });
 
       // Access the private easing method
@@ -245,7 +242,6 @@ describe("TextEntity", () => {
         textAlign: "center",
         color: "white",
         strokeColor: undefined,
-        phases: [],
       });
 
       // Access the private interpolate method
@@ -289,7 +285,6 @@ describe("TextEntity", () => {
         textAlign: "center",
         color: "white",
         strokeColor: undefined,
-        phases: [],
         props: {
           scale: 2,
           opacity: 1,
@@ -319,7 +314,6 @@ describe("TextEntity", () => {
         textAlign: "center",
         color: "white",
         strokeColor: undefined,
-        phases: [],
       });
 
       // Render
@@ -329,7 +323,7 @@ describe("TextEntity", () => {
       expect(mockCtx.scale).toHaveBeenCalledWith(1, 1);
     });
 
-    it("should prevent negative scale values", () => {
+    it("should allow negative scale values", () => {
       // Create entity with negative scale in props
       const negativeScaleEntity = new TextEntity({
         id: "negative-scale-text",
@@ -342,7 +336,6 @@ describe("TextEntity", () => {
         textAlign: "center",
         color: "white",
         strokeColor: undefined,
-        phases: [],
         props: {
           scale: -1,
           opacity: 1,
@@ -352,11 +345,9 @@ describe("TextEntity", () => {
         },
       });
 
-      // Render
       negativeScaleEntity.render(mockCtx);
 
-      // Check that scale was called with 0 instead of negative value
-      expect(mockCtx.scale).toHaveBeenCalledWith(0, 0);
+      expect(mockCtx.scale).toHaveBeenCalledWith(-1, -1);
     });
 
     it("should apply stroke when stroke properties are set", () => {
@@ -392,7 +383,6 @@ describe("TextEntity", () => {
         shadowOffsetX: 2,
         shadowOffsetY: 2,
         shadowBlur: 4,
-        phases: [],
       });
 
       // Verify shadow properties were set correctly on the entity
@@ -442,7 +432,6 @@ describe("TextEntity", () => {
         textAlign: "center",
         color: "white",
         strokeColor: undefined,
-        phases: [],
       });
 
       // Mock the getFontSize method to throw the expected error

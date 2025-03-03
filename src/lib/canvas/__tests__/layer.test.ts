@@ -205,7 +205,6 @@ describe("Layer", () => {
       color: "white",
       position: POSITION.TOP,
       layer: LAYER.UI,
-      phases: [],
       strokeColor: "black",
       strokeWidth: 1,
     });
@@ -215,7 +214,6 @@ describe("Layer", () => {
       type: "sprite",
       position: POSITION.CENTER,
       layer: LAYER.UI,
-      phases: [],
       src: IMAGE.CARDS,
       sprites: [{ x: 0, y: 0 }],
       spriteWidth: 32,
@@ -249,7 +247,6 @@ describe("Layer", () => {
       color: "white",
       position: POSITION.TOP,
       layer: LAYER.UI,
-      phases: [],
       strokeColor: "black",
       strokeWidth: 1,
     });
@@ -280,7 +277,6 @@ describe("Layer", () => {
       color: "white",
       position: POSITION.TOP,
       layer: LAYER.GAME,
-      phases: [],
       strokeColor: "black",
       strokeWidth: 1,
     });
@@ -309,7 +305,6 @@ describe("Layer", () => {
       color: "white",
       position: POSITION.TOP,
       layer: LAYER.GAME,
-      phases: [],
       strokeColor: "black",
       strokeWidth: 1,
     });
@@ -342,7 +337,6 @@ describe("Layer", () => {
       color: "white",
       position: POSITION.TOP,
       layer: LAYER.GAME,
-      phases: [],
       strokeColor: "black",
       strokeWidth: 1,
     });
@@ -359,7 +353,6 @@ describe("Layer", () => {
       color: "white",
       position: POSITION.TOP,
       layer: LAYER.GAME,
-      phases: [],
       strokeColor: "black",
       strokeWidth: 1,
     });
@@ -389,7 +382,6 @@ describe("Layer", () => {
       color: "white",
       position: POSITION.TOP,
       layer: LAYER.GAME,
-      phases: [],
       strokeColor: "black",
       strokeWidth: 1,
     });

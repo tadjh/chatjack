@@ -213,12 +213,12 @@ export abstract class Entity<
     let index = 0;
     let current = this.phases[this.phases.length - 1];
     for (const p of this.phases) {
-      index++;
       count += p.duration;
       if (this.progress * this.totalDuration <= count) {
         current = p;
         break;
       }
+      index++;
       timeSpent = count;
     }
     this.current = current;

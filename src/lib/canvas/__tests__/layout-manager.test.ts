@@ -284,7 +284,6 @@ function createTestTextEntity({
     x: 0,
     y: 0,
     layer: LAYER.UI,
-    phases: [],
     strokeColor: "black",
     strokeWidth: 1,
   });

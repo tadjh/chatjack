@@ -187,7 +187,6 @@ describe("LayerManager", () => {
       color: "white",
       position: POSITION.TOP,
       layer: LAYER.UI,
-      phases: [],
       strokeColor: "black",
       strokeWidth: 1,
     });
@@ -215,7 +214,6 @@ describe("LayerManager", () => {
       color: "white",
       position: POSITION.TOP,
       layer: LAYER.UI,
-      phases: [],
       strokeColor: "black",
       strokeWidth: 1,
     });
@@ -245,7 +243,6 @@ describe("LayerManager", () => {
       color: "white",
       position: POSITION.TOP,
       layer: LAYER.UI,
-      phases: [],
       strokeColor: "black",
       strokeWidth: 1,
     });
@@ -270,7 +267,6 @@ describe("LayerManager", () => {
       type: "sprite",
       position: POSITION.CENTER,
       layer: LAYER.GAME,
-      phases: [],
       src: IMAGE.CARDS,
       sprites: [{ x: 0, y: 0 }],
       spriteWidth: 32,
@@ -303,7 +299,6 @@ describe("LayerManager", () => {
       color: "white",
       position: POSITION.TOP,
       layer: LAYER.UI,
-      phases: [],
       strokeColor: "black",
       strokeWidth: 1,
     });
@@ -334,7 +329,6 @@ describe("LayerManager", () => {
       color: "white",
       position: POSITION.TOP,
       layer: LAYER.UI,
-      phases: [],
       strokeColor: "black",
       strokeWidth: 1,
     });
@@ -351,7 +345,6 @@ describe("LayerManager", () => {
       color: "white",
       position: POSITION.BOTTOM,
       layer: LAYER.GAME,
-      phases: [],
       strokeColor: "black",
       strokeWidth: 1,
     });
@@ -362,7 +355,6 @@ describe("LayerManager", () => {
       type: "sprite",
       position: POSITION.CENTER,
       layer: LAYER.GAME,
-      phases: [],
       src: IMAGE.CARDS,
       sprites: [{ x: 0, y: 0 }],
       spriteWidth: 32,
@@ -435,7 +427,6 @@ describe("LayerManager", () => {
       color: "white",
       position: POSITION.TOP,
       layer: LAYER.UI,
-      phases: [],
       strokeColor: "black",
       strokeWidth: 1,
     });
@@ -451,7 +442,6 @@ describe("LayerManager", () => {
       color: "white",
       position: POSITION.BOTTOM,
       layer: LAYER.GAME,
-      phases: [],
       strokeColor: "black",
       strokeWidth: 1,
     });

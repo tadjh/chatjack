@@ -76,7 +76,6 @@ describe("SpriteEntity", () => {
         sprites: [{ x: 0, y: 0 }],
         spriteWidth: 50,
         spriteHeight: 75,
-        phases: [],
       });
 
       expect(minimalEntity.position).toBe(POSITION.TOP_LEFT); // Default position
@@ -271,7 +270,6 @@ describe("SpriteEntity", () => {
         sprites: [{ x: 0, y: 0 }],
         spriteWidth: 100,
         spriteHeight: 150,
-        phases: [],
         props: {
           scale: 2,
           spriteIndex: 0,
@@ -314,7 +312,6 @@ describe("SpriteEntity", () => {
         sprites: [{ x: 0, y: 0 }],
         spriteWidth: 100,
         spriteHeight: 150,
-        phases: [],
         props: {
           scale: -1,
           spriteIndex: 0,
@@ -345,7 +342,6 @@ describe("SpriteEntity", () => {
         sprites: [{ x: 0, y: 0, flipX: true, flipY: false }],
         spriteWidth: 100,
         spriteHeight: 150,
-        phases: [],
       });
 
       // Set bitmaps
@@ -370,7 +366,6 @@ describe("SpriteEntity", () => {
         spriteWidth: 100,
         spriteHeight: 150,
         angle: Math.PI / 4, // 45 degrees
-        phases: [],
       });
 
       // Set bitmaps

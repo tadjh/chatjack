@@ -85,7 +85,6 @@ describe("TimerEntity", () => {
         radius: 30,
         startAngle: 0,
         rotation: 0,
-        phases: [],
         backgroundColor: "black",
       });
 
@@ -104,7 +103,6 @@ describe("TimerEntity", () => {
         radius: 40,
         startAngle: 0,
         rotation: 0,
-        phases: [],
         backgroundColor: "black",
       });
 
@@ -120,7 +118,6 @@ describe("TimerEntity", () => {
         radius: 40,
         startAngle: 90, // 90 degrees
         rotation: 45, // 45 degrees
-        phases: [],
         backgroundColor: "black",
       });
 
@@ -246,7 +243,6 @@ describe("TimerEntity", () => {
         radius: 40,
         startAngle: 0,
         rotation: 0,
-        phases: [],
         backgroundColor: "black",
       });
 
@@ -269,7 +265,6 @@ describe("TimerEntity", () => {
         radius: 40,
         startAngle: 0,
         rotation: 0,
-        phases: [],
         backgroundColor: "black",
       });
 
@@ -469,7 +464,6 @@ describe("TimerEntity", () => {
         radius: 50,
         startAngle: 0,
         rotation: 0,
-        phases: [],
         backgroundColor: "",
       });
 
@@ -497,7 +491,6 @@ describe("TimerEntity", () => {
         radius: 50,
         startAngle: 0,
         rotation: 0,
-        phases: [],
       });
 
       // Set properties for rendering
@@ -524,7 +517,6 @@ describe("TimerEntity", () => {
         startAngle: 0,
         rotation: 0,
         counterclockwise: true,
-        phases: [],
         backgroundColor: "black",
       });
 
