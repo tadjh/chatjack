@@ -244,7 +244,7 @@ export class SpriteEntity extends Entity<
               (this.current.magnitude ?? 1);
 
             this.#spriteProgress =
-              (this.#spriteProgress + this.baseAnimSpeed / 6) % 1;
+              (this.#spriteProgress + this.animationSpeed / 6) % 1;
 
             this.props.spriteIndex = Math.floor(
               lerp(0, this.#sprites.length - 1, this.#spriteProgress)

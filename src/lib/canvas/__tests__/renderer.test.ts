@@ -32,16 +32,13 @@ vi.mock("@/lib/canvas/renderer", () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let instance: any = null;
 
-  const createInstance = (options?: {
-    fps?: number;
-    tickRate?: number;
-    animationSpeed?: number;
-  }) => {
+  const createInstance = (options?: { fps?: number; timer?: number }) => {
     if (!instance) {
       instance = {
         fps: options?.fps || 12,
-        tickRate: options?.tickRate || 1000 / 12,
-        baseAnimSpeed: options?.animationSpeed || 1 / 12,
+        tickRate: 1000 / (options?.fps || 12),
+        animationSpeed: 1 / (options?.fps || 12),
+        timer: options?.timer || 30,
         isReady: false,
         isRunning: false,
         isLoading: false,
@@ -126,8 +123,7 @@ describe("Renderer", () => {
     // Create renderer instance
     renderer = Renderer.create({
       fps: 60,
-      tickRate: 16.67,
-      animationSpeed: 0.0167,
+      timer: 25,
     });
   });
 
@@ -149,19 +145,15 @@ describe("Renderer", () => {
       const defaultRenderer = Renderer.create();
       expect(defaultRenderer.fps).toBe(12); // Default FPS from constants
       expect(defaultRenderer.tickRate).toBe(1000 / 12);
-      expect(defaultRenderer.baseAnimSpeed).toBe(1 / 12);
+      expect(defaultRenderer.animationSpeed).toBe(1 / 12);
+      expect(defaultRenderer.timer).toBe(30);
     });
 
     it("should initialize with provided options", () => {
-      Renderer.destroy();
-      const customRenderer = Renderer.create({
-        fps: 60,
-        tickRate: 16.67,
-        animationSpeed: 0.0167,
-      });
-      expect(customRenderer.fps).toBe(60);
-      expect(customRenderer.tickRate).toBe(16.67);
-      expect(customRenderer.baseAnimSpeed).toBe(0.0167);
+      expect(renderer.fps).toBe(60);
+      expect(renderer.tickRate).toBe(1000 / 60);
+      expect(renderer.animationSpeed).toBe(1 / 60);
+      expect(renderer.timer).toBe(25);
     });
   });
 

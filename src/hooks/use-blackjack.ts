@@ -85,7 +85,7 @@ export function useBlackjack(
   }
 
   function deal() {
-    blackjack.handleDeal();
+    blackjack.handleStart();
     updateSnapshot();
   }
 
@@ -119,14 +119,13 @@ export function useBlackjack(
   }
 
   function exit() {
-    blackjack.reset();
+    blackjack.handleStop();
     updateSnapshot();
   }
 
   function restart() {
-    console.clear();
-    blackjack.reset();
-    blackjack.handleDeal();
+    // console.clear();
+    blackjack.handleStart();
     updateSnapshot();
   }
 

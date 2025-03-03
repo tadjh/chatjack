@@ -7,7 +7,7 @@ import { COMMAND, EVENT, STATE } from "@/lib/types";
 
 export type BlackjackOptions = {
   shoeSize?: number;
-  fixedDeck?: FixedDeck | null;
+  deck?: FixedDeck | null;
   playerCount?: number;
   playerNames?: string[];
 };
@@ -18,7 +18,7 @@ export class Blackjack {
   public static readonly name = "Blackjack";
   public static defaults: Required<BlackjackOptions> = {
     shoeSize: 1,
-    fixedDeck: null,
+    deck: null,
     playerCount: 1,
     playerNames: [],
   };
@@ -52,7 +52,7 @@ export class Blackjack {
   private constructor(
     {
       shoeSize = Blackjack.defaults.shoeSize,
-      fixedDeck = Blackjack.defaults.fixedDeck,
+      deck = Blackjack.defaults.deck,
       playerCount = Blackjack.defaults.playerCount,
       playerNames = Blackjack.defaults.playerNames,
     }: BlackjackOptions = Blackjack.defaults,
@@ -61,13 +61,13 @@ export class Blackjack {
   ) {
     this.debug = debug;
     this.shoeSize = shoeSize;
-    this.fixedDeck = fixedDeck;
+    this.fixedDeck = deck;
     this.playerCount = playerCount;
     this.playerNames = playerNames;
     this.#eventBus = eventBusInstance;
     this.init();
     this.#table = this.createTable({ playerCount, playerNames });
-    this.#shoe = this.createShoe({ shoeSize, fixedDeck });
+    this.#shoe = this.createShoe({ shoeSize, fixedDeck: this.fixedDeck });
   }
 
   get dealer() {
@@ -115,7 +115,8 @@ export class Blackjack {
   }
 
   private setup() {
-    this.#eventBus.subscribe("start", this.handleDeal, Blackjack.name);
+    this.#eventBus.subscribe("start", this.handleStart, Blackjack.name);
+    this.#eventBus.subscribe("stop", this.handleStop, Blackjack.name);
     this.#eventBus.subscribe(
       "playerAction",
       this.handlePlayerAction,
@@ -131,7 +132,8 @@ export class Blackjack {
   }
 
   private teardown() {
-    this.#eventBus.unsubscribe("start", this.handleDeal);
+    this.#eventBus.unsubscribe("start", this.handleStart);
+    this.#eventBus.unsubscribe("stop", this.handleStop);
     this.#eventBus.unsubscribe("playerAction", this.handlePlayerAction);
     this.#eventBus.unsubscribe("dealerAction", this.handleDealerAction);
     this.#eventBus.unsubscribe("judge", this.handleJudge);
@@ -295,7 +297,7 @@ export class Blackjack {
     return this;
   }
 
-  public handleDeal = () => {
+  public handleStart = () => {
     this.debug.log("Starting game");
     if (this.#state !== STATE.INIT) {
       this.reset();
@@ -354,6 +356,17 @@ export class Blackjack {
     this.judge();
     this.#eventBus.emit("gamestate", {
       type: EVENT.JUDGE,
+      data: {
+        state: this.state,
+      },
+    });
+  };
+
+  public handleStop = () => {
+    this.debug.log("Stopping game");
+    this.reset();
+    this.#eventBus.emit("gamestate", {
+      type: EVENT.STOP,
       data: {
         state: this.state,
       },

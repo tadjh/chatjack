@@ -5,21 +5,32 @@ import { useMediator } from "@/hooks/use-mediator";
 import { useTwitch } from "@/hooks/use-twtich";
 
 export interface CanvasProps {
-  fixedDeck: string | null;
+  deck: string | null;
   channel: string | null;
   debug: string | null;
+  timer: string | null;
+  fps: string | null;
 }
 
-export function Canvas({ fixedDeck, channel, debug }: CanvasProps) {
+export function Canvas({ deck, channel, debug, timer, fps }: CanvasProps) {
+  const timerValue = parseTimer(timer);
+  const fpsValue = parseFps(fps);
   const isDebug = debug !== null && debug !== "false";
-  const { bgRef, gameRef, uiRef } = useCanvas();
+  const { bgRef, gameRef, uiRef } = useCanvas({
+    timer: timerValue,
+    fps: fpsValue,
+  });
   const blackjack = useBlackjack({
-    fixedDeck,
+    deck,
     playerCount: 1,
     playerNames: ["Chat"],
   });
   useMediator();
-  useTwitch({ channel: channel ?? "", voteDuration: 10, debug: isDebug });
+  useTwitch({
+    channel: channel ?? "",
+    voteDuration: timerValue,
+    debug: isDebug,
+  });
 
   return (
     <>
@@ -30,4 +41,16 @@ export function Canvas({ fixedDeck, channel, debug }: CanvasProps) {
     </>
   );
 }
+
+const parseTimer = (value: string | null) => {
+  if (!value) return 10;
+  const num = parseInt(value);
+  return isNaN(num) ? 10 : num;
+};
+
+const parseFps = (value: string | null) => {
+  if (!value) return 12;
+  const num = parseInt(value);
+  return isNaN(num) ? 12 : num;
+};
 

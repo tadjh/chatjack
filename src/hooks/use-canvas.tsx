@@ -1,8 +1,8 @@
 import { Renderer } from "@/lib/canvas/renderer";
 import { useEffect, useRef } from "react";
 
-export function useCanvas() {
-  const rendererRef = useRef(Renderer.create());
+export function useCanvas({ timer, fps }: { timer: number; fps: number }) {
+  const rendererRef = useRef(Renderer.create({ timer, fps }));
   const bgRef = useRef<HTMLCanvasElement>(null);
   const gameRef = useRef<HTMLCanvasElement>(null);
   const uiRef = useRef<HTMLCanvasElement>(null);

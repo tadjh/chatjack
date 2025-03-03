@@ -48,6 +48,10 @@ export type GameEvent =
   | {
       type: EVENT.JUDGE;
       data: { state: STATE };
+    }
+  | {
+      type: EVENT.STOP;
+      data: { state: STATE };
     };
 
 export type AnimationEvent = ChatEvent | GameEvent;
@@ -61,6 +65,7 @@ interface MediatorEvents {
   playerAction: COMMAND;
   dealerAction: void;
   judge: void;
+  stop: void;
 }
 
 export type EventMap = MediatorEvents & {

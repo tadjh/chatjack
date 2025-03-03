@@ -33,7 +33,7 @@ describe("Blackjack", () => {
   });
 
   it("should deal cards to player and the dealer correctly", () => {
-    game.handleDeal();
+    game.handleStart();
 
     expect(game.hasDealt).toBe(true);
     // Player should have 2 cards.
@@ -45,7 +45,7 @@ describe("Blackjack", () => {
   });
 
   it("should throw an error if a player hits out of turn", () => {
-    game.handleDeal();
+    game.handleStart();
     game.handlePlayerAction(COMMAND.STAND);
     const player = game.player;
     expect(() => game.handlePlayerAction(COMMAND.HIT)).toThrow(
@@ -54,7 +54,7 @@ describe("Blackjack", () => {
   });
 
   it("should throw an error if a player stands out of turn", () => {
-    game.handleDeal();
+    game.handleStart();
     const player = game.player;
     game.handlePlayerAction(COMMAND.STAND); // Move to next player's turn
     expect(() => game.handlePlayerAction(COMMAND.STAND)).toThrow(
@@ -79,7 +79,7 @@ describe("Blackjack", () => {
     Blackjack.destroy();
 
     // Check that all event handlers were unsubscribed (4 events)
-    expect(unsubscribeSpy).toHaveBeenCalledTimes(4);
+    expect(unsubscribeSpy).toHaveBeenCalledTimes(5);
 
     // Create a new game to verify the singleton was reset
     const newGame = Blackjack.create();
@@ -99,8 +99,8 @@ describe("Blackjack with Fixed Decks", () => {
   });
 
   it("should result in player bust with fixed deck 'player-bust'", () => {
-    const game = Blackjack.create({ fixedDeck: "player-bust" });
-    game.handleDeal();
+    const game = Blackjack.create({ deck: "player-bust" });
+    game.handleStart();
     // Simulate player's turn by hitting until the hand becomes busted.
     while (!game.player.hand.isBusted) {
       game.handlePlayerAction(COMMAND.HIT);
@@ -111,8 +111,8 @@ describe("Blackjack with Fixed Decks", () => {
   });
 
   it("should result in dealer bust with fixed deck 'dealer-bust'", () => {
-    const game = Blackjack.create({ fixedDeck: "dealer-bust" });
-    game.handleDeal();
+    const game = Blackjack.create({ deck: "dealer-bust" });
+    game.handleStart();
     // Simulate player's turn: assume player has a strong hand and stands.
     game.handlePlayerAction(COMMAND.STAND);
     // Let the dealer play its turn.
@@ -125,8 +125,8 @@ describe("Blackjack with Fixed Decks", () => {
   });
 
   it("should result in a push with fixed deck 'push'", () => {
-    const game = Blackjack.create({ fixedDeck: "push" });
-    game.handleDeal();
+    const game = Blackjack.create({ deck: "push" });
+    game.handleStart();
     // For a push the player stands with a score equal to the dealer.
     game.handlePlayerAction(COMMAND.STAND);
     game.handleDealerAction();
@@ -138,8 +138,8 @@ describe("Blackjack with Fixed Decks", () => {
   });
 
   it("should result in a player natural blackjack with fixed deck 'natural-blackjack'", () => {
-    const game = Blackjack.create({ fixedDeck: "natural-blackjack" });
-    game.handleDeal();
+    const game = Blackjack.create({ deck: "natural-blackjack" });
+    game.handleStart();
     // Player has a natural blackjack, dealer has a weak hand.
     game.handleDealerAction();
     game.handleJudge();
@@ -147,8 +147,8 @@ describe("Blackjack with Fixed Decks", () => {
   });
 
   it("should result in a player blackjack with fixed deck 'player-blackjack'", () => {
-    const game = Blackjack.create({ fixedDeck: "player-blackjack" });
-    game.handleDeal();
+    const game = Blackjack.create({ deck: "player-blackjack" });
+    game.handleStart();
     // Simulate player's turn by hitting until the hand becomes blackjack.
     while (!game.player.hand.isBlackjack) {
       game.handlePlayerAction(COMMAND.HIT);
@@ -159,8 +159,8 @@ describe("Blackjack with Fixed Decks", () => {
   });
 
   it("should result in a dealer blackjack with fixed deck 'dealer-blackjack'", () => {
-    const game = Blackjack.create({ fixedDeck: "dealer-blackjack" });
-    game.handleDeal();
+    const game = Blackjack.create({ deck: "dealer-blackjack" });
+    game.handleStart();
     // Simulate player's turn: assume player has a strong hand and stands.
     game.handlePlayerAction(COMMAND.STAND);
     game.handleDealerAction();
@@ -172,8 +172,8 @@ describe("Blackjack with Fixed Decks", () => {
   });
 
   it("should result in a player win with fixed deck 'player-win'", () => {
-    const game = Blackjack.create({ fixedDeck: "player-win" });
-    game.handleDeal();
+    const game = Blackjack.create({ deck: "player-win" });
+    game.handleStart();
     // Simulate player's turn: assume player has a strong hand and stands.
     game.handlePlayerAction(COMMAND.STAND);
     game.handleDealerAction();
@@ -185,8 +185,8 @@ describe("Blackjack with Fixed Decks", () => {
   });
 
   it("should result in a dealer win with fixed deck 'dealer-win'", () => {
-    const game = Blackjack.create({ fixedDeck: "dealer-win" });
-    game.handleDeal();
+    const game = Blackjack.create({ deck: "dealer-win" });
+    game.handleStart();
     // Simulate player's turn: assume player has a strong hand and stands.
     game.handlePlayerAction(COMMAND.STAND);
     game.handleDealerAction();
@@ -217,10 +217,10 @@ describe("Blackjack Event Handlers", () => {
   it("should handle game start correctly", () => {
     // Spy on reset and deal methods
     const resetSpy = vi.spyOn(game, "reset");
-    const dealSpy = vi.spyOn(game, "handleDeal");
+    const dealSpy = vi.spyOn(game, "handleStart");
 
     // Call the handler
-    game.handleDeal();
+    game.handleStart();
 
     // Verify the game was reset and cards were dealt
     expect(resetSpy).toHaveBeenCalledTimes(0);
@@ -239,11 +239,11 @@ describe("Blackjack Event Handlers", () => {
   it("should handle game restart correctly", () => {
     // Spy on reset and deal methods
     const resetSpy = vi.spyOn(game, "reset");
-    const dealSpy = vi.spyOn(game, "handleDeal");
+    const dealSpy = vi.spyOn(game, "handleStart");
 
     // Call the handler
-    game.handleDeal();
-    game.handleDeal();
+    game.handleStart();
+    game.handleStart();
 
     // Verify the game was reset and cards were dealt
     expect(resetSpy).toHaveBeenCalledTimes(1);
@@ -260,7 +260,7 @@ describe("Blackjack Event Handlers", () => {
   });
   it("should handle player hit action correctly", () => {
     // Setup the game
-    game.handleDeal();
+    game.handleStart();
 
     // Call the handler with HIT command
     game.handlePlayerAction(COMMAND.HIT);
@@ -277,7 +277,7 @@ describe("Blackjack Event Handlers", () => {
 
   it("should handle player stand action correctly", () => {
     // Setup the game
-    game.handleDeal();
+    game.handleStart();
 
     // Call the handler with STAND command
     game.handlePlayerAction(COMMAND.STAND);
@@ -294,7 +294,7 @@ describe("Blackjack Event Handlers", () => {
 
   it("should handle dealer action when hole card is not revealed", () => {
     // Setup the game
-    game.handleDeal();
+    game.handleStart();
 
     // Spy on reveal method
     const revealSpy = vi.spyOn(game, "handleDealerAction");
@@ -316,7 +316,7 @@ describe("Blackjack Event Handlers", () => {
 
   it("should handle dealer action when hole card is already revealed", () => {
     // Setup the game
-    game.handleDeal();
+    game.handleStart();
     game.handleDealerAction();
 
     // Spy on decide method
@@ -343,7 +343,7 @@ describe("Blackjack Event Handlers", () => {
 
   it("should handle judge action correctly", () => {
     // Setup the game
-    game.handleDeal();
+    game.handleStart();
 
     // Spy on judge method
     const judgeSpy = vi.spyOn(game, "handleJudge");

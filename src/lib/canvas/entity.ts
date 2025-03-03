@@ -59,6 +59,7 @@ export type BaseEntityProps<
   offsetX?: number;
   offsetY?: number;
   opacity?: number;
+  animationSpeed?: number;
 } & Shadow;
 
 export type BaseEntityAnimationTypes =
@@ -108,7 +109,7 @@ export abstract class Entity<
   readonly shadowOffsetX: number;
   readonly shadowOffsetY: number;
   readonly shadowBlur: number;
-  readonly baseAnimSpeed: number;
+  readonly animationSpeed: number;
   public progress: number = 0;
   public delay: number;
   public x: number;
@@ -154,7 +155,7 @@ export abstract class Entity<
     this.shadowOffsetX = props.shadowOffsetX ?? 0;
     this.shadowOffsetY = props.shadowOffsetY ?? 0;
     this.shadowBlur = props.shadowBlur ?? 0;
-    this.baseAnimSpeed = 1 / FPS;
+    this.animationSpeed = props.animationSpeed ?? 1 / FPS;
     this.opacity = props.opacity ?? 1;
     this.delay = props.delay ?? 0;
     this.x = props.x ?? 0;
@@ -173,7 +174,7 @@ export abstract class Entity<
     );
 
     this.speed =
-      this.totalDuration > 0 ? 1 / (this.totalDuration * FPS) : 1 / 12;
+      this.totalDuration > 0 ? this.animationSpeed / this.totalDuration : 1;
     this.init();
   }
 

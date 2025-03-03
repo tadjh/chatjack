@@ -40,8 +40,7 @@ enum ASSETS_LOADED {
 
 type RendererOptions = {
   fps?: number;
-  tickRate?: number;
-  animationSpeed?: number;
+  timer?: number;
 };
 
 type Canvases = [
@@ -54,13 +53,13 @@ export class Renderer {
   public static readonly name = "Renderer";
   public static readonly defaults: Required<RendererOptions> = {
     fps: FPS,
-    tickRate: 1000 / FPS,
-    animationSpeed: 1 / FPS,
+    timer: 30,
   };
   static #instance: Renderer | null = null;
   readonly fps: number;
   readonly tickRate: number;
-  readonly baseAnimSpeed: number;
+  readonly animationSpeed: number;
+  readonly timer: number;
   protected debug: Debug;
   #lastTick = 0;
   #spritesheets: Map<string, HTMLImageElement> = new Map();
@@ -91,8 +90,7 @@ export class Renderer {
   private constructor(
     {
       fps = Renderer.defaults.fps,
-      tickRate = Renderer.defaults.tickRate,
-      animationSpeed = Renderer.defaults.animationSpeed,
+      timer = Renderer.defaults.timer,
     }: RendererOptions = Renderer.defaults,
     eventBusInstance = eventBus,
     layers = new LayerManager(),
@@ -100,10 +98,11 @@ export class Renderer {
   ) {
     this.debug = debug;
     this.fps = fps;
-    this.tickRate = tickRate;
-    this.baseAnimSpeed = animationSpeed;
+    this.tickRate = 1000 / fps;
+    this.animationSpeed = 1 / fps;
     this.#layers = layers;
     this.#eventBus = eventBusInstance;
+    this.timer = timer;
     this.init();
   }
 
@@ -272,6 +271,8 @@ export class Renderer {
   ) {
     let entity: SpriteEntity | TextEntity | TimerEntity;
 
+    props.animationSpeed = props.animationSpeed ?? this.animationSpeed;
+
     switch (props.type) {
       case "sprite":
         entity = new SpriteEntity(props);
@@ -369,8 +370,12 @@ export class Renderer {
   }
 
   private createTimer = () => {
+    const timer = { ...turnTimer };
+
+    timer.phases[1].duration = this.timer;
+
     this.createEntity({
-      ...turnTimer,
+      ...timer,
       onEnd: (layer: LAYER, id: string) => this.#layers.removeEntity(layer, id),
     });
   };
@@ -870,6 +875,12 @@ export class Renderer {
     });
   };
 
+  private handleStop = (event: EventType<EVENT.STOP>) => {
+    this.debug.log("Stopping");
+    this.reset();
+    this.#eventBus.emit("animationComplete", event);
+  };
+
   public handleGamestate = (event: AnimationEvent) => {
     switch (event.type) {
       case EVENT.DEALING:
@@ -883,6 +894,8 @@ export class Renderer {
         return this.handleDealerAction(event);
       case EVENT.JUDGE:
         return this.handleJudge(event);
+      case EVENT.STOP:
+        return this.handleStop(event);
     }
   };
 

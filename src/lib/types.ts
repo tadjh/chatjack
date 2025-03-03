@@ -40,4 +40,5 @@ export enum EVENT {
   REVEAL_HOLE_CARD = "revealHoleCard",
   DEALER_ACTION = "dealerAction",
   JUDGE = "judge",
+  STOP = "stop",
 }
