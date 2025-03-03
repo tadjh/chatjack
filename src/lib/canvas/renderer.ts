@@ -389,17 +389,11 @@ export class Renderer {
     );
 
     if (timer) {
-      const callback = () => {
+      timer.advancePhase("zoom-out");
+      timer.onEnd = () => {
         timer.destroy();
         this.#layers.removeEntity(turnTimer.layer, turnTimer.id);
       };
-
-      if (timer.currentPhase()) {
-        timer.advancePhase();
-        timer.onEnd = callback;
-      } else {
-        callback();
-      }
     }
   };
 
