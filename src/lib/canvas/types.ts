@@ -1,13 +1,21 @@
 import { SpriteEntity, SpriteEntityProps } from "@/lib/canvas/entity.sprite";
 import { TextEntity, TextEntityProps } from "@/lib/canvas/entity.text";
 import { TimerEntity, TimerEntityProps } from "@/lib/canvas/entity.timer";
-
+import {
+  VignetteEntity,
+  VignetteEntityProps,
+} from "@/lib/canvas/entity.vignette";
 export type EntityProps =
   | SpriteEntityProps
   | TextEntityProps
-  | TimerEntityProps;
+  | TimerEntityProps
+  | VignetteEntityProps;
 
-export type EntityType = SpriteEntity | TextEntity | TimerEntity;
+export type EntityType =
+  | SpriteEntity
+  | TextEntity
+  | TimerEntity
+  | VignetteEntity;
 
 export enum LAYER {
   BG = "Background",

@@ -284,6 +284,9 @@ export class Renderer {
       case "timer":
         entity = new TimerEntity(props);
         break;
+      case "vignette":
+        entity = new VignetteEntity(props);
+        break;
       default:
         throw new Error(`Unknown entity type`);
     }
@@ -365,6 +368,7 @@ export class Renderer {
       this.#counter.destroy();
       this.#counter = null;
     }
+    this.destroyVignette();
     this.resize();
   }
 
@@ -719,6 +723,25 @@ export class Renderer {
     return this;
   }
 
+  private createVignette() {
+    this.createEntity({ id: "vignette", type: "vignette", layer: LAYER.GAME });
+    return this;
+  }
+
+  private destroyVignette() {
+    const entity = this.#layers.getEntityById<VignetteEntity>(
+      LAYER.GAME,
+      "vignette"
+    );
+
+    if (entity) {
+      entity.fadeOut(() => {
+        this.#layers.removeEntity(entity.layer, entity.id);
+      });
+    }
+    return this;
+  }
+
   private createGameoverText(state: STATE, callback?: () => void) {
     let title;
     let subtitle;
@@ -875,6 +898,7 @@ export class Renderer {
   };
 
   private handleJudge = (event: EventType<EVENT.JUDGE>) => {
+    this.createVignette();
     this.createGameoverText(event.data.state, () => {
       this.#eventBus.emit("animationComplete", event);
     });
