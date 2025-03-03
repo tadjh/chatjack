@@ -1,17 +1,32 @@
 import {
+  AnimationPhase,
   BaseAnimationProps,
-  BaseEntityNoProps,
+  BaseAnimationTypes,
+  BaseEntityOptionalAnimations,
   Entity,
 } from "@/lib/canvas/entity";
-import { easeOutBack, lerp, radians } from "@/lib/canvas/utils";
+import { lerp, radians } from "@/lib/canvas/utils";
 import { Debug } from "@/lib/debug";
 
-type TimerEntityAnimationTypes = "zoom-in" | "countdown" | "zoom-out";
+type TimerEntityAnimationTypes = BaseAnimationTypes | "countdown";
 type TimerEntityAnimationProps = BaseAnimationProps & {
   angle: number;
-  radius: number;
 };
-export type TimerEntityProps = BaseEntityNoProps<
+
+type OptionalDurationOrPhases =
+  | {
+      phases: AnimationPhase<
+        TimerEntityAnimationTypes,
+        TimerEntityAnimationProps
+      >[];
+      duration?: never;
+    }
+  | {
+      phases?: never;
+      duration?: number;
+    };
+
+export type TimerEntityProps = BaseEntityOptionalAnimations<
   TimerEntityAnimationTypes,
   TimerEntityAnimationProps
 > & {
@@ -25,12 +40,30 @@ export type TimerEntityProps = BaseEntityNoProps<
   radius: number;
   startAngle: number;
   rotation: number;
-};
+} & OptionalDurationOrPhases;
 
 export class TimerEntity extends Entity<
   TimerEntityAnimationTypes,
   TimerEntityAnimationProps
 > {
+  public static readonly epsilon = 0.0872665; // 5 degrees in radians
+  public static readonly defaultPhases: AnimationPhase<
+    TimerEntityAnimationTypes,
+    TimerEntityAnimationProps
+  >[] = [
+    {
+      name: "zoom-in",
+      duration: 0.75,
+    },
+    {
+      name: "countdown",
+      duration: 30,
+    },
+    {
+      name: "zoom-out",
+      duration: 0.75,
+    },
+  ];
   readonly type = "timer";
   readonly color: string | CanvasGradient | CanvasPattern;
   readonly radius: number;
@@ -41,6 +74,7 @@ export class TimerEntity extends Entity<
   readonly strokeColor?: string | CanvasGradient | CanvasPattern;
   readonly strokeScale: number = 1.05;
   readonly counterclockwise: boolean = false;
+  readonly duration: number;
   #radius: number = 0;
 
   constructor(
@@ -51,12 +85,11 @@ export class TimerEntity extends Entity<
       {
         ...props,
         type: "timer",
+        phases: props.phases ?? TimerEntity.setPhases(props),
         props: {
+          ...Entity.defaultProps,
           angle: 0,
-          radius: 0,
-          opacity: 1,
-          offsetX: 0,
-          offsetY: 0,
+          ...props.props,
         },
       },
       debug
@@ -65,13 +98,23 @@ export class TimerEntity extends Entity<
     this.radius = props.radius;
     this.rotation = radians(props.rotation);
     this.startAngle = radians(props.startAngle) + this.rotation;
+    this.props.angle = this.startAngle;
     this.backgroundColor = props.backgroundColor;
     this.backgroundScale = props.backgroundScale ?? this.backgroundScale;
     this.strokeColor = props.strokeColor;
     this.strokeScale = props.strokeWidth ?? this.strokeScale;
     this.counterclockwise = props.counterclockwise ?? this.counterclockwise;
+    this.duration = props.duration ?? TimerEntity.defaultPhases[1].duration;
     this.#radius = this.radius;
     this.resize();
+  }
+
+  private static setPhases(props: TimerEntityProps) {
+    const phases = TimerEntity.defaultPhases;
+    if (props.duration) {
+      phases[1].duration = props.duration;
+    }
+    return phases;
   }
 
   public resize(): this {
@@ -94,10 +137,6 @@ export class TimerEntity extends Entity<
       this.props = this.current.easing(this.localProgress);
     } else {
       switch (this.current.name) {
-        case "zoom-in":
-        case "zoom-out":
-          this.localProgress = easeOutBack(this.localProgress);
-          break;
         case "countdown":
           // linear easing
           break;
@@ -118,24 +157,10 @@ export class TimerEntity extends Entity<
       this.props = this.current.interpolate(this.localProgress);
     } else {
       switch (this.current.name) {
-        case "zoom-in":
-          this.props.angle = this.startAngle;
-          this.props.radius = Math.max(
-            lerp(0, this.#radius, this.localProgress),
-            0
-          );
-          break;
         case "countdown":
           this.props.angle =
-            lerp(0, Math.PI * 2, this.localProgress) + this.rotation;
-          this.props.radius = this.#radius;
-          break;
-        case "zoom-out":
-          this.props.angle = Math.PI * 2;
-          this.props.radius = Math.max(
-            lerp(this.#radius, 0, this.localProgress),
-            0
-          );
+            lerp(0, Math.PI * 2 + TimerEntity.epsilon, this.localProgress) +
+            this.rotation;
           break;
         default:
           super.interpolate();
@@ -146,13 +171,15 @@ export class TimerEntity extends Entity<
   }
 
   public render(ctx: CanvasRenderingContext2D): this {
+    const scale = Math.max(this.props.scale, 0);
+
     if (this.backgroundColor) {
       ctx.beginPath();
       ctx.moveTo(this.x, this.y);
       ctx.arc(
         this.x,
         this.y,
-        this.props.radius * this.backgroundScale,
+        this.#radius * this.backgroundScale * scale,
         0,
         2 * Math.PI,
         false
@@ -168,7 +195,7 @@ export class TimerEntity extends Entity<
       ctx.arc(
         this.x,
         this.y,
-        this.props.radius * this.strokeScale,
+        this.#radius * this.strokeScale * scale,
         this.startAngle,
         this.props.angle,
         this.counterclockwise
@@ -183,7 +210,7 @@ export class TimerEntity extends Entity<
     ctx.arc(
       this.x,
       this.y,
-      this.props.radius,
+      this.#radius * scale,
       this.startAngle,
       this.props.angle,
       this.counterclockwise || false
@@ -196,7 +223,7 @@ export class TimerEntity extends Entity<
 
   public destroy(): this {
     super.destroy();
-    this.props.radius = 0;
+    this.props.scale = 0;
     this.props.angle = 0;
     this.#radius = 0;
     return this;

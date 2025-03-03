@@ -160,9 +160,8 @@ describe("TimerEntity", () => {
       interpolateMethod.call(zoomInEntity);
 
       // Verify properties were set correctly
-      expect(zoomInEntity.props.angle).toBe(0); // startAngle
-      expect(zoomInEntity.props.radius).toBeGreaterThan(0); // Interpolated radius
-      expect(zoomInEntity.props.radius).toBeLessThan(50); // Less than final radius
+      expect(zoomInEntity.props.scale).toBeGreaterThan(0); // Interpolated radius
+      expect(zoomInEntity.props.scale).toBeLessThan(50); // Less than final radius
     });
 
     it("should handle countdown animation", () => {
@@ -196,8 +195,10 @@ describe("TimerEntity", () => {
       interpolateMethod.call(countdownEntity);
 
       // Verify properties were set correctly
-      expect(countdownEntity.props.angle).toBeCloseTo(Math.PI); // Half of 2π
-      expect(countdownEntity.props.radius).toBe(64); // Unchanged radius
+      expect(countdownEntity.props.angle).toBeCloseTo(
+        Math.PI + TimerEntity.epsilon / 2
+      ); // Half of 2π
+      expect(countdownEntity.props.scale).toBe(1); // Unchanged radius
     });
 
     it("should handle zoom-out animation", () => {
@@ -231,9 +232,8 @@ describe("TimerEntity", () => {
       interpolateMethod.call(zoomOutEntity);
 
       // Verify properties were set correctly
-      expect(zoomOutEntity.props.angle).toBe(Math.PI * 2); // Full circle
-      expect(zoomOutEntity.props.radius).toBeGreaterThan(0); // Interpolated radius
-      expect(zoomOutEntity.props.radius).toBeLessThan(50); // Less than initial radius
+      expect(zoomOutEntity.props.scale).toBeGreaterThan(0); // Interpolated radius
+      expect(zoomOutEntity.props.scale).toBeLessThan(50); // Less than initial radius
     });
 
     it("should throw error when trying to ease with no current phase", () => {
@@ -323,7 +323,7 @@ describe("TimerEntity", () => {
   describe("rendering", () => {
     it("should render timer with correct context settings", () => {
       // Set properties for rendering
-      timerEntity.props.radius = 50;
+      timerEntity.props.scale = 1;
       timerEntity.props.angle = Math.PI;
 
       // Render
@@ -333,6 +333,130 @@ describe("TimerEntity", () => {
       expect(mockCtx.beginPath).toHaveBeenCalledTimes(3); // Once for background, once for stroke, once for main timer
       expect(mockCtx.arc).toHaveBeenCalledTimes(3); // Once for each circle
       expect(mockCtx.fill).toHaveBeenCalledTimes(3); // Once for each fill
+    });
+
+    it("should apply props.scale to all circle radii", () => {
+      // Set scale to 2
+      timerEntity.props.scale = 2;
+      timerEntity.props.angle = Math.PI;
+
+      // Render
+      timerEntity.render(mockCtx);
+
+      // Check that arc was called with scaled radii for all circles
+      const baseRadius =
+        50 * (timerEntity as unknown as { scaleFactor: number }).scaleFactor;
+
+      // Background circle (radius * backgroundScale * scale)
+      expect(mockCtx.arc).toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.any(Number),
+        baseRadius * 1.2 * 2, // backgroundScale is 1.2, scale is 2
+        expect.any(Number),
+        expect.any(Number),
+        expect.any(Boolean)
+      );
+
+      // Stroke circle (radius * strokeScale * scale)
+      expect(mockCtx.arc).toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.any(Number),
+        baseRadius * 1.1 * 2, // strokeScale is 1.1, scale is 2
+        expect.any(Number),
+        expect.any(Number),
+        expect.any(Boolean)
+      );
+
+      // Main circle (radius * scale)
+      expect(mockCtx.arc).toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.any(Number),
+        baseRadius * 2, // scale is 2
+        expect.any(Number),
+        expect.any(Number),
+        expect.any(Boolean)
+      );
+    });
+
+    it("should prevent negative scale values", () => {
+      // Set negative scale
+      timerEntity.props.scale = -1;
+      timerEntity.props.angle = Math.PI;
+
+      // Render
+      timerEntity.render(mockCtx);
+
+      // Check that arc was called with radius of 0 (clamped from negative)
+      const baseRadius =
+        50 * (timerEntity as unknown as { scaleFactor: number }).scaleFactor;
+
+      // All circles should use scale of 0
+      expect(mockCtx.arc).toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.any(Number),
+        baseRadius * 1.2 * 0, // backgroundScale is 1.2, scale is 0
+        expect.any(Number),
+        expect.any(Number),
+        expect.any(Boolean)
+      );
+
+      expect(mockCtx.arc).toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.any(Number),
+        baseRadius * 1.1 * 0, // strokeScale is 1.1, scale is 0
+        expect.any(Number),
+        expect.any(Number),
+        expect.any(Boolean)
+      );
+
+      expect(mockCtx.arc).toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.any(Number),
+        baseRadius * 0, // scale is 0
+        expect.any(Number),
+        expect.any(Number),
+        expect.any(Boolean)
+      );
+    });
+
+    it("should use default scale of 1 when props.scale is not provided", () => {
+      // Don't set scale (should default to 1)
+      timerEntity.props.angle = Math.PI;
+
+      // Render
+      timerEntity.render(mockCtx);
+
+      // Check that arc was called with default scale of 1
+      const baseRadius =
+        50 * (timerEntity as unknown as { scaleFactor: number }).scaleFactor;
+
+      // All circles should use default scale of 1
+      expect(mockCtx.arc).toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.any(Number),
+        baseRadius * 1.2 * 1, // backgroundScale is 1.2, scale is 1
+        expect.any(Number),
+        expect.any(Number),
+        expect.any(Boolean)
+      );
+
+      expect(mockCtx.arc).toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.any(Number),
+        baseRadius * 1.1 * 1, // strokeScale is 1.1, scale is 1
+        expect.any(Number),
+        expect.any(Number),
+        expect.any(Boolean)
+      );
+
+      expect(mockCtx.arc).toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.any(Number),
+        baseRadius * 1, // scale is 1
+        expect.any(Number),
+        expect.any(Number),
+        expect.any(Boolean)
+      );
     });
 
     it("should not render background when backgroundColor is not set", () => {
@@ -350,7 +474,7 @@ describe("TimerEntity", () => {
       });
 
       // Set properties for rendering
-      noBackgroundEntity.props.radius = 50;
+      noBackgroundEntity.props.scale = 50;
       noBackgroundEntity.props.angle = Math.PI;
 
       // Render
@@ -377,7 +501,7 @@ describe("TimerEntity", () => {
       });
 
       // Set properties for rendering
-      noStrokeEntity.props.radius = 50;
+      noStrokeEntity.props.scale = 50;
       noStrokeEntity.props.angle = Math.PI;
 
       // Render
@@ -405,7 +529,7 @@ describe("TimerEntity", () => {
       });
 
       // Set properties for rendering
-      counterclockwiseEntity.props.radius = 50;
+      counterclockwiseEntity.props.scale = 50;
       counterclockwiseEntity.props.angle = Math.PI;
 
       // Render
@@ -449,7 +573,7 @@ describe("TimerEntity", () => {
       timerEntity.destroy();
 
       // Check that radius is reset to 0
-      expect(timerEntity.props.radius).toBe(0);
+      expect(timerEntity.props.scale).toBe(0);
       expect(timerEntity.props.angle).toBe(0);
 
       // Verify that rendering still works after destruction

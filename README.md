@@ -1,6 +1,7 @@
 ## Bugs
 
 - TODO Screen flickers on restart (missing render call?)
+- TODO If you stand before all cards drawn, you can quick draw the dealer
 
 ## Development
 

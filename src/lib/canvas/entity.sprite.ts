@@ -1,7 +1,7 @@
 import {
   BaseAnimationProps,
-  BaseEntityAnimationTypes,
-  BaseEntityNoProps,
+  BaseAnimationTypes,
+  BaseEntityOptionalAnimations,
   Entity,
 } from "@/lib/canvas/entity";
 import { Debug } from "@/lib/debug";
@@ -14,7 +14,7 @@ import {
 import { IMAGE } from "@/lib/canvas/constants";
 
 type SpriteEntityAnimationTypes =
-  | BaseEntityAnimationTypes
+  | BaseAnimationTypes
   | "flip-over"
   | "animated-float-y";
 type SpriteEntityAnimationProps = BaseAnimationProps & {
@@ -28,7 +28,7 @@ interface SpriteCoordinates {
   flipY?: boolean;
 }
 
-export type SpriteEntityProps = BaseEntityNoProps<
+export type SpriteEntityProps = BaseEntityOptionalAnimations<
   SpriteEntityAnimationTypes,
   SpriteEntityAnimationProps
 > & {
@@ -62,6 +62,8 @@ export class SpriteEntity extends Entity<
   #halfWidth: number = 0;
   #halfHeight: number = 0;
   #spriteProgress: number = 0;
+  #scale: number;
+
   constructor(
     props: SpriteEntityProps,
     debug = new Debug("SpriteEntity", "Pink")
@@ -71,11 +73,11 @@ export class SpriteEntity extends Entity<
         ...props,
         type: "sprite",
         props: {
+          ...Entity.defaultProps,
           spriteIndex: 0,
-          offsetX: 0,
-          offsetY: 0,
-          opacity: 1,
+          ...props.props,
         },
+        phases: props.phases ?? [],
       },
       debug
     );
@@ -85,6 +87,7 @@ export class SpriteEntity extends Entity<
     this.spriteHeight = props.spriteHeight;
     this.scale = props.scale ?? 1;
     this.angle = props.angle ?? 0;
+    this.#scale = this.scaleFactor * this.scale;
     this.resize();
   }
 
@@ -193,8 +196,9 @@ export class SpriteEntity extends Entity<
 
   public resize(): this {
     super.resize();
-    this.width = this.spriteWidth * this.scaleFactor * this.scale;
-    this.height = this.spriteHeight * this.scaleFactor * this.scale;
+    this.#scale = this.scaleFactor * this.scale;
+    this.width = this.spriteWidth * this.#scale;
+    this.height = this.spriteHeight * this.#scale;
     this.#halfWidth = this.width / 2;
     this.#halfHeight = this.height / 2;
     const pos = this.getPosition();
@@ -293,9 +297,15 @@ export class SpriteEntity extends Entity<
 
     ctx.translate(this.#x + this.#halfWidth, this.#y + this.#halfHeight);
 
+    let scaleX = Math.max(this.props.scale, 0);
+    let scaleY = Math.max(this.props.scale, 0);
+
     if (flipX || flipY) {
-      ctx.scale(flipX ? -1 : 1, flipY ? -1 : 1);
+      scaleX *= flipX ? -1 : 1;
+      scaleY *= flipY ? -1 : 1;
     }
+
+    ctx.scale(scaleX, scaleY);
 
     if (this.angle) {
       ctx.rotate(this.angle);

@@ -39,6 +39,7 @@ describe("TextEntity", () => {
     // Mock canvas context
     mockCtx = {
       save: vi.fn(),
+      scale: vi.fn(),
       restore: vi.fn(),
       translate: vi.fn(),
       fillText: vi.fn(),
@@ -273,6 +274,89 @@ describe("TextEntity", () => {
         expect.any(Number)
       );
       expect(mockCtx.restore).toHaveBeenCalled();
+    });
+
+    it("should apply props.scale when rendering", () => {
+      // Create entity with specific scale in props
+      const scaleEntity = new TextEntity({
+        id: "scale-text",
+        type: "text",
+        layer: LAYER.UI,
+        text: "Scaled Text",
+        fontSize: 24,
+        fontFamily: FONT.SANS_SERIF,
+        textBaseline: "middle",
+        textAlign: "center",
+        color: "white",
+        strokeColor: undefined,
+        phases: [],
+        props: {
+          scale: 2,
+          opacity: 1,
+          offsetX: 0,
+          offsetY: 0,
+          kerning: 0,
+        },
+      });
+
+      // Render
+      scaleEntity.render(mockCtx);
+
+      // Check that scale was called with the correct value
+      expect(mockCtx.scale).toHaveBeenCalledWith(2, 2);
+    });
+
+    it("should use default scale of 1 when props.scale is not provided", () => {
+      // Create entity without explicit scale
+      const defaultScaleEntity = new TextEntity({
+        id: "default-scale-text",
+        type: "text",
+        layer: LAYER.UI,
+        text: "Default Scale Text",
+        fontSize: 24,
+        fontFamily: FONT.SANS_SERIF,
+        textBaseline: "middle",
+        textAlign: "center",
+        color: "white",
+        strokeColor: undefined,
+        phases: [],
+      });
+
+      // Render
+      defaultScaleEntity.render(mockCtx);
+
+      // Check that scale was called with default value
+      expect(mockCtx.scale).toHaveBeenCalledWith(1, 1);
+    });
+
+    it("should prevent negative scale values", () => {
+      // Create entity with negative scale in props
+      const negativeScaleEntity = new TextEntity({
+        id: "negative-scale-text",
+        type: "text",
+        layer: LAYER.UI,
+        text: "Negative Scale Text",
+        fontSize: 24,
+        fontFamily: FONT.SANS_SERIF,
+        textBaseline: "middle",
+        textAlign: "center",
+        color: "white",
+        strokeColor: undefined,
+        phases: [],
+        props: {
+          scale: -1,
+          opacity: 1,
+          offsetX: 0,
+          offsetY: 0,
+          kerning: 0,
+        },
+      });
+
+      // Render
+      negativeScaleEntity.render(mockCtx);
+
+      // Check that scale was called with 0 instead of negative value
+      expect(mockCtx.scale).toHaveBeenCalledWith(0, 0);
     });
 
     it("should apply stroke when stroke properties are set", () => {

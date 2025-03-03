@@ -276,7 +276,6 @@ export const actionText: TextEntityProps = {
   shadowBlur: 0,
   strokeColor: rgb(Palette.Black),
   strokeWidth: 4,
-  phases: [],
 };
 
 export const scoreText: TextEntityProps = {
@@ -296,7 +295,6 @@ export const scoreText: TextEntityProps = {
   shadowBlur: 0,
   strokeColor: rgb(Palette.Black),
   strokeWidth: 2,
-  phases: [],
 };
 
 export const cardSprite: SpriteEntityProps = {
@@ -308,7 +306,6 @@ export const cardSprite: SpriteEntityProps = {
   spriteWidth: SPRITE_WIDTH,
   spriteHeight: SPRITE_HEIGHT,
   opacity: 1,
-  phases: [],
   position: POSITION.CENTER,
   scale: 1,
   angle: 0,
@@ -330,18 +327,4 @@ export const turnTimer: TimerEntityProps = {
   radius: 24,
   startAngle: 0,
   rotation: -90,
-  phases: [
-    {
-      name: "zoom-in",
-      duration: 1,
-    },
-    {
-      name: "countdown",
-      duration: 30,
-    },
-    {
-      name: "zoom-out",
-      duration: 0.5,
-    },
-  ],
 };

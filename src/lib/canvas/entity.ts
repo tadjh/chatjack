@@ -2,6 +2,7 @@ import { BASELINE_PADDING, FPS } from "@/lib/canvas/constants";
 import { LAYER, POSITION } from "@/lib/canvas/types";
 import {
   clamp,
+  easeOutBack,
   easeOutCubic,
   getHorizontalScaleFactor,
   getScaleFactor,
@@ -62,15 +63,10 @@ export type BaseEntityProps<
   animationSpeed?: number;
 } & Shadow;
 
-export type BaseEntityAnimationTypes =
-  | "slide-in-top"
-  | "slide-in-right"
-  | "slide-in-bottom"
-  | "slide-in-left"
-  | "slide-out-top"
-  | "slide-out-right"
-  | "slide-out-bottom"
-  | "slide-out-left"
+export type BaseAnimationTypes =
+  | "idle"
+  | "fade-in"
+  | "fade-out"
   | "fade-slide-in-top"
   | "fade-slide-in-right"
   | "fade-slide-in-bottom"
@@ -80,24 +76,45 @@ export type BaseEntityAnimationTypes =
   | "fade-slide-out-bottom"
   | "fade-slide-out-left"
   | "float-x"
-  | "float-y";
+  | "float-y"
+  | "slide-in-top"
+  | "slide-in-right"
+  | "slide-in-bottom"
+  | "slide-in-left"
+  | "slide-out-top"
+  | "slide-out-right"
+  | "slide-out-bottom"
+  | "slide-out-left"
+  | "zoom-in"
+  | "zoom-out"
+  | "zoom-shake";
 
 export type BaseAnimationProps = {
   opacity: number;
   offsetX: number;
   offsetY: number;
+  scale: number;
 };
-export type BaseEntityNoProps<
-  AnimationTypes extends BaseEntityAnimationTypes | string,
+export type BaseEntityOptionalAnimations<
+  AnimationTypes extends BaseAnimationTypes | string,
   AnimationProps extends BaseAnimationProps & Record<string, number>,
-> = Omit<BaseEntityProps<AnimationTypes, AnimationProps>, "props">;
+> = Omit<BaseEntityProps<AnimationTypes, AnimationProps>, "props" | "phases"> &
+  Partial<
+    Pick<BaseEntityProps<AnimationTypes, AnimationProps>, "props" | "phases">
+  >;
 
 export abstract class Entity<
   Phase extends string,
   Props extends Record<string, number>,
 > implements
-    AnimationSpec<Phase | BaseEntityAnimationTypes, Props & BaseAnimationProps>
+    AnimationSpec<Phase | BaseAnimationTypes, Props & BaseAnimationProps>
 {
+  public static readonly defaultProps: BaseAnimationProps = {
+    offsetX: 0,
+    offsetY: 0,
+    opacity: 1,
+    scale: 1,
+  };
   readonly id: string;
   readonly type: string;
   readonly layer: LAYER;
@@ -117,7 +134,7 @@ export abstract class Entity<
   public width: number = 0;
   public height: number = 0;
   public phases: AnimationPhase<
-    Phase | BaseEntityAnimationTypes,
+    Phase | BaseAnimationTypes,
     Props & BaseAnimationProps
   >[];
   public props: Props & BaseAnimationProps;
@@ -125,9 +142,10 @@ export abstract class Entity<
   public startTime: number = 0;
   protected totalDuration: number;
   protected phaseStart: number = 0;
+  protected phaseIndex: number = -1;
   protected localProgress: number = 0;
   protected current: AnimationPhase<
-    Phase | BaseEntityAnimationTypes,
+    Phase | BaseAnimationTypes,
     Props & BaseAnimationProps
   > | null = null;
   protected padding: number = getScaleFactor() * BASELINE_PADDING;
@@ -140,7 +158,7 @@ export abstract class Entity<
 
   constructor(
     props: BaseEntityProps<
-      Phase | BaseEntityAnimationTypes,
+      Phase | BaseAnimationTypes,
       Props & BaseAnimationProps
     >,
     debug = new Debug("Entity", "Black")
@@ -160,9 +178,7 @@ export abstract class Entity<
     this.delay = props.delay ?? 0;
     this.x = props.x ?? 0;
     this.y = props.y ?? 0;
-    this.phases = props.phases.map((phase) => ({
-      ...phase,
-    }));
+    this.phases = props.phases ?? [];
     this.props = { ...props.props };
     this.onBegin = props.onBegin;
     this.onEnd = props.onEnd;
@@ -178,6 +194,14 @@ export abstract class Entity<
     this.init();
   }
 
+  public get currentPhase() {
+    return this.current;
+  }
+
+  public get currentPhaseIndex() {
+    return this.phaseIndex;
+  }
+
   protected init(): this {
     this.debug.log("Creating:", this.id);
     return this;
@@ -186,8 +210,10 @@ export abstract class Entity<
   protected setPhase(): this {
     let count = 0;
     let timeSpent = 0;
+    let index = 0;
     let current = this.phases[this.phases.length - 1];
     for (const p of this.phases) {
+      index++;
       count += p.duration;
       if (this.progress * this.totalDuration <= count) {
         current = p;
@@ -197,29 +223,36 @@ export abstract class Entity<
     }
     this.current = current;
     this.phaseStart = timeSpent;
+    this.phaseIndex = index;
     return this;
   }
 
-  private getPhaseIndex(): number {
-    return this.phases.findIndex((p) => p.name === this.current?.name);
-  }
-
-  public nextPhase(): this {
-    if (!this.current || !this.phases.length) {
-      throw new Error("No current phase to advance");
-    }
-    const index = this.getPhaseIndex();
-    if (index === -1) {
-      throw new Error("No current phase to advance");
+  public advancePhase(name?: string): this {
+    if (!this.phases.length) {
+      throw new Error("No phases to advance");
     }
 
-    this.phaseStart += this.current.duration;
-    this.current =
-      index === this.phases.length - 1
-        ? this.phases[0]
-        : this.phases[index + 1];
+    if (name) {
+      let timeSpent = 0;
+      let index = 0;
+      for (const p of this.phases) {
+        if (p.name === name) {
+          this.current = p;
+          break;
+        }
+        timeSpent += p.duration;
+        index++;
+      }
+      this.phaseStart = timeSpent;
+      this.phaseIndex = index;
+    } else {
+      this.phaseIndex =
+        this.phaseIndex === this.phases.length - 1 ? 0 : this.phaseIndex + 1;
+      this.current = this.phases[this.phaseIndex];
+      this.phaseStart += this.current.duration;
+    }
+
     this.progress = this.phaseStart / this.totalDuration;
-
     return this;
   }
 
@@ -338,8 +371,12 @@ export abstract class Entity<
       this.props = this.current.easing(this.localProgress);
     } else {
       switch (this.current.name) {
-        case "slide-in-top":
-        case "slide-in-bottom":
+        case "fade-in":
+        case "fade-out":
+        case "float-x":
+        case "float-y":
+          // linear easing
+          break;
         case "fade-slide-in-top":
         case "fade-slide-in-right":
         case "fade-slide-in-bottom":
@@ -348,11 +385,13 @@ export abstract class Entity<
         case "fade-slide-out-right":
         case "fade-slide-out-bottom":
         case "fade-slide-out-left":
+        case "slide-in-top":
+        case "slide-in-bottom":
           this.localProgress = easeOutCubic(this.localProgress);
           break;
-        case "float-x":
-        case "float-y":
-          // linear easing
+        case "zoom-in":
+        case "zoom-out":
+          this.localProgress = easeOutBack(this.localProgress);
           break;
         default:
           break;
@@ -372,6 +411,12 @@ export abstract class Entity<
     } else {
       const magnitude = this.current.magnitude ?? 64;
       switch (this.current.name) {
+        case "fade-in":
+          this.props.opacity = lerp(0, 1, this.localProgress);
+          break;
+        case "fade-out":
+          this.props.opacity = lerp(1, 0, this.localProgress);
+          break;
         case "float-x":
           this.props.opacity = 1;
           this.props.offsetX =
@@ -447,6 +492,14 @@ export abstract class Entity<
         case "fade-slide-out-right":
           this.props.offsetX = lerp(0, magnitude, this.localProgress);
           this.props.opacity = lerp(1, 0, this.localProgress);
+          break;
+        case "zoom-in":
+          this.props.opacity = 1;
+          this.props.scale = lerp(0, 1, this.localProgress);
+          break;
+        case "zoom-out":
+          this.props.opacity = 1;
+          this.props.scale = lerp(1, 0, this.localProgress);
           break;
         default:
           break;

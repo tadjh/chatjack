@@ -261,6 +261,80 @@ describe("SpriteEntity", () => {
       expect(mockCtx.restore).toHaveBeenCalled();
     });
 
+    it("should apply props.scale when rendering", () => {
+      // Create entity with specific scale in props
+      const scaleEntity = new SpriteEntity({
+        id: "scale-entity",
+        type: "sprite",
+        layer: LAYER.UI,
+        src: IMAGE.CARDS,
+        sprites: [{ x: 0, y: 0 }],
+        spriteWidth: 100,
+        spriteHeight: 150,
+        phases: [],
+        props: {
+          scale: 2,
+          spriteIndex: 0,
+          opacity: 1,
+          offsetX: 0,
+          offsetY: 0,
+        },
+      });
+
+      // Set bitmaps
+      const mockBitmaps = [{} as ImageBitmap];
+      scaleEntity.setBitmaps(mockBitmaps);
+
+      // Render
+      scaleEntity.render(mockCtx);
+
+      // Check that scale was called with the correct value
+      expect(mockCtx.scale).toHaveBeenCalledWith(2, 2);
+    });
+
+    it("should use default scale of 1 when props.scale is not provided", () => {
+      // Set bitmaps
+      const mockBitmaps = [{} as ImageBitmap];
+      spriteEntity.setBitmaps(mockBitmaps);
+
+      // Render
+      spriteEntity.render(mockCtx);
+
+      // Check that scale was called with default value
+      expect(mockCtx.scale).toHaveBeenCalledWith(1, 1);
+    });
+
+    it("should prevent negative scale values", () => {
+      // Create entity with negative scale in props
+      const negativeScaleEntity = new SpriteEntity({
+        id: "negative-scale-entity",
+        type: "sprite",
+        layer: LAYER.UI,
+        src: IMAGE.CARDS,
+        sprites: [{ x: 0, y: 0 }],
+        spriteWidth: 100,
+        spriteHeight: 150,
+        phases: [],
+        props: {
+          scale: -1,
+          spriteIndex: 0,
+          opacity: 1,
+          offsetX: 0,
+          offsetY: 0,
+        },
+      });
+
+      // Set bitmaps
+      const mockBitmaps = [{} as ImageBitmap];
+      negativeScaleEntity.setBitmaps(mockBitmaps);
+
+      // Render
+      negativeScaleEntity.render(mockCtx);
+
+      // Check that scale was called with 0 instead of negative value
+      expect(mockCtx.scale).toHaveBeenCalledWith(0, 0);
+    });
+
     it("should apply flipping when sprite has flip flags", () => {
       // Create entity with flipped sprite
       const flipEntity = new SpriteEntity({

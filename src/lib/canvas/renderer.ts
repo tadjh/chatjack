@@ -10,11 +10,12 @@ import {
 } from "@/lib/canvas/entities";
 import { SpriteEntity, SpriteEntityProps } from "@/lib/canvas/entity.sprite";
 import { TextEntity, TextEntityProps } from "@/lib/canvas/entity.text";
-import { TimerEntity, TimerEntityProps } from "@/lib/canvas/entity.timer";
+import { TimerEntity } from "@/lib/canvas/entity.timer";
+import { VignetteEntity } from "@/lib/canvas/entity.vignette";
 import { LayerManager } from "@/lib/canvas/layer-manager";
 import { DynamicLayer } from "@/lib/canvas/layer.dynamic";
 import { StaticLayer } from "@/lib/canvas/layer.static";
-import { LAYER, POSITION } from "@/lib/canvas/types";
+import { EntityProps, EntityType, LAYER, POSITION } from "@/lib/canvas/types";
 import { rgb } from "@/lib/canvas/utils";
 import { Palette } from "@/lib/constants";
 import { Debug } from "@/lib/debug";
@@ -266,10 +267,8 @@ export class Renderer {
     return Promise.all([this.unloadFonts(), this.unloadImages()]);
   }
 
-  private createEntity(
-    props: SpriteEntityProps | TextEntityProps | TimerEntityProps
-  ) {
-    let entity: SpriteEntity | TextEntity | TimerEntity;
+  private createEntity(props: EntityProps) {
+    let entity: EntityType;
 
     props.animationSpeed = props.animationSpeed ?? this.animationSpeed;
 
@@ -370,12 +369,11 @@ export class Renderer {
   }
 
   private createTimer = () => {
-    const timer = { ...turnTimer };
-
-    timer.phases[1].duration = this.timer;
-
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { phases: _p, ...props } = turnTimer;
     this.createEntity({
-      ...timer,
+      ...props,
+      duration: this.timer,
       onEnd: (layer: LAYER, id: string) => this.#layers.removeEntity(layer, id),
     });
   };
@@ -385,12 +383,19 @@ export class Renderer {
       turnTimer.layer,
       turnTimer.id
     );
+
     if (timer) {
-      timer.nextPhase();
-      timer.onEnd = () => {
+      const callback = () => {
         timer.destroy();
         this.#layers.removeEntity(turnTimer.layer, turnTimer.id);
       };
+
+      if (timer.currentPhase()) {
+        timer.advancePhase();
+        timer.onEnd = callback;
+      } else {
+        callback();
+      }
     }
   };
 
@@ -909,3 +914,4 @@ export class Renderer {
     }
   };
 }
+

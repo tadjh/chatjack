@@ -1,8 +1,8 @@
 import { FONT } from "@/lib/canvas/constants";
 import {
   BaseAnimationProps,
-  BaseEntityAnimationTypes,
-  BaseEntityNoProps,
+  BaseAnimationTypes,
+  BaseEntityOptionalAnimations,
   Entity,
 } from "@/lib/canvas/entity";
 import {
@@ -14,7 +14,7 @@ import {
 import { Debug } from "@/lib/debug";
 
 type TextEntityAnimationTypes =
-  | BaseEntityAnimationTypes
+  | BaseAnimationTypes
   | "fade-slide-kerning-in-bottom";
 
 type TextEntityAnimationProps = BaseAnimationProps & {
@@ -28,7 +28,7 @@ type Stroke =
     }
   | { strokeColor: undefined; strokeWidth?: number };
 
-export type TextEntityProps = BaseEntityNoProps<
+export type TextEntityProps = BaseEntityOptionalAnimations<
   TextEntityAnimationTypes,
   TextEntityAnimationProps
 > & {
@@ -71,11 +71,12 @@ export class TextEntity extends Entity<
         ...props,
         type: "text",
         props: {
-          opacity: 0,
+          ...Entity.defaultProps,
           kerning: 0,
-          offsetX: 0,
-          offsetY: 0,
+          opacity: 0,
+          ...props.props,
         },
+        phases: props.phases ?? [],
       },
       debug
     );
@@ -257,6 +258,8 @@ export class TextEntity extends Entity<
 
     ctx.fillStyle = this.color;
     ctx.fillText(this.text, this.#x, this.#y);
+
+    ctx.scale(this.props.scale, this.props.scale);
 
     // Remove debug visualization
     // ctx.fillRect(this.#x, this.#y, this.width, this.height);
