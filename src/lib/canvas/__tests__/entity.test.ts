@@ -17,7 +17,7 @@ type TestProps = BaseAnimationProps & {
 class TestEntity extends Entity<TestPhase, TestProps> {
   // We need to implement the abstract method but don't use it in tests
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  render(ctx: CanvasRenderingContext2D): this {
+  render(_ctx: CanvasRenderingContext2D): this {
     // Simple implementation for testing
     return this;
   }

@@ -331,15 +331,15 @@ export const turnTimer: TimerEntityProps = {
 
 export const hitOrStand: [TextEntityProps, TextEntityProps, TextEntityProps] = [
   {
-    id: "hit",
+    id: "!hit",
     type: "text",
     text: "!hit",
     layer: LAYER.GAME,
     position: POSITION.EYELINE,
-    fontSize: 24,
+    fontSize: 32,
     fontFamily: FONT.SANS_SERIF,
-    textBaseline: "top",
-    textAlign: "left",
+    textBaseline: "middle",
+    textAlign: "center",
     color: rgb(Palette.Yellow),
     shadowColor: rgb(Palette.DarkestGreen),
     shadowOffsetX: 4,
@@ -354,7 +354,7 @@ export const hitOrStand: [TextEntityProps, TextEntityProps, TextEntityProps] = [
       },
       {
         name: "zoom-shake",
-        duration: 2,
+        duration: 1.0,
       },
       {
         name: "float-y",
@@ -372,7 +372,7 @@ export const hitOrStand: [TextEntityProps, TextEntityProps, TextEntityProps] = [
     position: POSITION.EYELINE,
     fontSize: 24,
     fontFamily: FONT.SANS_SERIF,
-    textBaseline: "top",
+    textBaseline: "middle",
     textAlign: "center",
     color: rgb(Palette.Yellow),
     shadowColor: rgb(Palette.DarkestGreen),
@@ -387,6 +387,10 @@ export const hitOrStand: [TextEntityProps, TextEntityProps, TextEntityProps] = [
         duration: 0.5,
       },
       {
+        name: "zoom-shake",
+        duration: 1.0,
+      },
+      {
         name: "float-y",
         duration: 2,
         magnitude: 1.5,
@@ -395,15 +399,15 @@ export const hitOrStand: [TextEntityProps, TextEntityProps, TextEntityProps] = [
     ],
   },
   {
-    id: "stand",
+    id: "!stand",
     type: "text",
     text: "!stand",
     layer: LAYER.GAME,
     position: POSITION.EYELINE,
-    fontSize: 24,
+    fontSize: 32,
     fontFamily: FONT.SANS_SERIF,
-    textBaseline: "top",
-    textAlign: "right",
+    textBaseline: "middle",
+    textAlign: "center",
     color: rgb(Palette.Yellow),
     shadowColor: rgb(Palette.DarkestGreen),
     shadowOffsetX: 4,
@@ -418,7 +422,7 @@ export const hitOrStand: [TextEntityProps, TextEntityProps, TextEntityProps] = [
       },
       {
         name: "zoom-shake",
-        duration: 2,
+        duration: 1.0,
       },
       {
         name: "float-y",

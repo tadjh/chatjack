@@ -134,7 +134,11 @@ export class Twitch extends tmi.Client {
     this.debug.log(channel, user, message);
     const command = this.parseMessage(message);
     if (!command) return;
-    return this.#vote.register(user.username, command, (command, count) => {
+    return this.handleVoteUpdate(user.username, command);
+  };
+
+  public handleVoteUpdate = (username: string, command: COMMAND) => {
+    return this.#vote.register(username, command, (command, count) => {
       this.#eventBus.emit("chat", {
         type: EVENT.VOTE_UPDATE,
         data: { command, count },

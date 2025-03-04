@@ -658,12 +658,24 @@ export class Renderer {
     return this;
   }
 
-  // private updateVoteText() {
-  //   for (const props of hitOrStand) {
-  //     this.updateEntity(props);
-  //   }
-  //   return this;
-  // }
+  private updateVoteText({
+    command,
+    count,
+  }: {
+    command: COMMAND;
+    count: number;
+  }) {
+    for (const props of hitOrStand) {
+      const entity = this.#layers.getEntityById<TextEntity>(
+        props.layer,
+        props.id
+      );
+      if (entity?.id === command) {
+        entity.advancePhase("zoom-shake");
+        entity.text = `${command} ${count}`;
+      }
+    }
+  }
 
   private destroyVoteText() {
     for (const props of hitOrStand) {
@@ -885,6 +897,7 @@ export class Renderer {
       event.data.command,
       event.data.count
     );
+    this.updateVoteText(event.data);
     // TODO Show votes on screen
   };
 

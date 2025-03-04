@@ -4,6 +4,9 @@ import {
   easeOut,
   easeOutBack,
   easeOutCubic,
+  easeOutBounce,
+  easeInBounce,
+  easeInOutBounce,
   font,
   getHorizontalScaleFactor,
   getScaleFactor,
@@ -95,6 +98,49 @@ describe("utils", () => {
 
     afterEach(() => {
       vi.unstubAllGlobals();
+    });
+  });
+
+  describe("bounce easing functions", () => {
+    it("should calculate easeOutBounce correctly", () => {
+      expect(easeOutBounce(0)).toBe(0);
+      expect(easeOutBounce(1)).toBe(1);
+
+      // Test different bounce regions
+      expect(easeOutBounce(0.2)).toBeCloseTo(0.3025); // First bounce
+      expect(easeOutBounce(0.5)).toBeCloseTo(0.7656); // Second bounce
+      expect(easeOutBounce(0.8)).toBeCloseTo(0.94); // Third bounce
+      expect(easeOutBounce(0.9)).toBeCloseTo(0.9919); // Fourth bounce
+    });
+
+    it("should calculate easeInBounce correctly", () => {
+      expect(easeInBounce(0)).toBe(0);
+      expect(easeInBounce(1)).toBe(1);
+
+      // Test inverse of easeOutBounce
+      expect(easeInBounce(0.2)).toBeCloseTo(1 - easeOutBounce(0.8));
+      expect(easeInBounce(0.5)).toBeCloseTo(1 - easeOutBounce(0.5));
+      expect(easeInBounce(0.8)).toBeCloseTo(1 - easeOutBounce(0.2));
+    });
+
+    it("should calculate easeInOutBounce correctly", () => {
+      expect(easeInOutBounce(0)).toBe(0);
+      expect(easeInOutBounce(1)).toBe(1);
+      expect(easeInOutBounce(0.5)).toBe(0.5);
+
+      // Test first half (ease in)
+      expect(easeInOutBounce(0.25)).toBeCloseTo(
+        0.5 * (1 - easeOutBounce(1 - 0.5))
+      );
+
+      // Test second half (ease out)
+      expect(easeInOutBounce(0.75)).toBeCloseTo(0.5 * (1 + easeOutBounce(0.5)));
+    });
+
+    it("should maintain continuity at the midpoint for easeInOutBounce", () => {
+      const justBefore = easeInOutBounce(0.49999);
+      const justAfter = easeInOutBounce(0.50001);
+      expect(Math.abs(justBefore - justAfter)).toBeLessThan(0.001);
     });
   });
 });

@@ -1,7 +1,7 @@
 ## Bugs
 
 - TODO Screen flickers on restart (missing render call?)
-- TODO If you stand before all cards drawn, you can quick draw the dealer
+- TODO If you stand before all cards drawn, you can quick draw the dealer, also breaks timer
 
 ## Development
 
@@ -13,6 +13,7 @@
 - TODO move action text to dynamic ui layer
 - TODO show vote totals during voting period on dynamic layer
 - TODO Add test coverage for twitch integration and mediator
+- TODO Consider showing username of vote
 
 ## Quality of life
 

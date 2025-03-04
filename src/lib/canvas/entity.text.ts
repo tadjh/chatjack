@@ -228,7 +228,7 @@ export class TextEntity extends Entity<
     ctx.textAlign = this.textAlign;
     ctx.globalAlpha = this.props.opacity;
     ctx.letterSpacing = `${this.props.kerning}px`;
-    ctx.font = font(this.#fontSize, this.fontFamily);
+    ctx.font = font(this.#fontSize * this.props.scale, this.fontFamily);
 
     if (this.shadowColor) {
       ctx.shadowColor = this.shadowColor;
@@ -258,8 +258,6 @@ export class TextEntity extends Entity<
 
     ctx.fillStyle = this.color;
     ctx.fillText(this.text, this.#x, this.#y);
-
-    ctx.scale(this.props.scale, this.props.scale);
 
     // Remove debug visualization
     // ctx.fillRect(this.#x, this.#y, this.width, this.height);

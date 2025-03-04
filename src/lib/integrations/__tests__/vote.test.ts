@@ -34,10 +34,13 @@ describe("Vote", () => {
 
     it("should not change counts when registering the same vote twice", () => {
       vote.register("user1", COMMAND.HIT, callback);
+      const vote1 = vote.getCount(COMMAND.HIT);
       vi.clearAllMocks();
 
       vote.register("user1", COMMAND.HIT, callback);
-      expect(callback).not.toHaveBeenCalled();
+      const vote2 = vote.getCount(COMMAND.HIT);
+      expect(vote1).toBe(vote2);
+      expect(callback).toHaveBeenCalledTimes(1);
       expect(vote.tally(COMMAND.STAND)).toBe(COMMAND.HIT);
     });
 
@@ -149,6 +152,110 @@ describe("Vote", () => {
       vote.register("user7", COMMAND.HIT, callback);
 
       expect(vote.tally(COMMAND.STAND)).toBe(COMMAND.HIT);
+    });
+  });
+
+  describe("private method behaviors", () => {
+    describe("increment and decrement", () => {
+      it("should increment and decrement vote counts correctly", () => {
+        // First vote increments
+        vote.register("user1", COMMAND.HIT, callback);
+        expect(callback).toHaveBeenLastCalledWith(COMMAND.HIT, 1);
+        const vote1 = vote.getCount(COMMAND.HIT);
+
+        // Second vote for same command should not change count
+        vote.register("user1", COMMAND.HIT, callback);
+        const vote2 = vote.getCount(COMMAND.HIT);
+        expect(vote1).toBe(vote2);
+        expect(callback).toHaveBeenCalledTimes(2);
+
+        // Changing vote should decrement old and increment new
+        vote.register("user1", COMMAND.STAND, callback);
+        const vote3 = vote.getCount(COMMAND.STAND);
+        expect(vote1).toBe(vote3);
+        expect(callback).toHaveBeenNthCalledWith(2, COMMAND.HIT, 1);
+        expect(callback).toHaveBeenNthCalledWith(3, COMMAND.HIT, 0);
+      });
+
+      it("should handle multiple increments and decrements", () => {
+        vote.register("user1", COMMAND.HIT, callback);
+        vote.register("user2", COMMAND.HIT, callback);
+        expect(callback).toHaveBeenLastCalledWith(COMMAND.HIT, 2);
+
+        vote.register("user1", COMMAND.STAND, callback);
+        expect(callback).toHaveBeenNthCalledWith(3, COMMAND.HIT, 1);
+        expect(callback).toHaveBeenNthCalledWith(4, COMMAND.STAND, 1);
+      });
+    });
+
+    describe("noChange", () => {
+      it("should call callback with current count when vote doesn't change", () => {
+        vote.register("user1", COMMAND.HIT, callback);
+        vi.clearAllMocks();
+
+        vote.register("user1", COMMAND.HIT, callback);
+        expect(callback).toHaveBeenCalledTimes(1);
+        expect(callback).toHaveBeenCalledWith(COMMAND.HIT, 1);
+      });
+    });
+
+    describe("change", () => {
+      it("should handle vote changes correctly", () => {
+        // Initial vote
+        vote.register("user1", COMMAND.HIT, callback);
+        vi.clearAllMocks();
+
+        // Change vote
+        vote.register("user1", COMMAND.STAND, callback);
+
+        // Should decrement old vote and increment new vote
+        expect(callback).toHaveBeenNthCalledWith(1, COMMAND.HIT, 0);
+        expect(callback).toHaveBeenNthCalledWith(2, COMMAND.STAND, 1);
+        expect(vote.tally(COMMAND.HIT)).toBe(COMMAND.STAND);
+      });
+
+      it("should maintain correct counts when multiple users change votes", () => {
+        vote.register("user1", COMMAND.HIT, callback);
+        vote.register("user2", COMMAND.HIT, callback);
+        vote.register("user3", COMMAND.STAND, callback);
+        vi.clearAllMocks();
+
+        vote.register("user1", COMMAND.STAND, callback);
+        expect(callback).toHaveBeenNthCalledWith(1, COMMAND.HIT, 1);
+        expect(callback).toHaveBeenNthCalledWith(2, COMMAND.STAND, 2);
+        expect(vote.tally(COMMAND.HIT)).toBe(COMMAND.STAND);
+      });
+    });
+
+    describe("dedupe and record", () => {
+      it("should handle duplicate votes correctly", () => {
+        vote.register("user1", COMMAND.HIT, callback);
+        vi.clearAllMocks();
+
+        // Same vote should trigger noChange
+        vote.register("user1", COMMAND.HIT, callback);
+        expect(callback).toHaveBeenCalledTimes(1);
+        expect(callback).toHaveBeenCalledWith(COMMAND.HIT, 1);
+      });
+
+      it("should record new votes correctly", () => {
+        vote.register("user1", COMMAND.HIT, callback);
+        expect(callback).toHaveBeenCalledWith(COMMAND.HIT, 1);
+        expect(vote.tally(COMMAND.STAND)).toBe(COMMAND.HIT);
+      });
+
+      it("should throw error when deduping without previous vote", () => {
+        // Reset to ensure no previous votes
+        vote.reset();
+
+        // Try to change non-existent vote
+        expect(() => {
+          const testVote = vote as unknown as {
+            dedupe(username: string, command: COMMAND): Vote;
+          };
+          testVote.dedupe("user1", COMMAND.HIT);
+        }).toThrow("No previous vote found");
+      });
     });
   });
 });

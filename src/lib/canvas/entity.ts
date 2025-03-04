@@ -3,6 +3,7 @@ import { LAYER, POSITION } from "@/lib/canvas/types";
 import {
   clamp,
   easeOutBack,
+  easeOutBounce,
   easeOutCubic,
   getHorizontalScaleFactor,
   getScaleFactor,
@@ -393,6 +394,9 @@ export abstract class Entity<
         case "zoom-out":
           this.localProgress = easeOutBack(this.localProgress);
           break;
+        case "zoom-shake":
+          this.localProgress = easeOutBounce(this.localProgress);
+          break;
         default:
           break;
       }
@@ -500,6 +504,10 @@ export abstract class Entity<
         case "zoom-out":
           this.props.opacity = 1;
           this.props.scale = lerp(1, 0, this.localProgress);
+          break;
+        case "zoom-shake":
+          this.props.opacity = 1;
+          this.props.scale = lerp(1.25, 1, this.localProgress);
           break;
         default:
           break;

@@ -27,6 +27,15 @@ export class Vote<T extends COMMAND = COMMAND> {
     return this;
   }
 
+  public getCount(command: T): number {
+    return this.#totals.get(command) ?? 0;
+  }
+
+  private noChange(command: T): this {
+    this.#callback?.(command, this.getCount(command));
+    return this;
+  }
+
   private change(username: string, prev: T, next: T): this {
     this.decrement(prev);
     this.increment(next);
@@ -43,6 +52,8 @@ export class Vote<T extends COMMAND = COMMAND> {
 
     if (prev !== command) {
       this.change(username, prev, command);
+    } else {
+      this.noChange(command);
     }
 
     return this;
