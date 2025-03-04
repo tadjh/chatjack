@@ -27,6 +27,9 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    env:
+      VITE_TWITCH_USERNAME: ${{ secrets.VITE_TWITCH_USERNAME }}
+      VITE_TWITCH_TOKEN: ${{ secrets.VITE_TWITCH_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
