@@ -1,4 +1,8 @@
-const isDevelopment = process.env.NODE_ENV === "development";
+import Jacquard24 from "@/assets/fonts/Jacquard24-Regular.ttf";
+import PressStart2P from "@/assets/fonts/PressStart2P-Regular.ttf";
+import cards from "@/assets/sprites/cards.png";
+
+// const isDevelopment = process.env.NODE_ENV === "development";
 
 export const FPS = 12;
 export const BASELINE_PADDING = 16;
@@ -12,14 +16,8 @@ export enum FONT {
 }
 
 export const Fonts: Map<FONT, string> = new Map([
-  [
-    FONT.DISPLAY,
-    `${isDevelopment ? "/src" : ""}/assets/fonts/${FONT.DISPLAY}-Regular.ttf`,
-  ],
-  [
-    FONT.SANS_SERIF,
-    `${isDevelopment ? "/src" : ""}/assets/fonts/${FONT.SANS_SERIF}-Regular.ttf`,
-  ],
+  [FONT.DISPLAY, Jacquard24],
+  [FONT.SANS_SERIF, PressStart2P],
 ]);
 
 export enum IMAGE {
@@ -28,7 +26,7 @@ export enum IMAGE {
 }
 
 export const images: Map<IMAGE, string> = new Map([
-  [IMAGE.CARDS, `${isDevelopment ? "/src" : ""}/assets/sprites/cards.png`],
+  [IMAGE.CARDS, cards],
   // [IMAGE.UI, `${isDevelopment ? "/src" : ""}/assets/sprites/ui.png`],
 ]);
 
