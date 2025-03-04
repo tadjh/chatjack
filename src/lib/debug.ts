@@ -12,6 +12,9 @@ export class Debug {
   /** CSS color string for the scope label */
   color: string;
 
+  /** Whether the debug instance is enabled */
+  enabled: boolean;
+
   /**
    * Creates a new Debug instance with a labeled scope and color.
    * @param scope - The scope name to identify this debug instance's logs
@@ -20,6 +23,7 @@ export class Debug {
   constructor(scope: string, color: keyof typeof Palette = "Green") {
     this.scope = `[${scope}]`;
     this.color = `color: ${rgb(Palette[color])}`;
+    this.enabled = import.meta.env.VITE_DEBUG === "true";
   }
 
   /**
@@ -28,7 +32,7 @@ export class Debug {
    * @param optionalParams - Additional parameters to log after the main message
    */
   public log(message?: unknown, ...optionalParams: unknown[]) {
-    if (process.env.NODE_ENV === "development") {
+    if (this.enabled) {
       console.log(`%c${this.scope}`, this.color, message, ...optionalParams);
     }
   }
@@ -39,7 +43,7 @@ export class Debug {
    * @param optionalParams - Additional parameters to log after the main message
    */
   public error(message?: unknown, ...optionalParams: unknown[]) {
-    if (process.env.NODE_ENV === "development") {
+    if (this.enabled) {
       console.error(`%c${this.scope}`, this.color, message, ...optionalParams);
     }
   }
