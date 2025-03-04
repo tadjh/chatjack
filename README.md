@@ -5,11 +5,14 @@
 
 ## Development
 
+- TODO Implement Zoom Shake
+- TODO Add render order list to layer dynamic
 - TODO show chat actions on the opposite side of the scores "!hit or !stand", hide when no longer chat's turn
 - TODO add DYNAMIC ui layer
 - TODO rename ui layer to STATIC
 - TODO move action text to dynamic ui layer
 - TODO show vote totals during voting period on dynamic layer
+- TODO Add test coverage for twitch integration and mediator
 
 ## Quality of life
 

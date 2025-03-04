@@ -1,5 +1,5 @@
 import { Debug } from "@/lib/debug";
-import { EventBus, eventBus } from "@/lib/event-bus";
+import { EventBus, eventBus, MediatorEvents } from "@/lib/event-bus";
 import { Vote } from "@/lib/integrations/vote";
 import { COMMAND, EVENT } from "@/lib/types";
 import * as tmi from "tmi.js";
@@ -19,7 +19,7 @@ export class Twitch extends tmi.Client {
   #voteTimer: NodeJS.Timeout | null = null;
   #duration: number;
   #vote: Vote;
-
+  #options: COMMAND[];
   public static create(options: TwitchOptions) {
     if (!Twitch.#instance) {
       Twitch.#instance = new Twitch(options);
@@ -56,15 +56,11 @@ export class Twitch extends tmi.Client {
     this.#channel = options.channel;
     this.#duration = options.voteDuration * 1000;
     this.#vote = vote;
+    this.#options = [COMMAND.START, COMMAND.RESTART];
     this.setup();
   }
 
   private async setup() {
-    if (!this.#channel) {
-      this.debug.error("Channel is not set");
-      return;
-    }
-
     this.addListener("connected", this.handleConnected);
     this.addListener("disconnected", this.handleDisconnected);
 
@@ -73,8 +69,12 @@ export class Twitch extends tmi.Client {
       this.handleWaitForStart,
       Twitch.name
     );
-    this.#eventBus.subscribe("vote", this.handleVoteStart, Twitch.name);
+    this.#eventBus.subscribe("voteStart", this.handleVoteStart, Twitch.name);
 
+    if (!this.#channel) {
+      this.debug.error("Channel is not set");
+      return;
+    }
     await this.connect();
   }
 
@@ -84,7 +84,7 @@ export class Twitch extends tmi.Client {
     await this.disconnect();
 
     this.#eventBus.unsubscribe("waitForStart", this.handleWaitForStart);
-    this.#eventBus.unsubscribe("vote", this.handleVoteStart);
+    this.#eventBus.unsubscribe("voteStart", this.handleVoteStart);
   }
 
   private startVoteTimer(onEnd: (command: COMMAND) => void) {
@@ -99,15 +99,9 @@ export class Twitch extends tmi.Client {
   }
 
   private parseMessage = (message: string): COMMAND | null => {
-    const command = message.toLowerCase().replace("!", "");
-    if (
-      command === COMMAND.HIT ||
-      command === COMMAND.STAND ||
-      command === COMMAND.START ||
-      command === COMMAND.RESTART ||
-      command === COMMAND.STOP
-    ) {
-      return command;
+    const command = message.toLowerCase();
+    if (this.#options.includes(command as COMMAND)) {
+      return command as COMMAND;
     }
     return null;
   };
@@ -123,38 +117,47 @@ export class Twitch extends tmi.Client {
       this.debug.log(channel, user, message);
       const command = this.parseMessage(message);
       if (command !== COMMAND.START) return;
-      this.#eventBus.emit(EVENT.START);
+      this.handlePlayerAction(command);
       this.removeListener("message", waitForStart);
     };
 
     this.addListener("message", waitForStart);
   };
 
-  private handleVoteStart = () => {
-    this.#vote.reset();
-    const handleVote = (
-      channel: string,
-      user: tmi.ChatUserstate,
-      message: string,
-      self: boolean
-    ) => {
-      if (self || !user.username) return;
-      this.debug.log(channel, user, message);
-      const command = this.parseMessage(message);
-      if (!command) return;
-      return this.#vote.register(user.username, command, (command, count) => {
-        this.#eventBus.emit("chat", {
-          type: EVENT.VOTE_UPDATE,
-          data: { command, count },
-        });
+  private handleVote = (
+    channel: string,
+    user: tmi.ChatUserstate,
+    message: string,
+    self: boolean
+  ) => {
+    if (self || !user.username) return;
+    this.debug.log(channel, user, message);
+    const command = this.parseMessage(message);
+    if (!command) return;
+    return this.#vote.register(user.username, command, (command, count) => {
+      this.#eventBus.emit("chat", {
+        type: EVENT.VOTE_UPDATE,
+        data: { command, count },
       });
-    };
-
-    this.addListener("message", handleVote);
-    this.startVoteTimer((command) => {
-      this.#eventBus.emit("playerAction", command);
-      this.removeListener("message", handleVote);
     });
+  };
+
+  private handleVoteStart = (event: MediatorEvents["voteStart"]) => {
+    this.#vote.reset();
+    this.#options = event.options;
+
+    this.addListener("message", this.handleVote);
+    this.startVoteTimer((command) => {
+      this.handlePlayerAction(command);
+    });
+  };
+
+  public handlePlayerAction = (command: COMMAND) => {
+    if (this.#voteTimer) {
+      clearTimeout(this.#voteTimer);
+      this.removeListener("message", this.handleVote);
+    }
+    this.#eventBus.emit("playerAction", command);
   };
 
   private handleConnected = () => {

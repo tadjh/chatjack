@@ -4,6 +4,7 @@ import {
   actionText,
   cardSprite,
   gameoverText,
+  hitOrStand,
   scoreText,
   titleScreen,
   turnTimer,
@@ -25,12 +26,13 @@ import {
   eventBus,
   EventBus,
   EventType,
+  MediatorEvents,
 } from "@/lib/event-bus";
 import { Card, Rank } from "@/lib/game/card";
 import { Dealer } from "@/lib/game/dealer";
 import { Hand, Status } from "@/lib/game/hand";
 import { Player, Role } from "@/lib/game/player";
-import { EVENT, STATE } from "@/lib/types";
+import { COMMAND, EVENT, STATE } from "@/lib/types";
 
 enum ASSETS_LOADED {
   FONTS,
@@ -133,6 +135,7 @@ export class Renderer {
     await this.loadAssets();
     this.#eventBus.subscribe("gamestate", this.handleGamestate, Renderer.name);
     this.#eventBus.subscribe("chat", this.handleChat, Renderer.name);
+    this.#eventBus.subscribe("voteStart", this.handleVoteStart, Renderer.name);
     return this;
   }
 
@@ -142,6 +145,7 @@ export class Renderer {
     this.unloadLayers();
     this.#eventBus.unsubscribe("gamestate", this.handleGamestate);
     this.#eventBus.unsubscribe("chat", this.handleChat);
+    this.#eventBus.unsubscribe("voteStart", this.handleVoteStart);
     return this;
   }
 
@@ -644,6 +648,30 @@ export class Renderer {
     return this;
   }
 
+  private createVoteText(options: COMMAND[]) {
+    // TODO: Dynamically set options with layout support
+    hitOrStand[0].text = options[0];
+    hitOrStand[2].text = options[1];
+    for (const props of hitOrStand) {
+      this.createEntity(props);
+    }
+    return this;
+  }
+
+  // private updateVoteText() {
+  //   for (const props of hitOrStand) {
+  //     this.updateEntity(props);
+  //   }
+  //   return this;
+  // }
+
+  private destroyVoteText() {
+    for (const props of hitOrStand) {
+      this.#layers.removeEntity(props.layer, props.id);
+    }
+    return this;
+  }
+
   private updateBustCard(card: Card) {
     const entity = this.#layers.getEntityById<SpriteEntity>(
       cardSprite.layer,
@@ -844,6 +872,13 @@ export class Renderer {
     });
   };
 
+  private handleVoteStart = (event: MediatorEvents["voteStart"]) => {
+    this.debug.log("Handling vote start", event);
+    this.createVignette();
+    this.createVoteText(event.options);
+    this.createTimer();
+  };
+
   private handleVoteUpdate = (event: EventType<EVENT.VOTE_UPDATE>) => {
     this.debug.log(
       "Handling vote update",
@@ -853,17 +888,17 @@ export class Renderer {
     // TODO Show votes on screen
   };
 
-  private handleVoteEnd = (event: EventType<EVENT.VOTE_END>) => {
-    this.debug.log("Handling vote end", event.data.command);
+  private handleVoteEnd = () => {
+    this.debug.log("Handling vote end");
+    this.destroyVoteText();
+    this.destroyVignette();
+    this.destroyTimer();
     // TODO Hide votes on screen
   };
 
   private handlePlayerAction = (event: EventType<EVENT.PLAYER_ACTION>) => {
-    this.destroyTimer();
+    this.handleVoteEnd();
     this.createActionText(event.data.state, event.data.player.role, () => {
-      if (!event.data.player.isDone) {
-        this.createTimer();
-      }
       this.#eventBus.emit("animationComplete", event);
     });
     this.updateScores(event.data.player);
@@ -927,8 +962,6 @@ export class Renderer {
     switch (event.type) {
       case EVENT.VOTE_UPDATE:
         return this.handleVoteUpdate(event);
-      case EVENT.VOTE_END:
-        return this.handleVoteEnd(event);
     }
   };
 }

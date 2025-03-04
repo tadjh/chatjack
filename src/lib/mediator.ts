@@ -1,6 +1,6 @@
 import { Debug } from "@/lib/debug";
 import { AnimationEvent, ChatEvent, EventBus, eventBus } from "@/lib/event-bus";
-import { EVENT } from "@/lib/types";
+import { COMMAND, EVENT } from "@/lib/types";
 
 export type MediatorOptions = {
   debug: boolean;
@@ -77,7 +77,9 @@ export class Mediator {
         if (event.data.player.isDone) {
           this.#eventBus.emit("dealerAction");
         } else {
-          this.#eventBus.emit("vote");
+          this.#eventBus.emit("voteStart", {
+            options: [COMMAND.HIT, COMMAND.STAND], // TODO: Support split command
+          });
         }
         break;
       case EVENT.PLAYER_ACTION:
@@ -85,7 +87,9 @@ export class Mediator {
         if (event.data.player.isDone) {
           this.#eventBus.emit("dealerAction");
         } else {
-          this.#eventBus.emit("vote");
+          this.#eventBus.emit("voteStart", {
+            options: [COMMAND.HIT, COMMAND.STAND], // TODO: Support split command
+          });
         }
         break;
       case EVENT.REVEAL_HOLE_CARD:

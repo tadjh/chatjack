@@ -26,7 +26,7 @@ export function Canvas({ deck, channel, debug, timer, fps }: CanvasProps) {
     playerNames: ["Chat"],
   });
   useMediator();
-  useTwitch({
+  const chat = useTwitch({
     channel: channel ?? "",
     voteDuration: timerValue,
     debug: isDebug,
@@ -37,7 +37,7 @@ export function Canvas({ deck, channel, debug, timer, fps }: CanvasProps) {
       <canvas ref={bgRef} />
       <canvas ref={gameRef} />
       <canvas ref={uiRef} />
-      <Debug blackjack={blackjack} disabled={!isDebug} />
+      <Debug blackjack={blackjack} disabled={!isDebug} chat={chat} />
     </>
   );
 }

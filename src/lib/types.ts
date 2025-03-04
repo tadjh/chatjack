@@ -19,11 +19,11 @@ export enum STATE {
 }
 
 export enum COMMAND {
-  HIT = "hit",
-  STAND = "stand",
-  START = "start",
-  RESTART = "restart",
-  STOP = "stop",
+  HIT = "!hit",
+  STAND = "!stand",
+  START = "!start",
+  RESTART = "!restart",
+  STOP = "!stop",
 }
 
 export type DEFAULT_COMMAND = COMMAND.STAND;
@@ -34,6 +34,7 @@ export enum EVENT {
   WAIT_FOR_START = "waitForStart",
   START = "start",
   DEALING = "dealing",
+  VOTE_START = "voteStart",
   VOTE_UPDATE = "voteUpdate",
   VOTE_END = "voteEnd",
   PLAYER_ACTION = "playerAction",

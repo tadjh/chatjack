@@ -79,7 +79,7 @@ describe("Blackjack", () => {
     Blackjack.destroy();
 
     // Check that all event handlers were unsubscribed (4 events)
-    expect(unsubscribeSpy).toHaveBeenCalledTimes(5);
+    expect(unsubscribeSpy).toHaveBeenCalledTimes(3);
 
     // Create a new game to verify the singleton was reset
     const newGame = Blackjack.create();
@@ -258,6 +258,7 @@ describe("Blackjack Event Handlers", () => {
       },
     });
   });
+
   it("should handle player hit action correctly", () => {
     // Setup the game
     game.handleStart();

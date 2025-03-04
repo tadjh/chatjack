@@ -115,8 +115,6 @@ export class Blackjack {
   }
 
   private setup() {
-    this.#eventBus.subscribe("start", this.handleStart, Blackjack.name);
-    this.#eventBus.subscribe("stop", this.handleStop, Blackjack.name);
     this.#eventBus.subscribe(
       "playerAction",
       this.handlePlayerAction,
@@ -132,8 +130,6 @@ export class Blackjack {
   }
 
   private teardown() {
-    this.#eventBus.unsubscribe("start", this.handleStart);
-    this.#eventBus.unsubscribe("stop", this.handleStop);
     this.#eventBus.unsubscribe("playerAction", this.handlePlayerAction);
     this.#eventBus.unsubscribe("dealerAction", this.handleDealerAction);
     this.#eventBus.unsubscribe("judge", this.handleJudge);
@@ -212,10 +208,9 @@ export class Blackjack {
     return this;
   }
 
-  private stand(player: Player, index = 0, callback?: () => void) {
+  private stand(player: Player, index = 0) {
     player.stand(index);
     this.state = STATE.PLAYER_STAND;
-    if (callback) callback();
     return this;
   }
 
@@ -312,20 +307,46 @@ export class Blackjack {
     });
   };
 
+  public handleHit = () => {
+    this.hit(this.player, 0);
+    this.#eventBus.emit("gamestate", {
+      type: EVENT.PLAYER_ACTION,
+      data: {
+        player: this.player,
+        state: this.state,
+      },
+    });
+  };
+
+  public handleStand = () => {
+    this.stand(this.player, 0);
+    this.#eventBus.emit("gamestate", {
+      type: EVENT.PLAYER_ACTION,
+      data: {
+        player: this.player,
+        state: this.state,
+      },
+    });
+  };
+
   public handlePlayerAction = (command: COMMAND) => {
     this.debug.log("Player action:", command);
-    const callback = () =>
-      this.#eventBus.emit("gamestate", {
-        type: EVENT.PLAYER_ACTION,
-        data: {
-          player: this.player,
-          state: this.state,
-        },
-      });
-    if (command === COMMAND.HIT) {
-      this.hit(this.player, 0, callback);
-    } else if (command === COMMAND.STAND) {
-      this.stand(this.player, 0, callback);
+    switch (command) {
+      case COMMAND.START:
+        this.handleStart();
+        break;
+      case COMMAND.STOP:
+        this.handleStop();
+        break;
+      case COMMAND.RESTART:
+        this.handleStart();
+        break;
+      case COMMAND.HIT:
+        this.handleHit();
+        break;
+      case COMMAND.STAND:
+        this.handleStand();
+        break;
     }
   };
 
@@ -341,7 +362,7 @@ export class Blackjack {
       });
     } else {
       this.decide();
-      this.debug.log("Dealer action:", this.state);
+      this.debug.log("Dealer action:", STATE[this.state]);
       this.#eventBus.emit("gamestate", {
         type: EVENT.DEALER_ACTION,
         data: {

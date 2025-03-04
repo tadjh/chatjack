@@ -1,12 +1,15 @@
 import { Button } from "@/components/ui/button";
 import { UseBlackjackReturnType } from "@/hooks/use-blackjack";
+import { ChatActions } from "@/hooks/use-twtich";
 
 export function Debug({
   blackjack,
   disabled,
+  chat,
 }: {
   blackjack: UseBlackjackReturnType;
   disabled: boolean;
+  chat: ChatActions;
 }) {
   if (disabled) return null;
 
@@ -17,14 +20,11 @@ export function Debug({
     isRevealed,
     isGameover,
     isPlayerDone,
-    deal,
-    hit,
-    stand,
     reveal,
     decide,
-    restart,
-    exit,
   } = blackjack;
+
+  const { hit, stand, start, restart, stop } = chat;
 
   return (
     <div className="p-4 flex gap-2 font-mono flex-col justify-center h-full fixed top-1/2 -translate-y-1/2 left-0 z-10">
@@ -36,15 +36,15 @@ export function Debug({
             onClick={restart}
             disabled={!hasDealt}
           >
-            Restart
+            !restart
           </Button>
           <Button
             size="sm"
             className="cursor-pointer"
-            onClick={exit}
+            onClick={stop}
             disabled={!hasDealt}
           >
-            X
+            !stop
           </Button>
         </div>
         <div className="grid gap-2 items-center">
@@ -55,8 +55,8 @@ export function Debug({
           </div>
           <div>
             {!hasDealt ? (
-              <Button size="sm" className="cursor-pointer" onClick={deal}>
-                Deal
+              <Button size="sm" className="cursor-pointer" onClick={start}>
+                !start
               </Button>
             ) : !isRevealed ? (
               <Button
@@ -65,7 +65,7 @@ export function Debug({
                 onClick={reveal}
                 disabled={!isPlayerDone}
               >
-                Reveal
+                !reveal
               </Button>
             ) : (
               <Button
@@ -74,7 +74,7 @@ export function Debug({
                 onClick={decide}
                 disabled={isGameover}
               >
-                Next
+                !decide
               </Button>
             )}
           </div>
@@ -101,7 +101,7 @@ export function Debug({
                     hand.isBlackjack
                   }
                 >
-                  Hit
+                  !hit
                 </Button>
                 <Button
                   size="sm"
@@ -114,7 +114,7 @@ export function Debug({
                   }
                   onClick={stand}
                 >
-                  Stand
+                  !stand
                 </Button>
               </div>
             </div>

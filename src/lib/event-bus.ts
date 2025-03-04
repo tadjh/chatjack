@@ -58,14 +58,12 @@ export type AnimationEvent = ChatEvent | GameEvent;
 
 export type EventType<T extends EVENT> = Extract<AnimationEvent, { type: T }>;
 
-interface MediatorEvents {
+export interface MediatorEvents {
   waitForStart: void;
-  start: void;
-  vote: void;
+  voteStart: { options: COMMAND[] };
   playerAction: COMMAND;
   dealerAction: void;
   judge: void;
-  stop: void;
 }
 
 export type EventMap = MediatorEvents & {
