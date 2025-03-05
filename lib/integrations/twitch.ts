@@ -44,8 +44,8 @@ export class Twitch extends tmi.Client {
         debug: options.debug,
       },
       identity: {
-        username: process.env.NEXT_PUBLIC_TWITCH_USERNAME,
-        password: process.env.NEXT_PUBLIC_TWITCH_TOKEN,
+        username: process.env.TWITCH_CLIENT_ID,
+        password: process.env.TWITCH_CLIENT_SECRET,
       },
       channels: [options.channel],
     });

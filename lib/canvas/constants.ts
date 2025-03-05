@@ -5,14 +5,12 @@ import { Jacquard_24, Press_Start_2P } from "next/font/google";
 const jacquard = Jacquard_24({
   variable: "--font-jacquard",
   weight: ["400"],
-  preload: true,
   display: "block",
 });
 
 const pressStart = Press_Start_2P({
   variable: "--font-press-start",
   weight: ["400"],
-  preload: true,
   display: "block",
 });
 // const isDevelopment = process.env.NODE_ENV === "development";
