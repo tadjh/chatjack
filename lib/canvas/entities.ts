@@ -9,6 +9,39 @@ import { Palette } from "@/lib/constants";
 const SPRITE_WIDTH = 256;
 const SPRITE_HEIGHT = 384;
 
+export const startText: TextEntityProps = {
+  id: "start",
+  type: "text",
+  text: "connecting...",
+  layer: LAYER.GAME,
+  position: POSITION.BOTTOM,
+  fontSize: 24,
+  fontFamily: FONT.SANS_SERIF,
+  textBaseline: "middle",
+  textAlign: "center",
+  delay: 32,
+  offsetY: -25,
+  color: rgb(Palette.Yellow),
+  shadowColor: rgb(Palette.DarkestGreen),
+  shadowOffsetX: 4,
+  shadowOffsetY: 4,
+  shadowBlur: 0,
+  strokeColor: rgb(Palette.Black),
+  strokeWidth: 4,
+  phases: [
+    {
+      name: "fade-slide-in-bottom",
+      duration: 2,
+    },
+    {
+      name: "float-y",
+      duration: 2,
+      magnitude: 2,
+      loop: true,
+    },
+  ],
+};
+
 export const titleScreen: [
   SpriteEntityProps,
   TextEntityProps,
@@ -128,38 +161,7 @@ export const titleScreen: [
       },
     ],
   },
-  {
-    id: "start",
-    type: "text",
-    text: "!start",
-    layer: LAYER.GAME,
-    position: POSITION.BOTTOM,
-    fontSize: 24,
-    fontFamily: FONT.SANS_SERIF,
-    textBaseline: "middle",
-    textAlign: "center",
-    delay: 32,
-    offsetY: -25,
-    color: rgb(Palette.Yellow),
-    shadowColor: rgb(Palette.DarkestGreen),
-    shadowOffsetX: 4,
-    shadowOffsetY: 4,
-    shadowBlur: 0,
-    strokeColor: rgb(Palette.Black),
-    strokeWidth: 4,
-    phases: [
-      {
-        name: "fade-slide-in-bottom",
-        duration: 2,
-      },
-      {
-        name: "float-y",
-        duration: 2,
-        magnitude: 2,
-        loop: true,
-      },
-    ],
-  },
+  startText,
 ];
 
 export const gameoverText: [TextEntityProps, TextEntityProps, TextEntityProps] =

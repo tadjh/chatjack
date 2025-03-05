@@ -17,12 +17,10 @@ export function useCanvas({ timer, fps }: { timer: number; fps: number }) {
     const renderer = rendererRef.current;
 
     async function setup() {
-      // Only load layers if they haven't been loaded yet
       if (!renderer.isLayersLoaded) {
         renderer.loadLayers([bgRef.current, gameRef.current, uiRef.current]);
       }
 
-      // Only start if not already running
       if (!renderer.isRunning) {
         try {
           await renderer.start();

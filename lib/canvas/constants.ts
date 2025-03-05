@@ -1,20 +1,8 @@
 import { StaticImageData } from "next/image";
 import cards from "../../public/sprites/cards.png";
-import { Jacquard_24, Press_Start_2P } from "next/font/google";
+import { pressStart } from "@/lib/fonts";
+import { jacquard } from "@/lib/fonts";
 
-const jacquard = Jacquard_24({
-  variable: "--font-jacquard",
-  weight: ["400"],
-  display: "block",
-  subsets: ["latin"],
-});
-
-const pressStart = Press_Start_2P({
-  variable: "--font-press-start",
-  weight: ["400"],
-  display: "block",
-  subsets: ["latin"],
-});
 // const isDevelopment = process.env.NODE_ENV === "development";
 
 export const FPS = 12;

@@ -122,10 +122,10 @@
   }
   html,
   body {
-    @apply m-0 p-0 overflow-hidden bg-[#265c42];
+    @apply m-0 overflow-hidden bg-[#265c42] p-0;
   }
   body {
-    @apply text-foreground;
+    @apply text-foreground font-sans antialiased;
   }
   canvas {
     image-rendering: pixelated;
@@ -134,3 +134,15 @@
   }
 }
 
+.game-text-shadow {
+  text-shadow:
+    0px -2px 0px #181425,
+    0px 2px 0px #181425,
+    -2px 0px 0px #181425,
+    2px 0px 0px #181425,
+    -2px -2px 0px #181425,
+    -2px 2px 0px #181425,
+    2px 2px 0px #181425,
+    2px -2px 0px #181425,
+    4px 4px 0px #193c3e;
+}

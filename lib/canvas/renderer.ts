@@ -10,6 +10,7 @@ import {
   gameoverText,
   hitOrStand,
   scoreText,
+  startText,
   titleScreen,
   turnTimer,
 } from "@/lib/canvas/entities";
@@ -53,7 +54,7 @@ type RendererOptions = {
 type Canvases = [
   HTMLCanvasElement | null,
   HTMLCanvasElement | null,
-  HTMLCanvasElement | null
+  HTMLCanvasElement | null,
 ];
 
 export class Renderer {
@@ -100,7 +101,7 @@ export class Renderer {
     }: RendererOptions = Renderer.defaults,
     eventBusInstance = eventBus,
     layers = new LayerManager(),
-    debug = new Debug(Renderer.name, "Orange")
+    debug = new Debug(Renderer.name, "Orange"),
   ) {
     this.debug = debug;
     this.fps = fps;
@@ -261,7 +262,12 @@ export class Renderer {
       throw new Error("Layers not loaded");
     }
     this.debug.log("Loading title screen");
-    titleScreen.forEach((entity) => this.createEntity(entity));
+    titleScreen.forEach((entity) => {
+      if (entity.id === "!start") {
+        return;
+      }
+      return this.createEntity(entity);
+    });
     this.#assetsLoaded.set(ASSETS_LOADED.TITLE_SCREEN, true);
     this.checkIsReady();
   }
@@ -408,7 +414,7 @@ export class Renderer {
   private destroyTimer = () => {
     const timer = this.#layers.getEntityById<TimerEntity>(
       turnTimer.layer,
-      turnTimer.id
+      turnTimer.id,
     );
 
     if (timer) {
@@ -465,7 +471,7 @@ export class Renderer {
       const dealerScore = player.score;
       const dealerScoreText = this.#layers.getEntityById<TextEntity>(
         scoreText.layer,
-        "dealer-score"
+        "dealer-score",
       );
       if (dealerScoreText) {
         dealerScoreText.text = dealerScore.toString();
@@ -477,7 +483,7 @@ export class Renderer {
       // TODO Handle split hands
       const playerScoreText = this.#layers.getEntityById<TextEntity>(
         scoreText.layer,
-        `${player.name.toLowerCase()}-score`
+        `${player.name.toLowerCase()}-score`,
       );
       if (playerScoreText) {
         playerScoreText.text = player.score.toString();
@@ -492,14 +498,14 @@ export class Renderer {
     card: Card,
     delay = 0,
     status: Status,
-    callback?: () => void
+    callback?: () => void,
   ) {
     const isDealer = card.owner === "Dealer";
     const spriteX = card.isHidden
       ? 0
       : status === "stand"
-      ? (card.suit % 12) * 1024 + cardSprite.spriteWidth * 3
-      : (card.suit % 12) * 1024 + cardSprite.spriteWidth * 2;
+        ? (card.suit % 12) * 1024 + cardSprite.spriteWidth * 3
+        : (card.suit % 12) * 1024 + cardSprite.spriteWidth * 2;
 
     const spriteY = card.isHidden ? 4992 : card.rank * cardSprite.spriteHeight;
 
@@ -557,7 +563,7 @@ export class Renderer {
           playerHand.forEach((card) => {
             const entity = this.#layers.getEntityById<SpriteEntity>(
               cardSprite.layer,
-              card.id
+              card.id,
             );
             if (!entity) {
               throw new Error("Entity not found");
@@ -573,22 +579,22 @@ export class Renderer {
           this.createActionText(
             STATE.PLAYER_BLACKJACK,
             Role.Player,
-            onComplete
+            onComplete,
           );
         } else {
           this.createTimer();
           if (onComplete) onComplete();
         }
-      }
+      },
     );
 
     this.#holeCardId = dealer.hand[1].id;
     for (let i = 0; i < dealer.hand.length; i++) {
       this.createCard(playerHand[i], count++ * delay, playerHand.status, () =>
-        counter.tick()
+        counter.tick(),
       );
       this.createCard(dealerHand[i], count++ * delay, dealerHand.status, () =>
-        counter.tick()
+        counter.tick(),
       );
     }
   }
@@ -597,7 +603,7 @@ export class Renderer {
   private createActionText(
     state: STATE | string,
     role: Role,
-    onEnd?: () => void
+    onEnd?: () => void,
   ): this {
     const props: TextEntityProps = {
       ...actionText,
@@ -687,7 +693,7 @@ export class Renderer {
     for (const props of hitOrStand) {
       const entity = this.#layers.getEntityById<TextEntity>(
         props.layer,
-        props.id
+        props.id,
       );
       if (entity?.id === command) {
         entity.advancePhase("zoom-shake");
@@ -706,7 +712,7 @@ export class Renderer {
   private updateBustCard(card: Card) {
     const entity = this.#layers.getEntityById<SpriteEntity>(
       cardSprite.layer,
-      card.id
+      card.id,
     )!;
     entity.opacity = 0.5;
     this.debug.log(`Updating ${entity.id}: { opacity: ${entity.opacity} }`);
@@ -716,7 +722,7 @@ export class Renderer {
   private updateStandCard(card: Card) {
     const entity = this.#layers.getEntityById<SpriteEntity>(
       cardSprite.layer,
-      card.id
+      card.id,
     )!;
     const spriteIndex = entity.props.spriteIndex;
     const coords = entity.getSprite(spriteIndex);
@@ -744,7 +750,7 @@ export class Renderer {
     const holeCard = dealer.hand[1];
     const entity = this.#layers.getEntityById<SpriteEntity>(
       cardSprite.layer,
-      this.#holeCardId
+      this.#holeCardId,
     );
     if (!entity) {
       throw new Error("Cannot animate entity. Hole card not found");
@@ -784,7 +790,7 @@ export class Renderer {
   private destroyVignette() {
     const entity = this.#layers.getEntityById<VignetteEntity>(
       LAYER.GAME,
-      "vignette"
+      "vignette",
     );
 
     if (entity) {
@@ -850,13 +856,13 @@ export class Renderer {
    */
   private getCachedBitmap(
     entity: SpriteEntity,
-    spriteIndex: number
+    spriteIndex: number,
   ): ImageBitmap {
     const sprite = entity.getSprite(spriteIndex);
     const cacheKey = SpriteEntity.formatSpriteId(
       entity.src,
       sprite.x,
-      sprite.y
+      sprite.y,
     );
 
     if (this.#cache.has(cacheKey)) {
@@ -875,7 +881,7 @@ export class Renderer {
    */
   private cacheEntityBitmaps(entity: SpriteEntity): void {
     this.debug.log(
-      `Caching ${entity.getSpriteCount()} sprite(s) for ${entity.id}`
+      `Caching ${entity.getSpriteCount()} sprite(s) for ${entity.id}`,
     );
 
     const bitmaps: ImageBitmap[] = [];
@@ -894,6 +900,16 @@ export class Renderer {
   private updateEntitySprites(entity: SpriteEntity): void {
     this.cacheEntityBitmaps(entity);
   }
+
+  private handleConnected = () => {
+    const entity = this.#layers.getEntityById<TextEntity>(
+      startText.layer,
+      startText.id,
+    );
+    if (entity) {
+      entity.text = "!start";
+    }
+  };
 
   private handleDealing = (event: EventType<EVENT.DEALING>) => {
     this.debug.log("Dealing");
@@ -914,7 +930,7 @@ export class Renderer {
     this.debug.log(
       "Handling vote update",
       event.data.command,
-      event.data.count
+      event.data.count,
     );
     this.updateVoteText(event.data);
     // TODO Show votes on screen
@@ -946,7 +962,7 @@ export class Renderer {
       event.data.dealer.role,
       () => {
         this.#eventBus.emit("animationComplete", event);
-      }
+      },
     );
   };
 
@@ -992,6 +1008,8 @@ export class Renderer {
   public handleChat = (event: ChatEvent) => {
     this.debug.log("Handling chat", event);
     switch (event.type) {
+      case EVENT.CONNECTED:
+        return this.handleConnected();
       case EVENT.VOTE_UPDATE:
         return this.handleVoteUpdate(event);
     }

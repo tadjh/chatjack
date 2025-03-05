@@ -34,9 +34,9 @@ export function Canvas({ deck, channel, debug, timer, fps }: CanvasProps) {
 
   return (
     <>
-      <canvas ref={bgRef} />
-      <canvas ref={gameRef} />
-      <canvas ref={uiRef} />
+      <canvas ref={bgRef} className="absolute" />
+      <canvas ref={gameRef} className="absolute" />
+      <canvas ref={uiRef} className="absolute" />
       <Debug blackjack={blackjack} disabled={!isDebug} chat={chat} />
     </>
   );

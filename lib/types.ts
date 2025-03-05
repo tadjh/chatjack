@@ -43,3 +43,25 @@ export enum EVENT {
   JUDGE = "judge",
   STOP = "stop",
 }
+type ValidTokenResponse = {
+  client_id: string;
+  login: string;
+  scopes: string[];
+  user_id: string;
+  expires_in: number;
+};
+
+type InvalidTokenResponse = {
+  status: number;
+  message: string;
+};
+
+export type ValidAuthStatus = {
+  user: ValidTokenResponse | null;
+  error?: never;
+};
+
+export type InvalidAuthStatus = {
+  error: InvalidTokenResponse;
+  user?: never;
+};

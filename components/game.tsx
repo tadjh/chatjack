@@ -3,7 +3,7 @@
 import { Canvas, CanvasProps } from "@/components/canvas";
 import { useSearchParams } from "next/navigation";
 
-export default function App() {
+export function Game() {
   const searchParams = useSearchParams();
 
   const props: CanvasProps = {
@@ -16,4 +16,3 @@ export default function App() {
 
   return <Canvas {...props} />;
 }
-
