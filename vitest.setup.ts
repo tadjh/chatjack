@@ -39,3 +39,15 @@ class MockOffscreenCanvas {
 Object.defineProperty(window, "innerWidth", { value: 1024, writable: true });
 Object.defineProperty(window, "innerHeight", { value: 768, writable: true });
 
+vi.mock("next/font/google", () => ({
+  Jacquard_24: () => ({
+    style: {
+      fontFamily: "Jacquard 24",
+    },
+  }),
+  Press_Start_2P: () => ({
+    style: {
+      fontFamily: "Press Start 2P",
+    },
+  }),
+}));

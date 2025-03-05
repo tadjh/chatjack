@@ -1,3 +1,5 @@
+# chatjack
+
 ## Bugs
 
 - TODO Screen flickers on restart (missing render call?)
@@ -24,3 +26,4 @@
   - dust when cards hit table or flip over
   - sparkles when blackjack
   - random orbs on title screens a la vegas
+
