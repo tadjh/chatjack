@@ -27,7 +27,7 @@ export function Debug({
   const { hit, stand, start, restart, stop } = chat;
 
   return (
-    <div className="p-4 flex gap-2 font-mono flex-col justify-center h-full fixed top-1/2 -translate-y-1/2 left-0 z-10">
+    <div className="fixed top-1/2 left-0 z-[9999] flex h-full -translate-y-1/2 flex-col justify-center gap-2 p-4 font-mono">
       <div className="grid gap-2">
         <div className="flex gap-2">
           <Button
@@ -47,7 +47,7 @@ export function Debug({
             !stop
           </Button>
         </div>
-        <div className="grid gap-2 items-center">
+        <div className="grid items-center gap-2">
           <div className="font-bold">Dealer</div>
           <div>{`Score: ${dealer.score} `}</div>
           <div>

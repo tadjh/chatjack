@@ -4,32 +4,33 @@ import { SignedOut } from "@/components/signed-out";
 import { TwitchLogin } from "@/components/twitch-login";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Suspense } from "react";
 
 export default function Home() {
   return (
     <>
-      <Suspense>
-        <Game />
-      </Suspense>
-      <div className="fixed inset-0 z-10 grid h-full w-full">
-        <div className="flex items-center justify-center"></div>
-        <div className="flex items-center justify-center">
+      <Game />
+      <div className="relative z-50 flex min-h-screen flex-col gap-3">
+        <header className="flex min-h-20 justify-end p-3">
+          <SignedIn>
+            <Button
+              variant="link"
+              className="game-text-shadow cursor-pointer text-lg hover:underline"
+              asChild
+            >
+              <Link href="/api/auth/twitch/logout">Logout</Link>
+            </Button>
+          </SignedIn>
+        </header>
+        <main className="flex grow flex-col items-center justify-center">
+          <div className="flex grow"></div>
           <SignedOut>
             <TwitchLogin />
           </SignedOut>
-        </div>
-      </div>
-      <div className="relative z-50 flex justify-end p-3">
-        <SignedIn>
-          <Button
-            variant="link"
-            className="game-text-shadow cursor-pointer text-lg hover:underline"
-            asChild
-          >
-            <Link href="/api/auth/twitch/logout">Logout</Link>
-          </Button>
-        </SignedIn>
+          <div className="flex min-h-20"></div>
+        </main>
+        <footer className="flex justify-end p-3">
+          {`© ${new Date().getFullYear()} chatjack by tadjh`}
+        </footer>
       </div>
     </>
   );

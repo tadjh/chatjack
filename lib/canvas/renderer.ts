@@ -262,12 +262,7 @@ export class Renderer {
       throw new Error("Layers not loaded");
     }
     this.debug.log("Loading title screen");
-    titleScreen.forEach((entity) => {
-      if (entity.id === "!start") {
-        return;
-      }
-      return this.createEntity(entity);
-    });
+    titleScreen.forEach((entity) => this.createEntity(entity));
     this.#assetsLoaded.set(ASSETS_LOADED.TITLE_SCREEN, true);
     this.checkIsReady();
   }

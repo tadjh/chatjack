@@ -46,7 +46,6 @@ export const titleScreen: [
   SpriteEntityProps,
   TextEntityProps,
   TextEntityProps,
-  TextEntityProps,
 ] = [
   {
     id: "flip-card",
@@ -161,7 +160,6 @@ export const titleScreen: [
       },
     ],
   },
-  startText,
 ];
 
 export const gameoverText: [TextEntityProps, TextEntityProps, TextEntityProps] =
