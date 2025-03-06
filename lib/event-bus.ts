@@ -1,76 +1,68 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { Debug } from "@/lib/debug";
 import { Dealer } from "@/lib/game/dealer";
 import { Player } from "@/lib/game/player";
-import { STATE, COMMAND, EVENT } from "./types";
-import { Debug } from "@/lib/debug";
+import Pusher from "pusher-js";
+import { COMMAND, EVENT, STATE } from "./types";
+import { RendererOptions } from "@/lib/canvas/renderer";
 
-export type EventCallback<T> = T extends void
-  ? () => void
-  : T extends any[]
-    ? (...args: T) => void
-    : (data: T) => void;
+export const NETWORKED_UPDATE_EVENT = "networkedUpdateEvent";
 
-export type EventArgs<T> = T extends void ? [] : T extends any[] ? T : [T];
+export type EventCallback<T> = T extends void ? () => void : (data: T) => void;
+
+export type EventArgs<T> = T extends void ? [] : [T];
+
+export type EventData<
+  T extends EVENT,
+  D extends Record<string, any> | undefined = undefined,
+> = D extends undefined
+  ? { type: T }
+  : {
+      type: T;
+      data: D;
+    };
 
 export type ChatEvent =
-  | {
-      type: EVENT.CONNECTED;
-    }
-  | {
-      type: EVENT.DISCONNECTED;
-    }
-  | {
-      type: EVENT.VOTE_UPDATE;
-      data: { command: COMMAND; count: number };
-    }
-  | {
-      type: EVENT.VOTE_END;
-      data: { command: COMMAND };
-    };
+  | EventData<EVENT.CONNECTED>
+  | EventData<EVENT.DISCONNECTED>
+  | EventData<EVENT.VOTE_UPDATE, { command: COMMAND; count: number }>
+  | EventData<EVENT.VOTE_END, { command: COMMAND }>;
 
 export type GameEvent =
-  | {
-      type: EVENT.DEALING;
-      data: { dealer: Dealer; player: Player };
-    }
-  | {
-      type: EVENT.PLAYER_ACTION;
-      data: { player: Player; state: STATE };
-    }
-  | {
-      type: EVENT.REVEAL_HOLE_CARD;
-      data: { dealer: Dealer };
-    }
-  | {
-      type: EVENT.DEALER_ACTION;
-      data: { dealer: Dealer; state: STATE };
-    }
-  | {
-      type: EVENT.JUDGE;
-      data: { state: STATE };
-    }
-  | {
-      type: EVENT.STOP;
-      data: { state: STATE };
-    };
+  | EventData<EVENT.DEALING, { dealer: Dealer; player: Player }>
+  | EventData<EVENT.PLAYER_ACTION, { player: Player; state: STATE }>
+  | EventData<EVENT.REVEAL_HOLE_CARD, { dealer: Dealer }>
+  | EventData<EVENT.DEALER_ACTION, { dealer: Dealer; state: STATE }>
+  | EventData<EVENT.JUDGE, { state: STATE }>
+  | EventData<EVENT.STOP, { state: STATE }>;
 
-export type AnimationEvent = ChatEvent | GameEvent;
+export type AnimationEvent = ChatEvent | GameEvent | MediatorAnimationEvent;
+
+export type MediatorEvent =
+  | EventData<EVENT.WAIT_FOR_START>
+  | EventData<EVENT.VOTE_START, { options: COMMAND[] }>
+  | EventData<EVENT.DEALER_DECIDE>
+  | EventData<EVENT.JUDGE>;
 
 export type EventType<T extends EVENT> = Extract<AnimationEvent, { type: T }>;
 
-export interface MediatorEvents {
-  waitForStart: void;
-  voteStart: { options: COMMAND[] };
-  playerAction: COMMAND;
-  dealerAction: void;
-  judge: void;
-}
+export type MediatorEventType<T extends EVENT> = Extract<
+  MediatorEvent,
+  { type: T }
+>;
 
-export type EventMap = MediatorEvents & {
+export type MediatorAnimationEvent = MediatorEventType<EVENT.VOTE_START>;
+
+export type EventMap = {
   chat: ChatEvent;
+  mediator: MediatorEvent;
   gamestate: GameEvent;
   animationComplete: AnimationEvent;
 };
+
+export interface EventBusOptions {
+  channel?: string;
+}
 
 export class EventBus<Events extends Record<string, any> = EventMap> {
   // Use a Partial mapping to store callbacks for defined events.
@@ -81,13 +73,17 @@ export class EventBus<Events extends Record<string, any> = EventMap> {
     }>;
   }>;
 
+  #pusher: Pusher | null = null;
+
   static #instance: EventBus | null = null;
   protected debug: Debug;
-  public static create<
-    T extends Record<string, any> = EventMap,
-  >(): EventBus<T> {
+  public readonly channel: string;
+
+  public static create<T extends Record<string, any> = EventMap>(
+    options?: EventBusOptions,
+  ): EventBus<T> {
     if (!EventBus.#instance) {
-      EventBus.#instance = new EventBus<T>();
+      EventBus.#instance = new EventBus<T>(options);
     }
 
     return EventBus.#instance as EventBus<T>;
@@ -100,7 +96,11 @@ export class EventBus<Events extends Record<string, any> = EventMap> {
     EventBus.#instance = null;
   }
 
-  private constructor(debug = new Debug("EventBus", "LightBlue")) {
+  private constructor(
+    { channel = "" }: EventBusOptions = { channel: "" },
+    debug = new Debug("EventBus", "LightBlue"),
+  ) {
+    this.channel = channel;
     this.#events = {};
     this.debug = debug;
   }
@@ -108,7 +108,7 @@ export class EventBus<Events extends Record<string, any> = EventMap> {
   public subscribe<K extends keyof Events>(
     eventName: K,
     callback: EventCallback<Events[K]>,
-    source: string = "Unknown"
+    source: string = "Unknown",
   ): () => void {
     this.debug.log(`${source} subscribing to: ${String(eventName)}`);
     if (!this.#events[eventName]) {
@@ -121,7 +121,7 @@ export class EventBus<Events extends Record<string, any> = EventMap> {
   public unsubscribe<K extends keyof Events>(
     eventName: K,
     callback: EventCallback<Events[K]>,
-    source?: string
+    source?: string,
   ) {
     if (this.#events[eventName]) {
       // Properly filter out the callback and update the event's callback array.
@@ -129,7 +129,7 @@ export class EventBus<Events extends Record<string, any> = EventMap> {
         const search = cb.callback !== callback;
         if (!search) {
           this.debug.log(
-            `${source ?? cb.source} unsubscribing from: ${String(eventName)}`
+            `${source ?? cb.source} unsubscribing from: ${String(eventName)}`,
           );
         }
         return search;
@@ -140,7 +140,7 @@ export class EventBus<Events extends Record<string, any> = EventMap> {
   public once<K extends keyof Events>(
     eventName: K,
     callback: EventCallback<Events[K]>,
-    source: string = "unknown"
+    source: string = "unknown",
   ): () => void {
     this.debug.log(`${source} subscribing once to: ${String(eventName)}`);
     const wrappedCallback = ((...args: Events[K]) => {
@@ -157,20 +157,12 @@ export class EventBus<Events extends Record<string, any> = EventMap> {
     return this.subscribe(eventName, wrappedCallback, source);
   }
 
-  public emit<K extends keyof Events>(
-    eventName: K,
-    ...args: EventArgs<Events[K]>
-  ): void {
+  public emit<K extends keyof Events>(eventName: K, args: Events[K]): void {
     this.debug.log(`Emitting: ${String(eventName)}`);
     if (this.#events[eventName]) {
+      this.emitNet(NETWORKED_UPDATE_EVENT, { eventName, args });
       this.#events[eventName]?.forEach(({ callback }) => {
-        if (args.length === 0) {
-          (callback as () => void)();
-        } else if (args.length === 1) {
-          (callback as (arg: Events[K]) => void)(args[0]);
-        } else {
-          (callback as (...args: Events[K]) => void)(...args);
-        }
+        callback(args);
       });
     }
   }
@@ -179,7 +171,7 @@ export class EventBus<Events extends Record<string, any> = EventMap> {
     this.debug.log("Current event subscriptions:");
     Object.entries(this.#events).forEach(([eventName, callbacks]) => {
       this.debug.log(
-        `Event: ${String(eventName)}, Subscribers: ${callbacks.length}`
+        `Event: ${String(eventName)}, Subscribers: ${callbacks.length}`,
       );
       callbacks.forEach((cb: { source: string }, index: number) => {
         this.debug.log(`  ${index + 1}. Source: ${cb.source}`);
@@ -190,7 +182,28 @@ export class EventBus<Events extends Record<string, any> = EventMap> {
   private teardown() {
     this.#events = {};
   }
+
+  async emitNet<K extends keyof Events>(
+    event: typeof NETWORKED_UPDATE_EVENT,
+    data: { eventName: K; args: Events[K] },
+  ) {
+    try {
+      const response = await fetch("/api/publish/event", {
+        method: "POST",
+        body: JSON.stringify({
+          channel: this.channel,
+          event,
+          data,
+        }),
+      });
+      if (!response.ok) {
+        return { success: false };
+      }
+
+      return response.json() as Promise<{ success: boolean }>;
+    } catch (error) {
+      this.debug.error(`Failed to emit event: ${error}`);
+      return { success: false };
+    }
+  }
 }
-
-export const eventBus = EventBus.create();
-

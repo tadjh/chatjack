@@ -16,5 +16,9 @@ declare namespace NodeJS {
     KV_REST_API_TOKEN: string;
     KV_REST_API_READ_ONLY_TOKEN: string;
     KV_URL: string;
+    PUSHER_APP_ID: string;
+    NEXT_PUBLIC_PUSHER_KEY: string;
+    PUSHER_SECRET: string;
+    NEXT_PUBLIC_PUSHER_CLUSTER: string;
   }
 }

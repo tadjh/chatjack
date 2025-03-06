@@ -1,59 +1,41 @@
-"use client";
-
-import { useSearch } from "@/components/search-provider";
-import { Debug } from "@/components/debug";
-import { useBlackjack } from "@/hooks/use-blackjack";
 import { useCanvas } from "@/hooks/use-canvas";
-import { useMediator } from "@/hooks/use-mediator";
-import { useTwitch } from "@/hooks/use-twtich";
+import { useRenderer } from "@/hooks/use-renderer";
+import { useEventBus } from "@/hooks/use-event-bus";
+import { RendererOptions } from "@/lib/canvas/renderer";
+import { useEffect } from "react";
 
-export interface CanvasProps {
-  deck: string | null;
-  channel: string | null;
-  debug: string | null;
-  timer: string | null;
-  fps: string | null;
-}
+export function Canvas(options: RendererOptions) {
+  const eventBus = useEventBus(options.channel);
+  const renderer = useRenderer(options, eventBus);
+  const { bgRef, gameRef, uiRef } = useCanvas(renderer);
 
-export function Canvas() {
-  const { timer, fps, debug, deck, channel } = useSearch();
-  const timerValue = parseTimer(timer);
-  const fpsValue = parseFps(fps);
-  const isDebug = debug !== null && debug !== "false";
-  const { bgRef, gameRef, uiRef } = useCanvas({
-    timer: timerValue,
-    fps: fpsValue,
-  });
-  const blackjack = useBlackjack({
-    deck,
-    playerCount: 1,
-    playerNames: ["Chat"],
-  });
-  useMediator();
-  const chat = useTwitch({
-    channel: channel ?? "",
-    voteDuration: timerValue,
-    debug: isDebug,
-  });
+  useEffect(() => {
+    async function setup() {
+      if (!renderer.isRunning) {
+        try {
+          await renderer.start();
+        } catch (error) {
+          console.error("Failed to start renderer:", error);
+        }
+      }
+    }
+
+    setup();
+
+    return () => {
+      // Don't stop the engine on unmount in development
+      // This prevents the double-start issue in React strict mode
+      if (process.env.NODE_ENV === "production" && renderer.isRunning) {
+        renderer.stop();
+      }
+    };
+  }, []);
 
   return (
     <>
       <canvas ref={bgRef} className="absolute" />
       <canvas ref={gameRef} className="absolute" />
       <canvas ref={uiRef} className="absolute" />
-      <Debug blackjack={blackjack} disabled={!isDebug} chat={chat} />
     </>
   );
 }
-
-const parseTimer = (value: string | null) => {
-  if (!value) return 10;
-  const num = parseInt(value);
-  return isNaN(num) ? 10 : num;
-};
-
-const parseFps = (value: string | null) => {
-  if (!value) return 12;
-  const num = parseInt(value);
-  return isNaN(num) ? 12 : num;
-};

@@ -11,10 +11,10 @@ export function ClientSessionProvider({
   initialSession,
   children,
 }: {
-  initialSession: Twitch.ValidateAccessTokenSessionData | null;
+  initialSession: Twitch.ValidateAccessTokenSessionData | undefined;
   children: React.ReactNode;
 }) {
-  const [session] = useState(initialSession);
+  const [session] = useState(initialSession ?? null);
 
   return (
     <SessionContext.Provider value={{ session }}>

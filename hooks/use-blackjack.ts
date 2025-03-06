@@ -1,9 +1,9 @@
 import { Blackjack, BlackjackOptions } from "@/lib/game/blackjack";
 import { Dealer } from "@/lib/game/dealer";
 import { Player } from "@/lib/game/player";
-import { COMMAND, STATE } from "@/lib/types";
+import { COMMAND, EVENT, STATE } from "@/lib/types";
 import { useRef, useState, useEffect } from "react";
-import { eventBus } from "@/lib/event-bus";
+import { EventBus } from "@/lib/event-bus";
 
 export interface UseBlackjackReturnType {
   dealer: Dealer;
@@ -24,9 +24,10 @@ export interface UseBlackjackReturnType {
 }
 
 export function useBlackjack(
-  options: BlackjackOptions
+  options: BlackjackOptions,
+  eventBus: EventBus,
 ): UseBlackjackReturnType {
-  const blackjackRef = useRef(Blackjack.create(options));
+  const blackjackRef = useRef(Blackjack.create(options, eventBus));
   const blackjack = blackjackRef.current;
 
   const [gameState, setGameState] = useState({
@@ -47,33 +48,27 @@ export function useBlackjack(
     };
 
     // Subscribe to events that should trigger state updates
-    const unsubscribeDealerAction = eventBus.subscribe(
-      "dealerAction",
+    const unsubscribeMediator = eventBus.subscribe(
+      "mediator",
       updateFromInstance,
-      "useBlackjack"
+      "useBlackjack",
     );
     const unsubscribeGamestate = eventBus.subscribe(
       "gamestate",
       updateFromInstance,
-      "useBlackjack"
+      "useBlackjack",
     );
-    const unsubscribePlayerAction = eventBus.subscribe(
-      "playerAction",
+    const unsubscribeChat = eventBus.subscribe(
+      "chat",
       updateFromInstance,
-      "useBlackjack"
-    );
-    const unsubscribeJudge = eventBus.subscribe(
-      "judge",
-      updateFromInstance,
-      "useBlackjack"
+      "useBlackjack",
     );
 
     // Clean up subscriptions when the hook unmounts
     return () => {
-      unsubscribeDealerAction();
+      unsubscribeMediator();
       unsubscribeGamestate();
-      unsubscribePlayerAction();
-      unsubscribeJudge();
+      unsubscribeChat();
     };
   }, []);
 
@@ -90,12 +85,18 @@ export function useBlackjack(
   }
 
   function hit() {
-    blackjack.handlePlayerAction(COMMAND.HIT);
+    blackjack.handlePlayerAction({
+      type: EVENT.VOTE_END,
+      data: { command: COMMAND.HIT },
+    });
     updateSnapshot();
   }
 
   function stand() {
-    blackjack.handlePlayerAction(COMMAND.STAND);
+    blackjack.handlePlayerAction({
+      type: EVENT.VOTE_END,
+      data: { command: COMMAND.STAND },
+    });
     updateSnapshot();
   }
 
@@ -147,4 +148,3 @@ export function useBlackjack(
     restart,
   };
 }
-

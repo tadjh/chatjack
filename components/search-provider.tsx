@@ -1,6 +1,6 @@
 "use client";
 
-import { CanvasProps } from "@/components/canvas";
+import { CanvasProps } from "@/components/game";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createContext, useContext } from "react";
 

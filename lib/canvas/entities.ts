@@ -16,6 +16,7 @@ export const startText: TextEntityProps = {
   layer: LAYER.GAME,
   position: POSITION.BOTTOM,
   fontSize: 24,
+  delay: 32,
   fontFamily: FONT.SANS_SERIF,
   textBaseline: "middle",
   textAlign: "center",
@@ -43,6 +44,7 @@ export const startText: TextEntityProps = {
 
 export const titleScreen: [
   SpriteEntityProps,
+  TextEntityProps,
   TextEntityProps,
   TextEntityProps,
 ] = [
@@ -159,6 +161,7 @@ export const titleScreen: [
       },
     ],
   },
+  startText,
 ];
 
 export const gameoverText: [TextEntityProps, TextEntityProps, TextEntityProps] =

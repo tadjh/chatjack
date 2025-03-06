@@ -1,7 +1,8 @@
 import { getModeratedChannels } from "@/app/actions";
-import { Canvas } from "@/components/canvas";
+import { Game } from "@/components/game";
 import { ChannelName } from "@/components/channel-name";
 import { SearchProvider } from "@/components/search-provider";
+import { SessionProvider } from "@/components/session-provider";
 import { SignedIn } from "@/components/signed-in";
 import { SignedOut } from "@/components/signed-out";
 import { TwitchLogin } from "@/components/twitch-login";
@@ -12,9 +13,9 @@ export default async function Home() {
   const channels = await getModeratedChannels();
 
   return (
-    <>
+    <SessionProvider>
       <SearchProvider>
-        <Canvas />
+        <Game />
         <div className="relative z-50 flex min-h-screen flex-col gap-3">
           <header className="flex min-h-20 justify-end p-3">
             <SignedIn>
@@ -42,6 +43,6 @@ export default async function Home() {
           </footer>
         </div>
       </SearchProvider>
-    </>
+    </SessionProvider>
   );
 }

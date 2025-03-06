@@ -1,5 +1,5 @@
 import { Debug } from "@/lib/debug";
-import { eventBus, EventBus } from "@/lib/event-bus";
+import { EventType, ChatEvent, EventBus, MediatorEvent } from "@/lib/event-bus";
 import { Dealer } from "@/lib/game/dealer";
 import { Deck, FixedDeck } from "@/lib/game/deck";
 import { Player, Role } from "@/lib/game/player";
@@ -34,9 +34,12 @@ export class Blackjack {
   #shoe: Deck;
   #eventBus: EventBus;
 
-  public static create(options?: BlackjackOptions): Blackjack {
+  public static create(
+    options?: BlackjackOptions,
+    eventBus?: EventBus,
+  ): Blackjack {
     if (!Blackjack.#instance) {
-      Blackjack.#instance = new Blackjack(options);
+      Blackjack.#instance = new Blackjack(options, eventBus);
     }
     return Blackjack.#instance;
   }
@@ -55,8 +58,8 @@ export class Blackjack {
       playerCount = Blackjack.defaults.playerCount,
       playerNames = Blackjack.defaults.playerNames,
     }: BlackjackOptions = Blackjack.defaults,
-    eventBusInstance = eventBus,
-    debug = new Debug(Blackjack.name, "Green")
+    eventBusInstance: EventBus = EventBus.create(),
+    debug = new Debug(Blackjack.name, "Green"),
   ) {
     this.debug = debug;
     this.shoeSize = shoeSize;
@@ -114,24 +117,14 @@ export class Blackjack {
   }
 
   private setup() {
-    this.#eventBus.subscribe(
-      "playerAction",
-      this.handlePlayerAction,
-      Blackjack.name
-    );
-    this.#eventBus.subscribe(
-      "dealerAction",
-      this.handleDealerAction,
-      Blackjack.name
-    );
-    this.#eventBus.subscribe("judge", this.handleJudge, Blackjack.name);
+    this.#eventBus.subscribe("mediator", this.handleMediator, Blackjack.name);
+    this.#eventBus.subscribe("chat", this.handleChat, Blackjack.name);
     return this;
   }
 
   private teardown() {
-    this.#eventBus.unsubscribe("playerAction", this.handlePlayerAction);
-    this.#eventBus.unsubscribe("dealerAction", this.handleDealerAction);
-    this.#eventBus.unsubscribe("judge", this.handleJudge);
+    this.#eventBus.unsubscribe("mediator", this.handleMediator);
+    this.#eventBus.unsubscribe("chat", this.handleChat);
     return this;
   }
 
@@ -147,7 +140,7 @@ export class Blackjack {
       new Dealer(),
       ...Array.from(
         { length: playerCount },
-        (_, i) => new Player(playerNames[i] || `Player ${i + 1}`, i + 1)
+        (_, i) => new Player(playerNames[i] || `Player ${i + 1}`, i + 1),
       ),
     ];
   }
@@ -328,9 +321,25 @@ export class Blackjack {
     });
   };
 
-  public handlePlayerAction = (command: COMMAND) => {
-    this.debug.log("Player action:", command);
-    switch (command) {
+  private handleChat = (event: ChatEvent) => {
+    switch (event.type) {
+      case EVENT.VOTE_END:
+        return this.handlePlayerAction(event);
+    }
+  };
+
+  private handleMediator = (event: MediatorEvent) => {
+    switch (event.type) {
+      case EVENT.DEALER_DECIDE:
+        return this.handleDealerAction();
+      case EVENT.JUDGE:
+        return this.handleJudge();
+    }
+  };
+
+  public handlePlayerAction = (event: EventType<EVENT.VOTE_END>) => {
+    this.debug.log("Player action:", event.data.command);
+    switch (event.data.command) {
       case COMMAND.START:
         this.handleStart();
         break;

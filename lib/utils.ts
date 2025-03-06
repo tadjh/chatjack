@@ -34,3 +34,23 @@ export function getCacheKey(scope: string, key: string) {
 export function getModeratedChannelsKey(userId: string) {
   return getCacheKey("moderatedChannels", userId);
 }
+
+/**
+ * Returns a cache key for the snapshot.
+ *
+ * @param channel - The channel of the snapshot.
+ * @returns A string of the cache key.
+ */
+export function getSnapshotKey(channel: string) {
+  return getCacheKey("snapshot", channel);
+}
+
+/**
+ * Parses a string value as a boolean.
+ *
+ * @param str - The string value to parse.
+ * @returns A boolean value.
+ */
+export function parseDebug(str: string | null) {
+  return str === "" ? true : Boolean(str);
+}

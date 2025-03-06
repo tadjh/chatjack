@@ -1,14 +1,11 @@
+import { RendererOptions } from "@/lib/canvas/renderer";
 import { Debug } from "@/lib/debug";
-import { EventBus, eventBus, MediatorEvents } from "@/lib/event-bus";
+import { EventBus, MediatorEvent, MediatorEventType } from "@/lib/event-bus";
 import { Vote } from "@/lib/integrations/vote";
 import { COMMAND, EVENT } from "@/lib/types";
 import * as tmi from "tmi.js";
 
-export type TwitchOptions = {
-  channel: string;
-  voteDuration: number;
-  debug?: boolean;
-};
+export type TwitchOptions = Pick<RendererOptions, "channel" | "timer">;
 
 export class Twitch {
   static #instance: Twitch | null = null;
@@ -21,9 +18,9 @@ export class Twitch {
   #options: COMMAND[];
   #client: tmi.Client | null = null;
 
-  public static create(options: TwitchOptions) {
+  public static create(options: TwitchOptions, eventBus: EventBus) {
     if (!Twitch.#instance) {
-      Twitch.#instance = new Twitch(options);
+      Twitch.#instance = new Twitch(options, eventBus);
     }
     return Twitch.#instance;
   }
@@ -49,15 +46,15 @@ export class Twitch {
   }
 
   private constructor(
-    options: TwitchOptions = { channel: "", voteDuration: 10, debug: false },
+    options: TwitchOptions,
+    events: EventBus,
     vote = new Vote(),
-    events = eventBus,
     debug = new Debug(Twitch.name, "Purple"),
   ) {
     this.debug = debug;
     this.#eventBus = events;
     this.#channel = options.channel;
-    this.#duration = options.voteDuration * 1000;
+    this.#duration = (options.timer ?? 10) * 1000;
     this.#vote = vote;
     this.#options = [COMMAND.START, COMMAND.RESTART];
     this.setup(this.#channel);
@@ -109,12 +106,7 @@ export class Twitch {
     this.addListener("connected", this.handleConnected);
     this.addListener("disconnected", this.handleDisconnected);
 
-    this.#eventBus.subscribe(
-      "waitForStart",
-      this.handleWaitForStart,
-      Twitch.name,
-    );
-    this.#eventBus.subscribe("voteStart", this.handleVoteStart, Twitch.name);
+    this.#eventBus.subscribe("mediator", this.handleMediator, Twitch.name);
     await this.connect();
   }
 
@@ -122,8 +114,7 @@ export class Twitch {
     this.removeListener("connected", this.handleConnected);
     this.removeListener("disconnected", this.handleDisconnected);
 
-    this.#eventBus.unsubscribe("waitForStart", this.handleWaitForStart);
-    this.#eventBus.unsubscribe("voteStart", this.handleVoteStart);
+    this.#eventBus.unsubscribe("mediator", this.handleMediator);
     await this.disconnect();
   }
 
@@ -155,16 +146,24 @@ export class Twitch {
       self: boolean,
     ) => {
       if (self || !user.username) return;
-      this.debug.log("here", channel, user, message);
       const command = this.parseMessage(message);
-      console.log("command", command);
-
       if (command !== COMMAND.START) return;
       this.handlePlayerAction(command);
       this.removeListener("message", waitForStart);
     };
 
     this.addListener("message", waitForStart);
+  };
+
+  private handleMediator = (event: MediatorEvent) => {
+    switch (event.type) {
+      case EVENT.WAIT_FOR_START:
+        this.handleWaitForStart();
+        break;
+      case EVENT.VOTE_START:
+        this.handleVoteStart(event);
+        break;
+    }
   };
 
   private handleVote = (
@@ -189,9 +188,9 @@ export class Twitch {
     });
   };
 
-  private handleVoteStart = (event: MediatorEvents["voteStart"]) => {
+  private handleVoteStart = (event: MediatorEventType<EVENT.VOTE_START>) => {
     this.#vote.reset();
-    this.#options = event.options;
+    this.#options = event.data.options;
 
     this.#client?.addListener("message", this.handleVote);
     this.startVoteTimer((command) => {
@@ -204,7 +203,10 @@ export class Twitch {
       clearTimeout(this.#voteTimer);
       this.#client?.removeListener("message", this.handleVote);
     }
-    this.#eventBus.emit("playerAction", command);
+    this.#eventBus.emit("chat", {
+      type: EVENT.VOTE_END,
+      data: { command },
+    });
   };
 
   private handleConnected = () => {

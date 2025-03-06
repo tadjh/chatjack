@@ -26,18 +26,19 @@ import { rgb } from "@/lib/canvas/utils";
 import { Palette } from "@/lib/constants";
 import { Debug } from "@/lib/debug";
 import {
-  AnimationEvent,
   ChatEvent,
-  eventBus,
   EventBus,
   EventType,
-  MediatorEvents,
+  GameEvent,
+  MediatorEvent,
+  MediatorEventType,
 } from "@/lib/event-bus";
 import { Card, Rank } from "@/lib/game/card";
 import { Dealer } from "@/lib/game/dealer";
 import { Hand, Status } from "@/lib/game/hand";
 import { Player, Role } from "@/lib/game/player";
 import { COMMAND, EVENT, STATE } from "@/lib/types";
+import { z } from "zod";
 
 enum ASSETS_LOADED {
   FONTS,
@@ -46,10 +47,18 @@ enum ASSETS_LOADED {
   TITLE_SCREEN,
 }
 
-type RendererOptions = {
-  fps?: number;
-  timer?: number;
-};
+type RenderMode = "moderator" | "spectator";
+
+export const rendererOptionsSchema = z.object({
+  channel: z.string({ message: "A channel name is required" }),
+  mode: z.enum(["moderator", "spectator"]),
+  fps: z.number().optional(),
+  timer: z.number().optional(),
+  caption: z.string().optional(),
+  debug: z.boolean().optional(),
+});
+
+export type RendererOptions = z.infer<typeof rendererOptionsSchema>;
 
 type Canvases = [
   HTMLCanvasElement | null,
@@ -61,6 +70,10 @@ export class Renderer {
   public static readonly defaults: Required<RendererOptions> = {
     fps: FPS,
     timer: 30,
+    channel: "",
+    mode: "moderator",
+    caption: "",
+    debug: false,
   };
   static #instance: Renderer | null = null;
   readonly fps: number;
@@ -79,10 +92,16 @@ export class Renderer {
   #assetsLoaded = new Map<ASSETS_LOADED, boolean>();
   #holeCardId: string = "";
   #eventBus: EventBus;
+  #caption: string;
+  #mode: RenderMode;
+  #channel: string;
 
-  public static create(options?: RendererOptions): Renderer {
+  public static create(
+    options?: RendererOptions,
+    eventBus?: EventBus,
+  ): Renderer {
     if (!Renderer.#instance) {
-      Renderer.#instance = new Renderer(options);
+      Renderer.#instance = new Renderer(options, eventBus);
     }
     return Renderer.#instance;
   }
@@ -98,8 +117,11 @@ export class Renderer {
     {
       fps = Renderer.defaults.fps,
       timer = Renderer.defaults.timer,
+      caption = Renderer.defaults.caption,
+      mode,
+      channel,
     }: RendererOptions = Renderer.defaults,
-    eventBusInstance = eventBus,
+    eventBusInstance: EventBus = EventBus.create(),
     layers = new LayerManager(),
     debug = new Debug(Renderer.name, "Orange"),
   ) {
@@ -110,6 +132,9 @@ export class Renderer {
     this.#layers = layers;
     this.#eventBus = eventBusInstance;
     this.timer = timer;
+    this.#caption = caption;
+    this.#mode = mode;
+    this.#channel = channel; // TODO use channel
 
     if (typeof window === "undefined") {
       this.debug.log("Renderer is not running in the browser");
@@ -145,7 +170,7 @@ export class Renderer {
     await this.loadAssets();
     this.#eventBus.subscribe("gamestate", this.handleGamestate, Renderer.name);
     this.#eventBus.subscribe("chat", this.handleChat, Renderer.name);
-    this.#eventBus.subscribe("voteStart", this.handleVoteStart, Renderer.name);
+    this.#eventBus.subscribe("mediator", this.handleMediator, Renderer.name);
     return this;
   }
 
@@ -155,7 +180,7 @@ export class Renderer {
     this.unloadLayers();
     this.#eventBus.unsubscribe("gamestate", this.handleGamestate);
     this.#eventBus.unsubscribe("chat", this.handleChat);
-    this.#eventBus.unsubscribe("voteStart", this.handleVoteStart);
+    this.#eventBus.unsubscribe("mediator", this.handleMediator);
     return this;
   }
 
@@ -262,7 +287,13 @@ export class Renderer {
       throw new Error("Layers not loaded");
     }
     this.debug.log("Loading title screen");
-    titleScreen.forEach((entity) => this.createEntity(entity));
+    titleScreen.forEach((entity) => {
+      if (entity.type === "text" && entity.id === startText.id) {
+        entity.text = this.#caption;
+      }
+
+      return this.createEntity(entity);
+    });
     this.#assetsLoaded.set(ASSETS_LOADED.TITLE_SCREEN, true);
     this.checkIsReady();
   }
@@ -897,7 +928,20 @@ export class Renderer {
   }
 
   private handleConnected = () => {
-    this.createEntity(startText);
+    const entity = this.#layers.getEntityById<TextEntity>(
+      startText.layer,
+      startText.id,
+    );
+    this.#caption = "Loading...";
+    if (entity) {
+      entity.text = this.#caption;
+      this.#layers.setEntity(entity);
+    } else {
+      this.createEntity({
+        ...startText,
+        text: this.#caption,
+      });
+    }
   };
 
   private handleDealing = (event: EventType<EVENT.DEALING>) => {
@@ -906,13 +950,6 @@ export class Renderer {
     this.createHands(event.data.dealer, event.data.player, () => {
       this.#eventBus.emit("animationComplete", event);
     });
-  };
-
-  private handleVoteStart = (event: MediatorEvents["voteStart"]) => {
-    this.debug.log("Handling vote start", event);
-    this.createVignette();
-    this.createVoteText(event.options);
-    this.createTimer();
   };
 
   private handleVoteUpdate = (event: EventType<EVENT.VOTE_UPDATE>) => {
@@ -976,7 +1013,7 @@ export class Renderer {
     this.#eventBus.emit("animationComplete", event);
   };
 
-  public handleGamestate = (event: AnimationEvent) => {
+  public handleGamestate = (event: GameEvent) => {
     switch (event.type) {
       case EVENT.DEALING:
         this.restart();
@@ -1001,6 +1038,21 @@ export class Renderer {
         return this.handleConnected();
       case EVENT.VOTE_UPDATE:
         return this.handleVoteUpdate(event);
+    }
+  };
+
+  private handleVoteStart = (event: MediatorEventType<EVENT.VOTE_START>) => {
+    this.debug.log("Handling vote start", event);
+    this.createVignette();
+    this.createVoteText(event.data.options);
+    this.createTimer();
+  };
+
+  private handleMediator = (event: MediatorEvent) => {
+    switch (event.type) {
+      case EVENT.VOTE_START:
+        this.handleVoteStart(event);
+        break;
     }
   };
 }

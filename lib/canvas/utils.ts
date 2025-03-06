@@ -191,7 +191,10 @@ export function getScaleFactor(): number {
  * @returns The vertical scale factor.
  */
 export function getVerticalScaleFactor(): number {
-  return window.innerHeight / BASELINE_HEIGHT;
+  if (typeof window !== "undefined") {
+    return window.innerHeight / BASELINE_HEIGHT;
+  }
+  return 1;
 }
 
 /**
@@ -203,5 +206,8 @@ export function getVerticalScaleFactor(): number {
  * @returns The horizontal scale factor.
  */
 export function getHorizontalScaleFactor(): number {
-  return window.innerWidth / BASELINE_WIDTH;
+  if (typeof window !== "undefined") {
+    return window.innerWidth / BASELINE_WIDTH;
+  }
+  return 1;
 }

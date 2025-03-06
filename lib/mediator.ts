@@ -1,5 +1,5 @@
 import { Debug } from "@/lib/debug";
-import { AnimationEvent, ChatEvent, EventBus, eventBus } from "@/lib/event-bus";
+import { AnimationEvent, ChatEvent, EventBus } from "@/lib/event-bus";
 import { COMMAND, EVENT } from "@/lib/types";
 
 export type MediatorOptions = {
@@ -11,9 +11,9 @@ export class Mediator {
   protected debug: Debug;
   #eventBus: EventBus;
 
-  public static create(): Mediator {
+  public static create(eventBus?: EventBus): Mediator {
     if (!Mediator.#instance) {
-      Mediator.#instance = new Mediator();
+      Mediator.#instance = new Mediator(eventBus);
     }
     return Mediator.#instance;
   }
@@ -26,8 +26,8 @@ export class Mediator {
   }
 
   private constructor(
-    eventBusInstance = eventBus,
-    debug = new Debug(Mediator.name, "Yellow")
+    eventBusInstance: EventBus = EventBus.create(),
+    debug = new Debug(Mediator.name, "Yellow"),
   ) {
     this.debug = debug;
     this.#eventBus = eventBusInstance;
@@ -44,7 +44,7 @@ export class Mediator {
     this.#eventBus.subscribe(
       "animationComplete",
       this.handleAnimationComplete,
-      Mediator.name
+      Mediator.name,
     );
   }
 
@@ -52,7 +52,7 @@ export class Mediator {
     this.#eventBus.unsubscribe("chat", this.handleChat);
     this.#eventBus.unsubscribe(
       "animationComplete",
-      this.handleAnimationComplete
+      this.handleAnimationComplete,
     );
   }
 
@@ -60,11 +60,11 @@ export class Mediator {
     switch (event.type) {
       case EVENT.CONNECTED:
         this.debug.log("Waiting for start");
-        this.#eventBus.emit("waitForStart");
+        this.#eventBus.emit("mediator", { type: EVENT.WAIT_FOR_START });
         break;
       case EVENT.DISCONNECTED:
         this.debug.log("Disconnected");
-        this.#eventBus.emit("waitForStart");
+        this.#eventBus.emit("mediator", { type: EVENT.WAIT_FOR_START });
         break;
     }
   };
@@ -74,42 +74,44 @@ export class Mediator {
       case EVENT.DEALING:
         this.debug.log("Dealing animation complete");
         if (event.data.player.isDone) {
-          this.#eventBus.emit("dealerAction");
+          this.#eventBus.emit("mediator", { type: EVENT.DEALER_DECIDE });
         } else {
-          this.#eventBus.emit("voteStart", {
-            options: [COMMAND.HIT, COMMAND.STAND], // TODO: Support split command
+          this.#eventBus.emit("mediator", {
+            type: EVENT.VOTE_START,
+            data: { options: [COMMAND.HIT, COMMAND.STAND] }, // TODO: Support split command
           });
         }
         break;
       case EVENT.PLAYER_ACTION:
         this.debug.log("Player action animation complete");
         if (event.data.player.isDone) {
-          this.#eventBus.emit("dealerAction");
+          this.#eventBus.emit("mediator", { type: EVENT.DEALER_DECIDE });
         } else {
-          this.#eventBus.emit("voteStart", {
-            options: [COMMAND.HIT, COMMAND.STAND], // TODO: Support split command
+          this.#eventBus.emit("mediator", {
+            type: EVENT.VOTE_START,
+            data: { options: [COMMAND.HIT, COMMAND.STAND] }, // TODO: Support split command
           });
         }
         break;
       case EVENT.REVEAL_HOLE_CARD:
         this.debug.log("Reveal hole card animation complete");
         if (event.data.dealer.isDone) {
-          this.#eventBus.emit("judge");
+          this.#eventBus.emit("mediator", { type: EVENT.JUDGE });
         } else {
-          this.#eventBus.emit("dealerAction");
+          this.#eventBus.emit("mediator", { type: EVENT.DEALER_DECIDE });
         }
         break;
       case EVENT.DEALER_ACTION:
         this.debug.log("Dealer action animation complete");
         if (event.data.dealer.isDone) {
-          this.#eventBus.emit("judge");
+          this.#eventBus.emit("mediator", { type: EVENT.JUDGE });
         } else {
-          this.#eventBus.emit("dealerAction");
+          this.#eventBus.emit("mediator", { type: EVENT.DEALER_DECIDE });
         }
         break;
       case EVENT.JUDGE:
         this.debug.log("Judge animation complete");
-        this.#eventBus.emit("waitForStart");
+        this.#eventBus.emit("mediator", { type: EVENT.WAIT_FOR_START });
         break;
     }
   };
