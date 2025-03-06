@@ -1,7 +1,7 @@
 import { Twitch, TwitchOptions } from "@/lib/integrations/twitch";
 import { COMMAND } from "@/lib/types";
 import { useEffect, useRef } from "react";
-import { faker } from "@faker-js/faker";
+import { randUser } from "@ngneat/falso";
 
 export interface ChatActions {
   hit: () => void;
@@ -31,15 +31,9 @@ export function useTwitch(options: TwitchOptions): ChatActions {
 
   return {
     hit: () =>
-      twitchRef.current.handleVoteUpdate(
-        faker.internet.username(),
-        COMMAND.HIT,
-      ),
+      twitchRef.current.handleVoteUpdate(randUser().username, COMMAND.HIT),
     stand: () =>
-      twitchRef.current.handleVoteUpdate(
-        faker.internet.username(),
-        COMMAND.STAND,
-      ),
+      twitchRef.current.handleVoteUpdate(randUser().username, COMMAND.STAND),
     start: () => twitchRef.current.handlePlayerAction(COMMAND.START),
     restart: () => twitchRef.current.handlePlayerAction(COMMAND.RESTART),
     stop: () => twitchRef.current.handlePlayerAction(COMMAND.STOP),
