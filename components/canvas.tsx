@@ -17,7 +17,6 @@ export interface CanvasProps {
 
 export function Canvas() {
   const { timer, fps, debug, deck, channel } = useSearch();
-  console.log("channel", channel);
   const timerValue = parseTimer(timer);
   const fpsValue = parseFps(fps);
   const isDebug = debug !== null && debug !== "false";

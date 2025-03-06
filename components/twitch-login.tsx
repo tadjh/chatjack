@@ -1,16 +1,7 @@
-"use client";
-
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/use-auth";
 import Link from "next/link";
 
 export function TwitchLogin() {
-  const { user, error } = useAuth();
-
-  if (user === null || user) {
-    return null;
-  }
-
   return (
     <Button
       size="lg"

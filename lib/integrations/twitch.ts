@@ -67,27 +67,33 @@ export class Twitch {
     return this.#channel;
   }
 
-  async connect() {
+  private async connect() {
     if (!this.#client) return;
     await this.#client.connect();
   }
 
-  async disconnect() {
+  private async disconnect() {
     if (!this.#client) return;
     await this.#client.disconnect();
   }
 
-  addListener(event: keyof tmi.Events, listener: (...args: any[]) => void) {
+  private addListener(
+    event: keyof tmi.Events,
+    listener: (...args: any[]) => void,
+  ) {
     if (!this.#client) return;
     this.#client.addListener(event, listener);
   }
 
-  removeListener(event: keyof tmi.Events, listener: (...args: any[]) => void) {
+  private removeListener(
+    event: keyof tmi.Events,
+    listener: (...args: any[]) => void,
+  ) {
     if (!this.#client) return;
     this.#client.removeListener(event, listener);
   }
 
-  setChannel(channel: string) {
+  private setChannel(channel: string) {
     this.#channel = channel;
     this.#client = Twitch.createClient([this.#channel], this.debug.enabled);
   }

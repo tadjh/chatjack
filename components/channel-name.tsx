@@ -1,8 +1,15 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { useSearch } from "@/components/search-provider";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -13,23 +20,17 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { useSearch } from "@/components/search-provider";
-
-export function ChannelName() {
-  const { channel } = useSearch();
-
-  if (channel) return null;
-
-  return <ChannelNameForm />;
-}
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Twitch } from "@/lib/integrations/twitch.types";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 const formSchema = z.object({
   username: z.string().min(1, {
@@ -37,22 +38,35 @@ const formSchema = z.object({
   }),
 });
 
-function ChannelNameForm() {
-  const { setContext } = useSearch();
+export function ChannelName({
+  channels,
+}: {
+  channels: Twitch.ModeratedChannelsResponse;
+}) {
+  const { channel, setContext } = useSearch();
+  const [open, setOpen] = useState(channel ? false : true);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: "",
+      username: channel ?? "",
     },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     setContext("channel", values.username);
+    setOpen(false);
   }
 
   return (
-    <Dialog open={true}>
-      {/* <DialogTrigger>Open</DialogTrigger> */}
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          variant="link"
+          className="game-text-shadow cursor-pointer text-lg hover:underline"
+        >
+          {channel ? channel : "Select Channel"}
+        </Button>
+      </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Enter Channel Name</DialogTitle>
@@ -67,11 +81,28 @@ function ChannelNameForm() {
               control={form.control}
               name="username"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="grid space-y-4">
                   <FormLabel>Username</FormLabel>
-                  <FormControl>
-                    <Input placeholder="channel" {...field} />
-                  </FormControl>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a channel" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {channels.data.map((channel) => (
+                        <SelectItem
+                          key={channel.broadcaster_id}
+                          value={channel.broadcaster_login}
+                        >
+                          {channel.broadcaster_login}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormDescription>
                     Enter the channel name you wish to play ChatJack on.
                   </FormDescription>

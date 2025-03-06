@@ -1,13 +1,10 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 
+const scopes = ["chat:read", "user:read:moderated_channels"].join(" ");
+
 export async function GET() {
   const state = crypto.randomBytes(16).toString("hex");
-
-  const scopes = [
-    "chat:read",
-    // "channel:manage:polls"
-  ].join(" ");
 
   const params = new URLSearchParams({
     client_id: process.env.TWITCH_CLIENT_ID,

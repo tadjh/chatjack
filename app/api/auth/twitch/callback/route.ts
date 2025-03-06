@@ -49,15 +49,19 @@ export async function GET(request: NextRequest) {
     const tokenData = await tokenRes.json();
 
     const response = NextResponse.redirect(new URL("/", request.url));
+
+    const cookieOptions = {
+      httpOnly: true,
+      path: "/",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax" as const,
+      expires: new Date(Date.now() + tokenData.expires_in * 1000),
+    };
+
     response.cookies.set(
       process.env.TWITCH_ACCESS_TOKEN_NAME,
       tokenData.access_token,
-      {
-        httpOnly: true,
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-        expires: new Date(Date.now() + tokenData.expires_in * 1000),
-      },
+      cookieOptions,
     );
 
     if (tokenData.refresh_token) {
@@ -65,9 +69,7 @@ export async function GET(request: NextRequest) {
         process.env.TWITCH_REFRESH_TOKEN_NAME,
         tokenData.refresh_token,
         {
-          httpOnly: true,
-          path: "/",
-          secure: process.env.NODE_ENV === "production",
+          ...cookieOptions,
           expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
         },
       );

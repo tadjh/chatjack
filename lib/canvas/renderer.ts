@@ -837,7 +837,7 @@ export class Renderer {
         props.text = title;
       } else if (props.id === "subtitle") {
         props.text = subtitle;
-      } else if (props.id === "play-again") {
+      } else if (props.id === "restart") {
         props.onEnd = () => {
           if (callback) callback();
         };

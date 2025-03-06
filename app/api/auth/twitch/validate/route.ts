@@ -1,19 +1,19 @@
-import { InvalidAuthStatus } from "@/lib/types";
-import { ValidAuthStatus } from "@/lib/types";
+import { Twitch } from "@/lib/integrations/twitch.types";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
-  const access_token = request.cookies.get(
-    process.env.TWITCH_ACCESS_TOKEN_NAME,
-  )?.value;
+  const access_token = request.nextUrl.searchParams.get("access_token");
 
   if (!access_token) {
-    return NextResponse.json<InvalidAuthStatus>({
-      error: {
-        status: 404,
-        message: "No access token found",
+    return NextResponse.json<Twitch.ValidateAccessTokenFailure>(
+      {
+        error: {
+          status: 404,
+          message: "No access token found",
+        },
       },
-    });
+      { status: 404, statusText: "No access token found" },
+    );
   }
 
   try {
@@ -23,24 +23,34 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const data = await validateRes.json();
+    const data = (await validateRes.json()) as
+      | Twitch.ValidateAccessTokenSessionData
+      | Twitch.ValidateAccessTokenError;
 
-    if (validateRes.status === 401) {
-      return NextResponse.json<InvalidAuthStatus>({
-        error: data,
-      });
+    if ("status" in data) {
+      return NextResponse.json<Twitch.ValidateAccessTokenFailure>(
+        {
+          error: data,
+        },
+        validateRes,
+      );
     }
 
-    return NextResponse.json<ValidAuthStatus>({
+    const response = NextResponse.json<Twitch.ValidateAccessTokenSuccess>({
       user: data,
     });
+
+    return response;
   } catch (error) {
     console.error("Token validation error:", error);
-    return NextResponse.json<InvalidAuthStatus>({
-      error: {
-        status: 500,
-        message: `Token validation error: ${JSON.stringify(error)}`,
+    return NextResponse.json<Twitch.ValidateAccessTokenFailure>(
+      {
+        error: {
+          status: 500,
+          message: `Token validation error: ${JSON.stringify(error)}`,
+        },
       },
-    });
+      { status: 500, statusText: "Token validation error" },
+    );
   }
 }

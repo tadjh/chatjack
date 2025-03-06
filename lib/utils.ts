@@ -14,3 +14,23 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * Returns a cache key for a given scope and key.
+ *
+ * @param scope - The scope of the cache key.
+ * @param key - The key of the cache key.
+ * @returns A string of the cache key.
+ */
+export function getCacheKey(scope: string, key: string) {
+  return `${scope}:${key}`;
+}
+
+/**
+ * Returns a cache key for the moderated channels.
+ *
+ * @param userId - The user ID of the user.
+ * @returns A string of the cache key.
+ */
+export function getModeratedChannelsKey(userId: string) {
+  return getCacheKey("moderatedChannels", userId);
+}
