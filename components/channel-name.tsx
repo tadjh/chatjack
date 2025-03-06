@@ -88,7 +88,7 @@ export function ChannelName({
                     defaultValue={field.value}
                   >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select a channel" />
                       </SelectTrigger>
                     </FormControl>
@@ -104,7 +104,9 @@ export function ChannelName({
                     </SelectContent>
                   </Select>
                   <FormDescription>
-                    Enter the channel name you wish to play ChatJack on.
+                    Choose a channel you have moderator privileges to host
+                    ChatJack. Players in chat will be able to participate using
+                    commands like !hit and !stand.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

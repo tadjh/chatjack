@@ -5,7 +5,7 @@ export function TwitchLogin() {
   return (
     <Button
       size="lg"
-      className="cursor-pointer border border-purple-700 bg-purple-600 font-bold text-white shadow-purple-600/50 drop-shadow-md hover:bg-purple-700"
+      className="cursor-pointer bg-[#9147ff] font-bold text-white shadow-md shadow-black/25 hover:bg-[#772ce8] active:bg-[#5c16c5]"
       asChild
     >
       <Link href="/api/auth/twitch/login">
@@ -13,11 +13,11 @@ export function TwitchLogin() {
           xmlns="http://www.w3.org/2000/svg"
           xmlnsXlink="http://www.w3.org/1999/xlink"
           version="1.1"
-          id="Layer_1"
           x="0px"
           y="0px"
           viewBox="0 0 2400 2800"
           xmlSpace="preserve"
+          className="size-6"
         >
           <g>
             <path
@@ -40,7 +40,7 @@ export function TwitchLogin() {
             />
           </g>
         </svg>
-        Login with Twitch
+        Login
       </Link>
     </Button>
   );

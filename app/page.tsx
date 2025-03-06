@@ -27,15 +27,18 @@ export default async function Home() {
                 <Link href="/api/auth/twitch/logout">Logout</Link>
               </Button>
             </SignedIn>
-          </header>
-          <main className="flex grow flex-col items-center justify-center">
-            <div className="flex grow"></div>
             <SignedOut>
               <TwitchLogin />
             </SignedOut>
+          </header>
+          <main className="flex grow flex-col items-center justify-center">
+            <div className="flex grow"></div>
           </main>
-          <footer className="game-text-shadow flex justify-end p-3">
-            {`© ${new Date().getFullYear()} ChatJack by tadjh`}
+          <footer className="game-text-shadow flex justify-end gap-3 p-3">
+            {`© ${new Date().getFullYear()}`}
+            <Link href="https://tadjh.com" className="hover:underline">
+              tadjh.com
+            </Link>
           </footer>
         </div>
       </SearchProvider>

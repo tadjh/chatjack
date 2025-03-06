@@ -10,7 +10,6 @@
 
 ## Development
 
-- TODO Remove "Twitch" and logos from game
 - TODO check what channels the logged in user can moderate
 - TODO invalidate get paths when user logs out or token expires
 - TODO Add render order list to layer dynamic
