@@ -4,18 +4,16 @@
 
 - TODO Screen flickers on restart (missing render call?)
 - TODO If you stand before all cards drawn, you can quick draw the dealer, also breaks timer
+- TODO !restart !start doesn't work after gameover
+- TODO hitting non-natural blackjack doesn't tint the auto-stand?
 
 ## Development
 
-- TODO Implement Zoom Shake
 - TODO Add render order list to layer dynamic
-- TODO show chat actions on the opposite side of the scores "!hit or !stand", hide when no longer chat's turn
 - TODO add DYNAMIC ui layer
 - TODO rename ui layer to STATIC
 - TODO move action text to dynamic ui layer
-- TODO show vote totals during voting period on dynamic layer
 - TODO Add test coverage for twitch integration and mediator
-- TODO Consider showing username of vote
 
 ## Quality of life
 
@@ -26,4 +24,3 @@
   - dust when cards hit table or flip over
   - sparkles when blackjack
   - random orbs on title screens a la vegas
-

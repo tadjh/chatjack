@@ -1,3 +1,6 @@
+"use client";
+
+import { useSearch } from "@/components/search-provider";
 import { Debug } from "@/components/debug";
 import { useBlackjack } from "@/hooks/use-blackjack";
 import { useCanvas } from "@/hooks/use-canvas";
@@ -12,7 +15,9 @@ export interface CanvasProps {
   fps: string | null;
 }
 
-export function Canvas({ deck, channel, debug, timer, fps }: CanvasProps) {
+export function Canvas() {
+  const { timer, fps, debug, deck, channel } = useSearch();
+  console.log("channel", channel);
   const timerValue = parseTimer(timer);
   const fpsValue = parseFps(fps);
   const isDebug = debug !== null && debug !== "false";

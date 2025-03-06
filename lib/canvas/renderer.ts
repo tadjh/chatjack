@@ -897,13 +897,7 @@ export class Renderer {
   }
 
   private handleConnected = () => {
-    const entity = this.#layers.getEntityById<TextEntity>(
-      startText.layer,
-      startText.id,
-    );
-    if (entity) {
-      entity.text = "!start";
-    }
+    this.createEntity(startText);
   };
 
   private handleDealing = (event: EventType<EVENT.DEALING>) => {
