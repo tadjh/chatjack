@@ -1,6 +1,7 @@
 "use client";
 
 import { RendererOptions } from "@/lib/canvas/renderer";
+import { Debug } from "@/lib/debug";
 import {
   ChatEventSchema,
   EventBus,
@@ -14,13 +15,13 @@ import { EVENT } from "@/lib/types";
 import { parseDebug } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
 import Pusher from "pusher-js";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export function usePusher(channelName: string, eventBus: EventBus) {
+  const debugRef = useRef(new Debug("Pusher", "LightGreen"));
   const searchParams = useSearchParams();
-  const debug = searchParams.get("debug");
   const params = {
-    debug: parseDebug(debug),
+    debug: parseDebug(searchParams.get("debug")),
   };
   const [state, setState] = useState<
     RendererOptions & { update: EventBusAllData }
@@ -34,6 +35,7 @@ export function usePusher(channelName: string, eventBus: EventBus) {
       data: {},
     },
   });
+  const debug = debugRef.current;
 
   useEffect(() => {
     const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY, {
@@ -42,6 +44,7 @@ export function usePusher(channelName: string, eventBus: EventBus) {
 
     const channel = pusher.subscribe(channelName);
     channel.bind("gamestate", ({ type, data }: GameEventSchema) => {
+      debug.log("gamestate", type, data);
       console.log("gamestate", type, data);
       switch (type) {
         case EVENT.DEALING:

@@ -58,8 +58,6 @@ export class Hand {
     this.#cards = cards.length ? cards : [];
     this.status = status;
     this.#score = score;
-
-    this.accumulate();
     this.debug = debug;
   }
 
@@ -205,6 +203,6 @@ export class Hand {
     return new Hand({
       ...json,
       cards: json.cards.map((card) => Card.fromJSON(card)),
-    }).accumulate();
+    });
   }
 }

@@ -21,7 +21,7 @@ export class LayoutManager {
   constructor(
     padding: number = getHorizontalScaleFactor() * BASELINE_PADDING,
     gutter: number = getVerticalScaleFactor() * BASELINE_GUTTER,
-    debug = new Debug("LayoutManager", "DarkTan")
+    debug = new Debug("LayoutManager", "DarkTan"),
   ) {
     this.#padding = padding;
     this.#gutter = gutter;
@@ -73,8 +73,8 @@ export class LayoutManager {
         verticalLayoutGenerator(
           initialY,
           this.#gutter * gutterMultiplier,
-          direction
-        )
+          direction,
+        ),
       );
     }
   }
@@ -113,7 +113,7 @@ export class LayoutManager {
 
       entity.y = nextY - offsetY;
 
-      this.debug.log(`Adding ${entity.id} to layout: ${entity.position}`);
+      // this.debug.log(`Adding ${entity.id} to layout: ${entity.position}`);
     }
   }
 
@@ -126,7 +126,7 @@ export class LayoutManager {
 export function* verticalLayoutGenerator(
   initialY: number,
   gutter: number = 10,
-  direction: DIRECTION = DIRECTION.DOWN
+  direction: DIRECTION = DIRECTION.DOWN,
 ): Generator<number, number, number> {
   let currentY = initialY;
   while (true) {

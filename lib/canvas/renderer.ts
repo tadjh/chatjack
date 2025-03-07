@@ -353,7 +353,6 @@ export class Renderer {
     this.render();
   };
 
-  // The game loop updates animation progress and redraws the canvas.
   private update = (timestamp: number) => {
     if (timestamp - this.#lastTick >= this.tickRate) {
       this.#lastTick = timestamp;
@@ -370,7 +369,6 @@ export class Renderer {
   }
 
   public async start() {
-    // If already running, just return instead of throwing
     if (this.#isRunning) {
       this.debug.log("Engine already running, ignoring start request");
       return;
@@ -379,7 +377,6 @@ export class Renderer {
     this.debug.log("Starting engine");
     this.#isRunning = true;
 
-    // Wait for assets to load
     while (!this.#isReady) {
       if (!this.#isRunning) {
         throw new Error("Engine stopped during startup");

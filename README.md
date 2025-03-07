@@ -2,9 +2,6 @@
 
 ## Bugs
 
-- TODO Spectator hit or stand doesn't disappear
-- TODO Spectator cards don't tint
-- TODO Spectator Footer doesn't show
 - TODO Spectator Timer isn't synched
 - TODO Loading... shows even after connected
 - TODO !restart !start doesn't work after gameover (command is null)
@@ -12,6 +9,7 @@
 - TODO hitting non-natural blackjack doesn't tint the auto-stand?
 - TODO Logout doesn't destroy !start animation
 - TODO Screen flickers on restart (missing render call?)
+- TODO disconnected caption
 
 ## Development
 
@@ -31,11 +29,11 @@
 - TODO add DYNAMIC ui layer
 - TODO rename ui layer to STATIC
 - TODO move action text to dynamic ui layer
+- TODO Randomize subtitles
 
 ## Quality of life
 
 - TODO Add !stop command
-- TODO Randomize subtitles
 - TODO Bust lower opacity
 - TODO add particle fx
   - dust when cards hit table or flip over
