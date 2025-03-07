@@ -39,3 +39,7 @@
   - dust when cards hit table or flip over
   - sparkles when blackjack
   - random orbs on title screens a la vegas
+
+## Performance
+
+- TODO Don't connect on spectate paths that haven't been registered by mods of said channel
