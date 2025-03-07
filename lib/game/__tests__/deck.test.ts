@@ -1,12 +1,16 @@
 import { Card, Rank, Suit } from "@/lib/game/card";
 import { Deck } from "@/lib/game/deck";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("Deck", () => {
   let deck: Deck;
 
   beforeEach(() => {
     deck = new Deck({ shoeSize: 1 });
+  });
+
+  afterEach(() => {
+    deck.empty();
   });
 
   it("should create a deck with a valid count", () => {
@@ -20,11 +24,11 @@ describe("Deck", () => {
   });
 
   it("should shuffle the deck", () => {
-    const originalOrder = [...deck];
+    const originalOrder = [...deck.cards];
     deck.shuffle();
     // It is possible (but unlikely) that a shuffle returns the same order,
     // so this test might occasionally fail. You may want to check that at least one card moved.
-    expect(deck).not.toEqual(originalOrder);
+    expect(deck.cards).not.toEqual(originalOrder);
   });
 
   it("should draw a card from the deck", () => {
@@ -60,11 +64,11 @@ describe("Deck", () => {
 
   it("should add a card to the deck at the correct position", () => {
     const initialLength = deck.length;
-    const card = new Card(Suit.Clubs + Rank.Ace);
+    const card = new Card({ card: Suit.Clubs + Rank.Ace });
     // Insert the card at index 0 so that every card shifts one index higher.
-    deck.splice(0, 0, card);
+    deck.cards.splice(0, 0, card);
     expect(deck.length).toBe(initialLength + 1);
-    expect(deck[0]).toBe(card);
+    expect(deck.cards[0]).toBe(card);
   });
 
   it.skip("should print the deck", () => {
@@ -83,4 +87,3 @@ describe("Deck", () => {
     expect(() => deck.reshuffle(1)).toThrow("Deck is not empty");
   });
 });
-

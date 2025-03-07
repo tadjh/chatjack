@@ -48,10 +48,11 @@ export function Debug({
           </Button>
         </div>
         <div className="grid items-center gap-2">
-          <div className="font-bold">Dealer</div>
+          <div>Dealer</div>
           <div>{`Score: ${dealer.score} `}</div>
           <div>
-            Hand: {dealer.hand.map((card) => card.icon).join(" ") || "empty"}
+            Hand:{" "}
+            {dealer.hand.cards.map((card) => card.icon).join(" ") || "empty"}
           </div>
           <div>
             {!hasDealt ? (
@@ -86,7 +87,7 @@ export function Debug({
           {player.hands.map((hand, h) => (
             <div key={h} className="grid gap-2">
               <div>
-                Hand: {hand.map((card) => card.icon).join(" ") || "empty"}
+                Hand: {hand.cards.map((card) => card.icon).join(" ") || "empty"}
               </div>
               <div>{`Score: ${hand.score}`}</div>
               <div className="flex gap-2">

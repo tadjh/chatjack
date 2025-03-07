@@ -74,7 +74,7 @@ describe("EventBus", () => {
 
       // Check if Debug.log was called with the correct source
       expect(eventBus["debug"].log).toHaveBeenCalledWith(
-        expect.stringContaining("TestComponent subscribing to: chat")
+        expect.stringContaining("TestComponent subscribing to: chat"),
       );
     });
 
@@ -85,7 +85,7 @@ describe("EventBus", () => {
 
       // Check if Debug.log was called with the default source
       expect(eventBus["debug"].log).toHaveBeenCalledWith(
-        expect.stringContaining("Unknown subscribing to: chat")
+        expect.stringContaining("Unknown subscribing to: chat"),
       );
     });
 
@@ -131,7 +131,7 @@ describe("EventBus", () => {
 
       // Check if Debug.log was called with the correct source
       expect(eventBus["debug"].log).toHaveBeenCalledWith(
-        expect.stringContaining("TestComponent unsubscribing from: chat")
+        expect.stringContaining("TestComponent unsubscribing from: chat"),
       );
     });
 
@@ -148,7 +148,7 @@ describe("EventBus", () => {
         anyEventBus.unsubscribe(
           "nonExistentEvent" as keyof Record<string, unknown>,
           callback,
-          "TestSource"
+          "TestSource",
         );
       }).not.toThrow();
     });
@@ -176,7 +176,7 @@ describe("EventBus", () => {
 
       // Check if Debug.log was called with the correct source
       expect(eventBus["debug"].log).toHaveBeenCalledWith(
-        expect.stringContaining("TestComponent subscribing once to: chat")
+        expect.stringContaining("TestComponent subscribing once to: chat"),
       );
     });
   });
@@ -186,10 +186,10 @@ describe("EventBus", () => {
       const callback = vi.fn();
 
       eventBus.subscribe("start", callback);
-      eventBus.emit("start");
+      eventBus.emit("start", undefined);
 
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith();
+      expect(callback).toHaveBeenCalledWith(undefined);
     });
 
     it("should emit an event with single data argument", () => {
@@ -207,10 +207,10 @@ describe("EventBus", () => {
       const callback = vi.fn();
 
       eventBus.subscribe("customEvent", callback);
-      eventBus.emit("customEvent", 42, "test", true);
+      eventBus.emit("customEvent", [42, "test", true]);
 
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith(42, "test", true);
+      expect(callback).toHaveBeenCalledWith([42, "test", true]);
     });
 
     it("should handle emitting to non-existent event", () => {
@@ -224,7 +224,7 @@ describe("EventBus", () => {
         // For emit, we need to provide at least the event name
         anyEventBus.emit(
           "nonExistentEvent" as keyof Record<string, unknown>,
-          undefined
+          undefined,
         );
       }).not.toThrow();
     });
@@ -245,24 +245,23 @@ describe("EventBus", () => {
 
       // Check if Debug.log was called with the correct information
       expect(eventBus["debug"].log).toHaveBeenCalledWith(
-        "Current event subscriptions:"
+        "Current event subscriptions:",
       );
       expect(eventBus["debug"].log).toHaveBeenCalledWith(
-        expect.stringContaining("Event: chat, Subscribers: 2")
+        expect.stringContaining("Event: chat, Subscribers: 2"),
       );
       expect(eventBus["debug"].log).toHaveBeenCalledWith(
-        expect.stringContaining("Source: Component1")
+        expect.stringContaining("Source: Component1"),
       );
       expect(eventBus["debug"].log).toHaveBeenCalledWith(
-        expect.stringContaining("Source: Component2")
+        expect.stringContaining("Source: Component2"),
       );
       expect(eventBus["debug"].log).toHaveBeenCalledWith(
-        expect.stringContaining("Event: start, Subscribers: 1")
+        expect.stringContaining("Event: start, Subscribers: 1"),
       );
       expect(eventBus["debug"].log).toHaveBeenCalledWith(
-        expect.stringContaining("Source: Component3")
+        expect.stringContaining("Source: Component3"),
       );
     });
   });
 });
-

@@ -26,7 +26,7 @@ export function Game() {
     {
       deck,
       playerCount: 1,
-      playerNames: [encodeURIComponent(channel ?? "Chat")],
+      playerNames: ["Chat"],
     },
     eventBus,
   );

@@ -14,7 +14,7 @@ export function SpectatorView({ channelName }: { channelName: string }) {
       <Canvas {...state} mode="spectator" />
       <div className="relative z-50 flex min-h-screen flex-col gap-3">
         <Header>
-          <HeaderItem>Spectator</HeaderItem>
+          <HeaderItem className="opacity-50">Spectating</HeaderItem>
         </Header>
         <pre>{JSON.stringify(state, null, 2)}</pre>
       </div>

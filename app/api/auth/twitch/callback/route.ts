@@ -1,3 +1,4 @@
+import { CURRENT_URL } from "@/lib/constants";
 import { NextResponse, NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
     client_secret: process.env.TWITCH_CLIENT_SECRET,
     code: code,
     grant_type: "authorization_code",
-    redirect_uri: `${process.env.VERCEL_URL}${process.env.TWITCH_CALLBACK_URL}`,
+    redirect_uri: `${CURRENT_URL}${process.env.TWITCH_CALLBACK_URL}`,
   });
 
   try {

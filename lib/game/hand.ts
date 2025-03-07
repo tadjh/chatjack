@@ -1,22 +1,66 @@
-import { Card, Rank } from "@/lib/game/card";
 import { Debug } from "@/lib/debug";
+import { Card, CardJSONSchema, Rank } from "@/lib/game/card";
+import { z } from "zod";
 
-export type Status = "playing" | "busted" | "blackjack" | "stand" | "split";
+export enum STATUS {
+  PLAYING = "playing",
+  BUSTED = "busted",
+  BLACKJACK = "blackjack",
+  STAND = "stand",
+  SPLIT = "split",
+}
 
-export class Hand extends Array<Card> {
-  #score: number = 0;
-  status: Status = "playing";
-  #owner: string;
-  #name: string;
+export const handJSONSchema = z.object({
+  owner: z.string(),
+  cards: z.array(CardJSONSchema),
+  status: z.nativeEnum(STATUS),
+  score: z.number(),
+});
+
+export type HandJSON = z.infer<typeof handJSONSchema>;
+
+export type HandOptions = {
+  owner?: string;
+  cards?: Card[];
+  status?: STATUS;
+  score?: number;
+};
+
+export class Hand {
+  static readonly defaultOptions: Required<HandOptions> = {
+    owner: "Player",
+    cards: [],
+    status: STATUS.PLAYING,
+    score: 0,
+  };
+  public status: STATUS;
+  readonly owner: string;
+  readonly name: string;
+  #score: number;
+  #cards: Card[];
+  protected debug: Debug;
+
+  static getName(owner: string) {
+    return `${owner}'s Hand`;
+  }
 
   constructor(
-    owner: string,
-    name = `${owner}'s Hand`,
-    private debug = new Debug(name, "Yellow")
+    {
+      owner = Hand.defaultOptions.owner,
+      cards = Hand.defaultOptions.cards,
+      status = Hand.defaultOptions.status,
+      score = Hand.defaultOptions.score,
+    }: HandOptions = Hand.defaultOptions,
+    debug = new Debug(Hand.getName(owner), "Yellow"),
   ) {
-    super();
-    this.#owner = owner;
-    this.#name = name;
+    this.owner = owner;
+    this.name = Hand.getName(owner);
+    this.#cards = cards.length ? cards : [];
+    this.status = status;
+    this.#score = score;
+
+    this.accumulate();
+    this.debug = debug;
   }
 
   get score() {
@@ -24,32 +68,40 @@ export class Hand extends Array<Card> {
   }
 
   get isPlaying() {
-    return this.status === "playing";
+    return this.status === STATUS.PLAYING;
   }
 
   get isBusted() {
-    return this.status === "busted";
+    return this.status === STATUS.BUSTED;
   }
 
   get isStand() {
-    return this.status === "stand";
+    return this.status === STATUS.STAND;
   }
 
   get isBlackjack() {
-    return this.status === "blackjack";
+    return this.status === STATUS.BLACKJACK;
+  }
+
+  get cards() {
+    return this.#cards;
+  }
+
+  get length() {
+    return this.#cards.length;
   }
 
   add(card: Card) {
     this.protect();
-    card.add(this.#owner, this.length);
-    super.push(card);
+    card.add(this.owner, this.#cards.length);
+    this.#cards.push(card);
     return this.accumulate();
   }
 
   accumulate() {
     this.protect();
     let aces = 0;
-    this.#score = this.reduce((score, card) => {
+    this.#score = this.#cards.reduce((score, card) => {
       if (card.rank === Rank.Ace && card.points === 11) {
         aces++;
       }
@@ -58,7 +110,7 @@ export class Hand extends Array<Card> {
     }, 0);
 
     if (this.#score > 21 && aces > 0) {
-      this.#score = this.reduce((total, card) => {
+      this.#score = this.#cards.reduce((total, card) => {
         if (total > 21 && card.points === 11) {
           card.setAce("low");
           total -= 10;
@@ -74,9 +126,9 @@ export class Hand extends Array<Card> {
   updateStatus() {
     this.protect();
     if (this.#score === 21) {
-      this.status = "blackjack";
+      this.status = STATUS.BLACKJACK;
     } else if (this.#score > 21) {
-      this.status = "busted";
+      this.status = STATUS.BUSTED;
     }
     return this;
   }
@@ -84,28 +136,40 @@ export class Hand extends Array<Card> {
   stand() {
     this.protect();
 
-    this.status = "stand";
+    this.status = STATUS.STAND;
     return this;
   }
 
   split(): [Hand, Hand] {
     this.protect();
 
-    if (this.length !== 2) {
+    if (this.#cards.length !== 2) {
       throw new Error("Hand must have exactly two cards to split");
     }
 
-    const [first, second] = this;
+    const [first, second] = this.#cards;
 
-    const hand1 = new Hand(this.#owner).add(first);
-    const hand2 = new Hand(this.#owner).add(second);
-    this.reset().status = "split";
-    return [hand1, hand2];
+    const hand = this.toJSON();
+    this.reset().status = STATUS.SPLIT;
+    return [
+      Hand.fromJSON({
+        ...hand,
+        status: STATUS.PLAYING,
+        score: 0,
+        cards: [{ ...first.toJSON(), handIndex: 0 }],
+      }),
+      Hand.fromJSON({
+        ...hand,
+        status: STATUS.PLAYING,
+        score: 0,
+        cards: [{ ...second.toJSON(), handIndex: 0 }],
+      }),
+    ];
   }
 
   print() {
     let output = "";
-    for (const card of this) {
+    for (const card of this.#cards) {
       output += "\t" + card.name + "\n";
     }
 
@@ -113,17 +177,34 @@ export class Hand extends Array<Card> {
   }
 
   reset() {
-    this.debug.log(`${this.#name} is resetting`);
-    this.length = 0;
+    this.debug.log(`${this.name} is resetting`);
+    this.#cards.length = 0;
     this.#score = 0;
-    this.status = "playing";
+    this.status = STATUS.PLAYING;
     return this;
   }
 
   protect() {
     if (!this.isPlaying && !this.isBlackjack) {
-      throw new Error("Hand is not allowed to perform this action");
+      throw new Error(
+        `Hand is not allowed to perform this action, state: ${this.status}`,
+      );
     }
   }
-}
 
+  public toJSON(): HandJSON {
+    return {
+      owner: this.owner,
+      status: this.status,
+      score: this.#score,
+      cards: this.#cards.map((card) => card.toJSON()),
+    };
+  }
+
+  public static fromJSON(json: HandJSON) {
+    return new Hand({
+      ...json,
+      cards: json.cards.map((card) => Card.fromJSON(card)),
+    }).accumulate();
+  }
+}

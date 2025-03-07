@@ -35,7 +35,7 @@ import {
 } from "@/lib/event-bus";
 import { Card, Rank } from "@/lib/game/card";
 import { Dealer } from "@/lib/game/dealer";
-import { Hand, Status } from "@/lib/game/hand";
+import { Hand, STATUS } from "@/lib/game/hand";
 import { Player, Role } from "@/lib/game/player";
 import { COMMAND, EVENT, STATE } from "@/lib/types";
 import { z } from "zod";
@@ -55,7 +55,6 @@ export const rendererOptionsSchema = z.object({
   fps: z.number().optional(),
   timer: z.number().optional(),
   caption: z.string().optional(),
-  debug: z.boolean().optional(),
 });
 
 export type RendererOptions = z.infer<typeof rendererOptionsSchema>;
@@ -73,7 +72,6 @@ export class Renderer {
     channel: "",
     mode: "moderator",
     caption: "",
-    debug: false,
   };
   static #instance: Renderer | null = null;
   readonly fps: number;
@@ -523,7 +521,7 @@ export class Renderer {
   private createCard(
     card: Card,
     delay = 0,
-    status: Status,
+    status: STATUS,
     callback?: () => void,
   ) {
     const isDealer = card.owner === "Dealer";
@@ -552,7 +550,7 @@ export class Renderer {
       delay,
       scale: isDealer ? 0.55 : 0.75,
       angle: ((Math.random() * 12 * 2 - 12) * Math.PI) / 180,
-      opacity: status === "busted" ? 0.5 : 1,
+      opacity: status === STATUS.BUSTED ? 0.5 : 1,
       phases: [
         {
           name: isDealer ? "slide-in-top" : "slide-in-bottom",
@@ -586,7 +584,7 @@ export class Renderer {
       dealerHand.length + playerHand.length,
       () => {
         if (playerHand.status === "blackjack") {
-          playerHand.forEach((card) => {
+          playerHand.cards.forEach((card) => {
             const entity = this.#layers.getEntityById<SpriteEntity>(
               cardSprite.layer,
               card.id,
@@ -614,13 +612,19 @@ export class Renderer {
       },
     );
 
-    this.#holeCardId = dealer.hand[1].id;
-    for (let i = 0; i < dealer.hand.length; i++) {
-      this.createCard(playerHand[i], count++ * delay, playerHand.status, () =>
-        counter.tick(),
+    this.#holeCardId = dealer.hand.cards[1].id;
+    for (let i = 0; i < dealer.hand.cards.length; i++) {
+      this.createCard(
+        playerHand.cards[i],
+        count++ * delay,
+        playerHand.status,
+        () => counter.tick(),
       );
-      this.createCard(dealerHand[i], count++ * delay, dealerHand.status, () =>
-        counter.tick(),
+      this.createCard(
+        dealerHand.cards[i],
+        count++ * delay,
+        dealerHand.status,
+        () => counter.tick(),
       );
     }
   }
@@ -762,7 +766,7 @@ export class Renderer {
   }
 
   private updateHand(hand: Hand) {
-    hand.forEach((card) => {
+    hand.cards.forEach((card) => {
       if (this.#layers.hasEntityById(cardSprite.layer, card.id)) {
         if (hand.isBusted) this.updateBustCard(card);
         if (hand.isStand) this.updateStandCard(card);
@@ -773,7 +777,7 @@ export class Renderer {
   }
 
   private updateHoleCard(dealer: Dealer) {
-    const holeCard = dealer.hand[1];
+    const holeCard = dealer.hand.cards[1];
     const entity = this.#layers.getEntityById<SpriteEntity>(
       cardSprite.layer,
       this.#holeCardId,
@@ -984,7 +988,7 @@ export class Renderer {
     this.updateScores(event.data.dealer);
     this.updateHoleCard(event.data.dealer);
     this.createActionText(
-      Rank[event.data.dealer.hand[1].rank],
+      Rank[event.data.dealer.hand.cards[1].rank],
       event.data.dealer.role,
       () => {
         this.#eventBus.emit("animationComplete", event);

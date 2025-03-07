@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -62,15 +61,14 @@ export function ChannelName({
       <DialogTrigger asChild>
         <Button
           variant="link"
-          className="game-text-shadow cursor-pointer text-lg hover:underline"
+          className="game-text-shadow cursor-pointer text-lg"
         >
           {channel ? channel : "Select Channel"}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md space-y-4">
         <DialogHeader>
-          <DialogTitle>Enter Channel Name</DialogTitle>
-          <DialogDescription></DialogDescription>
+          <DialogTitle>Select a Channel</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form
@@ -104,9 +102,8 @@ export function ChannelName({
                     </SelectContent>
                   </Select>
                   <FormDescription>
-                    Choose a channel you have moderator privileges to host
-                    ChatJack. Players in chat will be able to participate using
-                    commands like !hit and !stand.
+                    Select a channel you have moderator privileges to host
+                    ChatJack.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

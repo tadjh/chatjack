@@ -1,74 +1,80 @@
 import { Card, Rank, Suit } from "@/lib/game/card";
 import { Dealer } from "@/lib/game/dealer";
+import { STATUS } from "@/lib/game/hand";
 import { Player, Role } from "@/lib/game/player";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 describe("Player", () => {
+  let player: Player;
+  let dealer: Dealer;
+
+  beforeEach(() => {
+    player = new Player();
+    dealer = new Dealer();
+  });
+
+  afterEach(() => {
+    player.reset();
+    dealer.reset();
+  });
+
   it("should create a player with default values", () => {
-    const player = new Player();
     expect(player.name).toBe("Player");
     expect(player.role).toBe(Role.Player);
     expect(player.hands.length).toBe(1);
   });
 
   it("should create a dealer with correct values", () => {
-    const dealer = new Dealer();
     expect(dealer.name).toBe("Dealer");
     expect(dealer.role).toBe(Role.Dealer);
     expect(dealer.hands.length).toBe(1);
   });
 
   it("should add cards to the player's hand and accumulate score", () => {
-    const player = new Player();
-    const card1 = new Card(Suit.Clubs + Rank.Ace); // Ace of Clubs (normally 11)
-    const card2 = new Card(Suit.Clubs + Rank.Jack); // Jack of Clubs (10)
+    const card1 = new Card({ card: Suit.Clubs + Rank.Ace }); // Ace of Clubs (normally 11)
+    const card2 = new Card({ card: Suit.Clubs + Rank.Jack }); // Jack of Clubs (10)
     player.hand.add(card1).add(card2);
     expect(player.hand.length).toBe(2);
     expect(player.score).toBe(21);
   });
 
   it("should accumulate score correctly with multiple Aces", () => {
-    const player = new Player();
-    const card1 = new Card(Suit.Clubs + Rank.Ace); // Ace of Clubs (11 initially)
-    const card2 = new Card(Suit.Diamonds + Rank.Ace); // Ace of Diamonds (should count as 1 if needed)
+    const card1 = new Card({ card: Suit.Clubs + Rank.Ace }); // Ace of Clubs (11 initially)
+    const card2 = new Card({ card: Suit.Diamonds + Rank.Ace }); // Ace of Diamonds (should count as 1 if needed)
     player.hand.add(card1).add(card2);
     expect(player.score).toBe(12); // 11 + 1 = 12
   });
 
   it("should reset the player's hand", () => {
-    const player = new Player("John");
-    const card1 = new Card(Suit.Clubs + Rank.Ace);
+    const card1 = new Card({ card: Suit.Clubs + Rank.Ace });
     player.hand.add(card1);
     player.reset();
     expect(player.hand.length).toBe(0);
     expect(player.score).toBe(0);
-    expect(player.name).toBe("John");
+    expect(player.name).toBe("Player");
     expect(player.seat).toBe(1);
   });
 
   it("should allow hitting (adding a card) to the player's hand", () => {
-    const player = new Player("Alice");
-    const card = new Card(Suit.Clubs + Rank.Five); // 5 points
+    const card = new Card({ card: Suit.Clubs + Rank.Five }); // 5 points
     player.hit(card);
     expect(player.hand.length).toBe(1);
     expect(player.score).toBe(5);
   });
 
   it("should stand and update player's hand status accordingly", () => {
-    const player = new Player("Bob");
-    const card1 = new Card(Suit.Diamonds + Rank.Ten);
-    const card2 = new Card(Suit.Hearts + Rank.Seven);
+    const card1 = new Card({ card: Suit.Diamonds + Rank.Ten });
+    const card2 = new Card({ card: Suit.Hearts + Rank.Seven });
     player.hand.add(card1).add(card2);
     // Before standing, status should be "playing"
-    expect(player.status).toBe("playing");
+    expect(player.status).toBe(STATUS.PLAYING);
     player.stand();
-    expect(player.status).toBe("stand");
+    expect(player.status).toBe(STATUS.STAND);
   });
 
   it("should split the hand correctly when given exactly two cards", () => {
-    const player = new Player("Charlie");
-    const card1 = new Card(Suit.Clubs + Rank.Eight);
-    const card2 = new Card(Suit.Diamonds + Rank.Eight);
+    const card1 = new Card({ card: Suit.Clubs + Rank.Eight });
+    const card2 = new Card({ card: Suit.Diamonds + Rank.Eight });
     player.hand.add(card1).add(card2);
     expect(player.hand.length).toBe(2);
 
@@ -86,42 +92,36 @@ describe("Player", () => {
   });
 
   it("should throw an error when attempting to split a hand with not exactly two cards", () => {
-    const player = new Player();
-    const card = new Card(Suit.Clubs + Rank.Nine);
+    const card = new Card({ card: Suit.Clubs + Rank.Nine });
     player.hand.add(card);
     expect(() => player.split()).toThrow(
-      "Hand must have exactly two cards to split"
+      "Hand must have exactly two cards to split",
     );
   });
 
   it("should update the player's hand status correctly", () => {
-    const player = new Player("Bob");
-    const card1 = new Card(Suit.Diamonds + Rank.Ten);
-    const card2 = new Card(Suit.Hearts + Rank.Seven);
+    const card1 = new Card({ card: Suit.Diamonds + Rank.Ten });
+    const card2 = new Card({ card: Suit.Hearts + Rank.Seven });
     player.hand.add(card1).add(card2);
     // Before standing, status should be "playing"
-    expect(player.status).toBe("playing");
+    expect(player.status).toBe(STATUS.PLAYING);
     player.stand();
-    expect(player.status).toBe("stand");
+    expect(player.status).toBe(STATUS.STAND);
   });
 
   it("should throw an error when attempting to hit a non-playing hand", () => {
-    const player = new Player("Alice");
     player.stand();
-    const card = new Card(Suit.Clubs + Rank.Five);
-    expect(() => player.hit(card)).toThrow("Alice's turn is over");
+    const card = new Card({ card: Suit.Clubs + Rank.Five });
+    expect(() => player.hit(card)).toThrow("Player's turn is over");
   });
 
   it("should throw an error when attempting to stand a non-playing hand", () => {
-    const player = new Player("Alice");
     player.stand();
-    expect(() => player.stand()).toThrow("Alice's turn is over");
+    expect(() => player.stand()).toThrow("Player's turn is over");
   });
 
   it("should throw an error when attempting to split a non-playing hand", () => {
-    const player = new Player("Alice");
     player.stand();
-    expect(() => player.split()).toThrow("Alice's turn is over");
+    expect(() => player.split()).toThrow("Player's turn is over");
   });
 });
-

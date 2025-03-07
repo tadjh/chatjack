@@ -2,30 +2,37 @@
 
 import { RendererOptions } from "@/lib/canvas/renderer";
 import {
-  AnimationEvent,
-  ChatEvent,
+  ChatEventSchema,
   EventBus,
-  EventMap,
-  GameEvent,
-  MediatorAnimationEvent,
-  NETWORKED_UPDATE_EVENT,
+  EventBusAllData,
+  GameEventSchema,
+  VoteStartSchema,
 } from "@/lib/event-bus";
-import { COMMAND, EVENT } from "@/lib/types";
+import { Dealer } from "@/lib/game/dealer";
+import { Player } from "@/lib/game/player";
+import { EVENT } from "@/lib/types";
 import { parseDebug } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
 import Pusher from "pusher-js";
 import { useEffect, useState } from "react";
+
 export function usePusher(channelName: string, eventBus: EventBus) {
   const searchParams = useSearchParams();
   const debug = searchParams.get("debug");
   const params = {
     debug: parseDebug(debug),
   };
-  const [state, setState] = useState<RendererOptions>({
+  const [state, setState] = useState<
+    RendererOptions & { update: EventBusAllData }
+  >({
     ...params,
     channel: channelName,
     mode: "spectator",
-    caption: "Loading...",
+    caption: "connecting...",
+    update: {
+      type: "",
+      data: {},
+    },
   });
 
   useEffect(() => {
@@ -34,28 +41,131 @@ export function usePusher(channelName: string, eventBus: EventBus) {
     });
 
     const channel = pusher.subscribe(channelName);
-    channel.bind("gamestate", (args: GameEvent) => {
-      eventBus.emit("gamestate", args);
-      if ("data" in args) {
-        setState((prev) => ({ ...prev, ...args.data }));
+    channel.bind("gamestate", ({ type, data }: GameEventSchema) => {
+      console.log("gamestate", type, data);
+      switch (type) {
+        case EVENT.DEALING:
+          eventBus.emit(
+            "gamestate",
+            {
+              type,
+              data: {
+                dealer: Dealer.fromJSON(data.dealer),
+                player: Player.fromJSON(data.player),
+              },
+            },
+            false,
+          );
+          break;
+        case EVENT.PLAYER_ACTION:
+          eventBus.emit(
+            "gamestate",
+            {
+              type,
+              data: {
+                player: Player.fromJSON(data.player),
+                state: data.state,
+              },
+            },
+            false,
+          );
+          break;
+        case EVENT.REVEAL_HOLE_CARD:
+          eventBus.emit(
+            "gamestate",
+            {
+              type,
+              data: {
+                dealer: Dealer.fromJSON(data.dealer),
+              },
+            },
+            false,
+          );
+          break;
+        case EVENT.DEALER_ACTION:
+          eventBus.emit(
+            "gamestate",
+            {
+              type,
+              data: {
+                dealer: Dealer.fromJSON(data.dealer),
+                state: data.state,
+              },
+            },
+            false,
+          );
+          break;
+        case EVENT.JUDGE:
+          eventBus.emit(
+            "gamestate",
+            {
+              type,
+              data: {
+                state: data.state,
+              },
+            },
+            false,
+          );
+          break;
+        case EVENT.STOP:
+          eventBus.emit(
+            "gamestate",
+            {
+              type,
+              data: {
+                state: data.state,
+              },
+            },
+            false,
+          );
+          break;
+        default:
+          break;
+      }
+      setState((prev) => ({
+        ...prev,
+        update: {
+          type,
+          data,
+        },
+      }));
+    });
+
+    channel.bind("chat", (args: ChatEventSchema) => {
+      console.log("chat", args);
+      switch (args.type) {
+        case EVENT.CONNECTED:
+        case EVENT.DISCONNECTED:
+        case EVENT.VOTE_UPDATE:
+        case EVENT.VOTE_END:
+          eventBus.emit("chat", args, false);
+          setState((prev) => ({
+            ...prev,
+            update: args,
+          }));
+          break;
+        default:
+          break;
       }
     });
 
-    channel.bind("chat", (args: ChatEvent) => {
-      eventBus.emit("chat", args);
-      if ("data" in args) {
-        setState((prev) => ({ ...prev, ...args.data }));
+    channel.bind("mediator", (args: VoteStartSchema) => {
+      console.log("mediator", args);
+      switch (args.type) {
+        case EVENT.VOTE_START:
+          eventBus.emit("mediator", args, false);
+          setState((prev) => ({
+            ...prev,
+            update: args,
+          }));
+          break;
+        default:
+          break;
       }
     });
 
-    channel.bind("mediator", (args: MediatorAnimationEvent) => {
-      eventBus.emit("mediator", args);
-      if ("data" in args) {
-        setState((prev) => ({ ...prev, ...args.data }));
-      }
-    });
-
-    channel.bind("state-snapshot", (snapshot: RendererOptions) => {
+    channel.bind("snapshot", (snapshot: RendererOptions) => {
+      console.log("snapshot", snapshot);
       // setState(snapshot);
     });
 

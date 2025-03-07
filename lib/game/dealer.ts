@@ -1,10 +1,48 @@
 import { Card } from "@/lib/game/card";
 import { Debug } from "@/lib/debug";
-import { Player, Role } from "@/lib/game/player";
+import { Hand } from "@/lib/game/hand";
+import {
+  Player,
+  PlayerOptions,
+  playerJSONSchema,
+  Role,
+} from "@/lib/game/player";
+import { z } from "zod";
+export const DealerJSONSchema = playerJSONSchema;
+
+export type DealerJSON = z.infer<typeof DealerJSONSchema>;
+
+export type DealerOptions = Pick<
+  PlayerOptions,
+  "isDone" | "hasSplit" | "hands"
+>;
 
 export class Dealer extends Player {
-  constructor(debug = new Debug("Dealer", "Red")) {
-    super("Dealer", 0, Role.Dealer, debug);
+  static readonly defaultOptions: Required<PlayerOptions> = {
+    name: "Dealer",
+    seat: 0,
+    role: Role.Dealer,
+    isDone: false,
+    hasSplit: false,
+    hands: [],
+  };
+  constructor(
+    {
+      isDone = Dealer.defaultOptions.isDone,
+      hasSplit = Dealer.defaultOptions.hasSplit,
+      hands = Dealer.defaultOptions.hands,
+    }: DealerOptions = Dealer.defaultOptions,
+    debug = new Debug(Dealer.name, "Red"),
+  ) {
+    super(
+      {
+        ...Dealer.defaultOptions,
+        isDone,
+        hasSplit,
+        hands: hands.length ? hands : [new Hand({ owner: Dealer.name })],
+      },
+      debug,
+    );
   }
 
   get isBusted() {
@@ -16,12 +54,14 @@ export class Dealer extends Player {
       return 0;
     }
 
-    return this.hand[1].isHidden ? this.hand[0].points : this.hand.score;
+    return this.hand.cards[1].isHidden
+      ? this.hand.cards[0].points
+      : this.hand.score;
   }
 
   reveal() {
     this.debug.log("Revealing hole card");
-    this.hand[1].show();
+    this.hand.cards[1].show();
   }
 
   probability(deck: Card[]) {
@@ -51,5 +91,15 @@ export class Dealer extends Player {
   split(): this {
     throw new Error("Dealer cannot split");
   }
-}
 
+  public toJSON(): DealerJSON {
+    return super.toJSON();
+  }
+
+  public static fromJSON(json: DealerJSON) {
+    return new Dealer({
+      ...json,
+      hands: json.hands.map((hand) => Hand.fromJSON(hand)),
+    });
+  }
+}

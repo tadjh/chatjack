@@ -1,5 +1,10 @@
 import { Vector3 } from "./types";
 
+export const CURRENT_URL =
+  process.env.NODE_ENV === "development"
+    ? `http://${process.env.NEXT_PUBLIC_URL}`
+    : `https://${process.env.VERCEL_URL}`;
+
 export const Palette: Record<string, Vector3> = {
   White: [255, 255, 255], // "#ffffff"
   LightestGrey: [192, 203, 220], // "#c0cbdc"

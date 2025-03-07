@@ -1,7 +1,7 @@
-import { RendererOptions, rendererOptionsSchema } from "@/lib/canvas/renderer";
-import { EventMap } from "@/lib/event-bus";
+import { EventBusData, eventBusDataSchema } from "@/lib/event-bus";
 import { NextResponse } from "next/server";
 import Pusher from "pusher";
+import { ZodError } from "zod";
 
 const pusher = new Pusher({
   appId: process.env.PUSHER_APP_ID,
@@ -12,19 +12,20 @@ const pusher = new Pusher({
 });
 
 export async function POST(request: Request) {
-  const { channel, event, data } = (await request.json()) as {
-    channel: string;
-    event: keyof EventMap;
-    data: EventMap[keyof EventMap];
-  };
+  const body = (await request.json()) as EventBusData;
 
   try {
-    // TODO: parse the data based on the data.type
-    // const parsedData = rendererOptionsSchema.parse(data);
-    await pusher.trigger(channel, event, data);
+    const { channel, eventName, args } = eventBusDataSchema.parse(body);
+    await pusher.trigger(channel, eventName, args);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Pusher error", error);
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        { error: error.issues.map((issue) => issue.message).join("\n") },
+        { status: 400 },
+      );
+    }
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Pusher error" },
       { status: 500 },

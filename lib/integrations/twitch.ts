@@ -138,7 +138,6 @@ export class Twitch {
   };
 
   private handleWaitForStart = () => {
-    console.log("handleWaitForStart");
     const waitForStart = (
       channel: string,
       user: tmi.ChatUserstate,

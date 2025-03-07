@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { CURRENT_URL } from "@/lib/constants";
 import { Debug } from "@/lib/debug";
-import { Dealer } from "@/lib/game/dealer";
-import { Player } from "@/lib/game/player";
-import Pusher from "pusher-js";
+import { Dealer, DealerJSONSchema } from "@/lib/game/dealer";
+import { Player, playerJSONSchema } from "@/lib/game/player";
+import { z } from "zod";
 import { COMMAND, EVENT, STATE } from "./types";
-import { RendererOptions } from "@/lib/canvas/renderer";
 
 export const NETWORKED_UPDATE_EVENT = "networkedUpdateEvent";
 
@@ -36,15 +36,11 @@ export type GameEvent =
   | EventData<EVENT.JUDGE, { state: STATE }>
   | EventData<EVENT.STOP, { state: STATE }>;
 
-export type AnimationEvent = ChatEvent | GameEvent | MediatorAnimationEvent;
-
 export type MediatorEvent =
   | EventData<EVENT.WAIT_FOR_START>
   | EventData<EVENT.VOTE_START, { options: COMMAND[] }>
   | EventData<EVENT.DEALER_DECIDE>
   | EventData<EVENT.JUDGE>;
-
-export type EventType<T extends EVENT> = Extract<AnimationEvent, { type: T }>;
 
 export type MediatorEventType<T extends EVENT> = Extract<
   MediatorEvent,
@@ -52,6 +48,10 @@ export type MediatorEventType<T extends EVENT> = Extract<
 >;
 
 export type MediatorAnimationEvent = MediatorEventType<EVENT.VOTE_START>;
+
+export type AnimationEvent = ChatEvent | GameEvent | MediatorAnimationEvent;
+
+export type EventType<T extends EVENT> = Extract<AnimationEvent, { type: T }>;
 
 export type EventMap = {
   chat: ChatEvent;
@@ -64,6 +64,145 @@ export interface EventBusOptions {
   channel?: string;
 }
 
+const chatEventSchema = z.union([
+  z.object({
+    type: z.literal(EVENT.CONNECTED),
+  }),
+  z.object({
+    type: z.literal(EVENT.DISCONNECTED),
+  }),
+  z.object({
+    type: z.literal(EVENT.VOTE_UPDATE),
+    data: z.object({
+      command: z.nativeEnum(COMMAND),
+      count: z.number(),
+    }),
+  }),
+  z.object({
+    type: z.literal(EVENT.VOTE_END),
+    data: z.object({
+      command: z.nativeEnum(COMMAND),
+    }),
+  }),
+]);
+
+export type ChatEventSchema = z.infer<typeof chatEventSchema>;
+
+const voteStartSchema = z.object({
+  type: z.literal(EVENT.VOTE_START),
+  data: z.object({
+    options: z.array(z.nativeEnum(COMMAND)),
+  }),
+});
+
+export type VoteStartSchema = z.infer<typeof voteStartSchema>;
+
+const mediatorEventSchema = z.union([
+  z.object({
+    type: z.literal(EVENT.WAIT_FOR_START),
+  }),
+  voteStartSchema,
+  z.object({
+    type: z.literal(EVENT.DEALER_DECIDE),
+  }),
+  z.object({
+    type: z.literal(EVENT.JUDGE),
+  }),
+]);
+
+export type MediatorEventSchema = z.infer<typeof mediatorEventSchema>;
+
+const gameEventSchema = z.union([
+  z.object({
+    type: z.literal(EVENT.DEALING),
+    data: z.object({
+      dealer: DealerJSONSchema,
+      player: playerJSONSchema,
+    }),
+  }),
+  z.object({
+    type: z.literal(EVENT.PLAYER_ACTION),
+    data: z.object({
+      player: z.any(),
+      state: z.nativeEnum(STATE),
+    }),
+  }),
+  z.object({
+    type: z.literal(EVENT.REVEAL_HOLE_CARD),
+    data: z.object({
+      dealer: z.any(),
+    }),
+  }),
+  z.object({
+    type: z.literal(EVENT.DEALER_ACTION),
+    data: z.object({
+      dealer: DealerJSONSchema,
+      state: z.nativeEnum(STATE),
+    }),
+  }),
+  z.object({
+    type: z.literal(EVENT.JUDGE),
+    data: z.object({
+      state: z.nativeEnum(STATE),
+    }),
+  }),
+  z.object({
+    type: z.literal(EVENT.STOP),
+    data: z.object({
+      state: z.nativeEnum(STATE),
+    }),
+  }),
+]);
+
+export type GameEventSchema = z.infer<typeof gameEventSchema>;
+
+const animationEventSchema = z.union([
+  ...chatEventSchema.options,
+  ...gameEventSchema.options,
+  voteStartSchema,
+]);
+
+const eventBusAllData = z.object({
+  type: z.string(),
+  data: z
+    .object({
+      dealer: DealerJSONSchema.optional(),
+      player: playerJSONSchema.optional(),
+      command: z.nativeEnum(COMMAND).optional(),
+      count: z.number().optional(),
+      state: z.nativeEnum(STATE).optional(),
+      options: z.array(z.nativeEnum(COMMAND)).optional(),
+    })
+    .optional(),
+});
+
+export type EventBusAllData = z.infer<typeof eventBusAllData>;
+
+export const eventBusDataSchema = z.discriminatedUnion("eventName", [
+  z.object({
+    channel: z.string(),
+    eventName: z.literal("chat"),
+    args: chatEventSchema,
+  }),
+  z.object({
+    channel: z.string(),
+    eventName: z.literal("mediator"),
+    args: mediatorEventSchema,
+  }),
+  z.object({
+    channel: z.string(),
+    eventName: z.literal("gamestate"),
+    args: gameEventSchema,
+  }),
+  z.object({
+    channel: z.string(),
+    eventName: z.literal("animationComplete"),
+    args: animationEventSchema,
+  }),
+]);
+
+export type EventBusData = z.infer<typeof eventBusDataSchema>;
+
 export class EventBus<Events extends Record<string, any> = EventMap> {
   // Use a Partial mapping to store callbacks for defined events.
   #events: Partial<{
@@ -72,8 +211,6 @@ export class EventBus<Events extends Record<string, any> = EventMap> {
       callback: EventCallback<Events[K]>;
     }>;
   }>;
-
-  #pusher: Pusher | null = null;
 
   static #instance: EventBus | null = null;
   protected debug: Debug;
@@ -157,10 +294,16 @@ export class EventBus<Events extends Record<string, any> = EventMap> {
     return this.subscribe(eventName, wrappedCallback, source);
   }
 
-  public emit<K extends keyof Events>(eventName: K, args: Events[K]): void {
+  public emit<K extends keyof Events>(
+    eventName: K,
+    args: Events[K],
+    networked = true,
+  ): void {
     this.debug.log(`Emitting: ${String(eventName)}`);
     if (this.#events[eventName]) {
-      this.emitNet(NETWORKED_UPDATE_EVENT, { eventName, args });
+      if (networked) {
+        this.emitNet(this.channel, eventName, args);
+      }
       this.#events[eventName]?.forEach(({ callback }) => {
         callback(args);
       });
@@ -184,19 +327,21 @@ export class EventBus<Events extends Record<string, any> = EventMap> {
   }
 
   async emitNet<K extends keyof Events>(
-    event: typeof NETWORKED_UPDATE_EVENT,
-    data: { eventName: K; args: Events[K] },
+    channel: string,
+    eventName: K,
+    args: Events[K],
   ) {
     try {
-      const response = await fetch("/api/publish/event", {
+      const response = await fetch(`${CURRENT_URL}/api/publish/event`, {
         method: "POST",
         body: JSON.stringify({
-          channel: this.channel,
-          event,
-          data,
+          channel,
+          eventName,
+          args,
         }),
       });
       if (!response.ok) {
+        this.debug.error(`Failed to emit event: ${response.statusText}`);
         return { success: false };
       }
 

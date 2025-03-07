@@ -1,5 +1,7 @@
 declare namespace NodeJS {
   interface ProcessEnv {
+    VERCEL_URL: string;
+    NEXT_PUBLIC_URL: string;
     TWITCH_AUTH_URL: string;
     TWITCH_TOKEN_URL: string;
     TWITCH_VALIDATE_URL: string;
@@ -11,7 +13,6 @@ declare namespace NodeJS {
     TWITCH_ACCESS_TOKEN_NAME: string;
     TWITCH_REFRESH_TOKEN_NAME: string;
     NEXT_PUBLIC_DEBUG: string;
-    VERCEL_URL: string;
     KV_REST_API_URL: string;
     KV_REST_API_TOKEN: string;
     KV_REST_API_READ_ONLY_TOKEN: string;

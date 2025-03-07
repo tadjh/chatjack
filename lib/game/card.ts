@@ -1,4 +1,5 @@
 import { Debug } from "@/lib/debug";
+import { z } from "zod";
 
 export enum Suit {
   Clubs = 0,
@@ -46,35 +47,83 @@ const Letter: Map<number, string> = new Map([
   [Rank.King, "K"],
 ]);
 
-export class Card extends Number {
+export const CardJSONSchema = z.object({
+  card: z.number().min(0).max(52),
+  owner: z.string(),
+  hidden: z.boolean(),
+  handIndex: z.number(),
+  isHigh: z.boolean().optional(),
+});
+
+export type CardJSON = z.infer<typeof CardJSONSchema>;
+
+export type CardOptions = {
+  card: number;
+  owner?: string;
+  hidden?: boolean;
+  handIndex?: number;
+  isHigh?: boolean;
+};
+
+export class Card {
+  static readonly defaultOptions: Required<CardOptions> = {
+    card: 0,
+    owner: "",
+    hidden: false,
+    handIndex: -1,
+    isHigh: true,
+  };
   readonly suit: number;
   readonly rank: number;
   readonly #name: string;
   readonly #icon: string;
+  readonly value: number;
   #id: string = "";
-  #points: number = 0;
+  #points: number;
   #isHidden: boolean;
-  #owner: string = "";
-  #handIndex: number = -1;
+  #owner: string;
+  #handIndex: number;
+  #isHigh: boolean;
   protected debug: Debug;
 
+  static formatName(rank: number, suit: number) {
+    return `${Rank[rank]} of ${Suit[suit]}`;
+  }
+
+  static formatIcon(rank: number, suit: number) {
+    return `${Letter.get(rank)} ${Icon.get(suit)}`;
+  }
+
   constructor(
-    card: number,
-    hidden = false,
-    debug = new Debug("Card", "DarkBlue")
+    {
+      card,
+      owner = Card.defaultOptions.owner,
+      hidden = Card.defaultOptions.hidden,
+      handIndex = Card.defaultOptions.handIndex,
+      isHigh = Card.defaultOptions.isHigh,
+    }: CardOptions = Card.defaultOptions,
+    debug = new Debug(Card.name, "DarkBlue"),
   ) {
     if (card < 0 || card > 52) {
       throw new Error("Invalid card");
     }
-    super(card);
+    this.value = card;
     this.suit = Card.toSuit(card);
     this.rank = card - this.suit;
-    this.debug = debug;
     this.#isHidden = hidden;
-    this.#name = `${Rank[this.rank]} of ${Suit[this.suit]}`;
-    this.#icon = `${Letter.get(this.rank)} ${Icon.get(this.suit)}`;
-    this.setId();
-    this.setPoints();
+    this.#name = Card.formatName(this.rank, this.suit);
+    this.#icon = Card.formatIcon(this.rank, this.suit);
+    this.#owner = owner;
+    this.#handIndex = handIndex;
+    this.#isHigh = isHigh;
+    this.debug = debug;
+    this.#id = Card.formatId(
+      this.#owner,
+      this.#name,
+      this.#handIndex,
+      this.#isHidden,
+    );
+    this.#points = Card.getPoints(this.rank, this.#isHigh);
   }
 
   public get id(): string {
@@ -113,69 +162,36 @@ export class Card extends Number {
 
   show() {
     this.#isHidden = false;
-    this.setId();
+    this.#id = Card.formatId(
+      this.#owner,
+      this.#name,
+      this.#handIndex,
+      this.#isHidden,
+    );
     this.debug.log("Revealing card:", this.name);
     return this;
   }
 
   hide() {
     this.#isHidden = true;
-    this.setId();
+    this.#id = Card.formatId(
+      this.#owner,
+      this.#name,
+      this.#handIndex,
+      this.#isHidden,
+    );
     return this;
   }
 
   add(owner: string, index: number) {
     this.#owner = owner;
     this.#handIndex = index;
-    this.setId();
-    return this;
-  }
-
-  setPoints() {
-    switch (this.rank) {
-      case Rank.Ace:
-        this.#points = 11;
-        break;
-      case Rank.Two:
-        this.#points = 2;
-        break;
-      case Rank.Three:
-        this.#points = 3;
-        break;
-      case Rank.Four:
-        this.#points = 4;
-        break;
-      case Rank.Five:
-        this.#points = 5;
-        break;
-      case Rank.Six:
-        this.#points = 6;
-        break;
-      case Rank.Seven:
-        this.#points = 7;
-        break;
-      case Rank.Eight:
-        this.#points = 8;
-        break;
-      case Rank.Nine:
-        this.#points = 9;
-        break;
-      case Rank.Ten:
-        this.#points = 10;
-        break;
-      case Rank.Jack:
-        this.#points = 10;
-        break;
-      case Rank.Queen:
-        this.#points = 10;
-        break;
-      case Rank.King:
-        this.#points = 10;
-        break;
-      default:
-        throw new Error("Invalid card");
-    }
-
+    this.#id = Card.formatId(
+      this.#owner,
+      this.#name,
+      this.#handIndex,
+      this.#isHidden,
+    );
     return this;
   }
 
@@ -186,24 +202,25 @@ export class Card extends Number {
 
     this.debug.log(`Setting Ace to ${type}`);
 
-    if (type === "low") {
-      this.#points = 1;
-    } else {
-      this.#points = 11;
-    }
+    this.#isHigh = type === "high";
+    this.#points = Card.getPoints(this.rank, this.#isHigh);
 
     return this;
   }
 
-  setId() {
-    const owner = this.#owner && this.#owner.replace(/\s/g, "").toLowerCase();
-    const name = this.isHidden
-      ? "hole-card"
-      : this.#name.replace(/\s/g, "-").toLowerCase();
-    const slot = this.#handIndex > -1 && `slot-${this.#handIndex}`;
-    const segments = [owner, name, slot].filter(Boolean);
-    this.#id = segments.join("-");
-    return this;
+  public static formatId(
+    owner: string,
+    name: string,
+    index: number,
+    isHidden: boolean,
+  ) {
+    return [
+      owner.replace(/\s/g, "").toLowerCase(),
+      isHidden ? "hole-card" : name.replace(/\s/g, "-").toLowerCase(),
+      index > -1 && `slot-${index}`,
+    ]
+      .filter(Boolean)
+      .join("-");
   }
 
   public static toRank(card: number) {
@@ -218,6 +235,34 @@ export class Card extends Number {
       throw new Error("Invalid card");
     }
     return (Math.floor(card / 13) * 13) as number;
+  }
+
+  public static getPoints(rank: Rank, isHigh = true) {
+    switch (rank) {
+      case Rank.Two:
+        return 2;
+      case Rank.Three:
+        return 3;
+      case Rank.Four:
+        return 4;
+      case Rank.Five:
+        return 5;
+      case Rank.Six:
+        return 6;
+      case Rank.Seven:
+        return 7;
+      case Rank.Eight:
+        return 8;
+      case Rank.Nine:
+        return 9;
+      case Rank.Ten:
+      case Rank.Jack:
+      case Rank.Queen:
+      case Rank.King:
+        return 10;
+      case Rank.Ace:
+        return isHigh ? 11 : 1;
+    }
   }
 
   /**
@@ -268,12 +313,25 @@ export class Card extends Number {
         base = 0x1f0a1;
         break;
       default:
-        throw new Error("Invalid suit");
+        throw new Error(`Invalid suit: ${suit}`);
     }
     // For ranks 0 (Ace) to 10 (Jack), no adjustment is needed.
     // For Queen (11), and King (12) adjust by +1 (skip the Knight).
     const offset = rank < 11 ? rank : rank + 1;
     return String.fromCodePoint(base + offset);
   }
-}
 
+  public toJSON(): CardJSON {
+    return {
+      card: this.value,
+      owner: this.#owner,
+      hidden: this.#isHidden,
+      handIndex: this.#handIndex,
+      isHigh: this.#isHigh,
+    };
+  }
+
+  public static fromJSON(json: CardJSON) {
+    return new Card(json);
+  }
+}

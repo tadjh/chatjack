@@ -1,5 +1,5 @@
-import { ClientSessionProvider } from "./client-session-provider";
 import { auth } from "@/app/actions";
+import { ClientSessionProvider } from "@/components/client-session-provider";
 
 export async function SessionProvider({
   children,

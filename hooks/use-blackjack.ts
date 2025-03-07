@@ -1,9 +1,9 @@
+import { EventBus } from "@/lib/event-bus";
 import { Blackjack, BlackjackOptions } from "@/lib/game/blackjack";
 import { Dealer } from "@/lib/game/dealer";
 import { Player } from "@/lib/game/player";
 import { COMMAND, EVENT, STATE } from "@/lib/types";
-import { useRef, useState, useEffect } from "react";
-import { EventBus } from "@/lib/event-bus";
+import { useEffect, useRef, useState } from "react";
 
 export interface UseBlackjackReturnType {
   dealer: Dealer;

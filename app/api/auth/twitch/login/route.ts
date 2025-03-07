@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
+import { CURRENT_URL } from "@/lib/constants";
 
 const scopes = ["chat:read", "user:read:moderated_channels"].join(" ");
 
@@ -8,7 +9,7 @@ export async function GET() {
 
   const params = new URLSearchParams({
     client_id: process.env.TWITCH_CLIENT_ID,
-    redirect_uri: `${process.env.VERCEL_URL}${process.env.TWITCH_CALLBACK_URL}`,
+    redirect_uri: `${CURRENT_URL}${process.env.TWITCH_CALLBACK_URL}`,
     response_type: "code",
     scope: scopes,
     state: state,

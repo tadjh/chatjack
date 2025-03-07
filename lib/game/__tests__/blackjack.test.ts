@@ -2,21 +2,23 @@ import { Blackjack } from "@/lib/game/blackjack";
 import { STATE } from "@/lib/types";
 import { COMMAND, EVENT } from "@/lib/types";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { eventBus } from "@/lib/event-bus";
+import { EventBus } from "@/lib/event-bus";
 
 describe("Blackjack", () => {
   let game: Blackjack;
-
+  let eventBus: EventBus;
   beforeEach(() => {
     // Create a new instance for each test to avoid state leakage
     // Reset by creating and destroying
     Blackjack.destroy();
+    eventBus = EventBus.create();
     game = Blackjack.create();
   });
 
   afterEach(() => {
     // Clean up after each test
     Blackjack.destroy();
+    EventBus.destroy();
   });
 
   it("should create a Blackjack game with default values", () => {
@@ -41,35 +43,38 @@ describe("Blackjack", () => {
     // The dealer should also have 2 cards.
     expect(game.dealer.hand.length).toBe(2);
     // The dealer's second card should be hidden (drawn with isHidden = true).
-    expect(game.dealer.hand[1].isHidden).toBe(true);
+    expect(game.dealer.hand.cards[1].isHidden).toBe(true);
   });
 
   it("should throw an error if a player hits out of turn", () => {
     game.handleStart();
-    game.handlePlayerAction(COMMAND.STAND);
+    game.handlePlayerAction({
+      type: EVENT.VOTE_END,
+      data: { command: COMMAND.STAND },
+    });
     const player = game.player;
-    expect(() => game.handlePlayerAction(COMMAND.HIT)).toThrow(
-      `${player.name}'s turn is over`
-    );
+    expect(() =>
+      game.handlePlayerAction({
+        type: EVENT.VOTE_END,
+        data: { command: COMMAND.HIT },
+      }),
+    ).toThrow(`${player.name}'s turn is over`);
   });
 
   it("should throw an error if a player stands out of turn", () => {
     game.handleStart();
     const player = game.player;
-    game.handlePlayerAction(COMMAND.STAND); // Move to next player's turn
-    expect(() => game.handlePlayerAction(COMMAND.STAND)).toThrow(
-      `${player.name}'s turn is over`
-    );
+    game.handlePlayerAction({
+      type: EVENT.VOTE_END,
+      data: { command: COMMAND.STAND },
+    }); // Move to next player's turn
+    expect(() =>
+      game.handlePlayerAction({
+        type: EVENT.VOTE_END,
+        data: { command: COMMAND.STAND },
+      }),
+    ).toThrow(`${player.name}'s turn is over`);
   });
-
-  // it("should throw an error if a player splits out of turn", () => {
-  //   game.handleDeal();
-  //   const player = game.player;
-  //   game.handlePlayerAction(COMMAND.STAND); // Move to next player's turn
-  //   expect(() => game.handlePlayerAction(COMMAND.SPLIT)).toThrow(
-  //     `${player.name}'s turn is over`
-  //   );
-  // });
 
   it("should properly destroy the game instance", () => {
     // Mock the eventBus
@@ -79,7 +84,7 @@ describe("Blackjack", () => {
     Blackjack.destroy();
 
     // Check that all event handlers were unsubscribed (4 events)
-    expect(unsubscribeSpy).toHaveBeenCalledTimes(3);
+    expect(unsubscribeSpy).toHaveBeenCalledTimes(2);
 
     // Create a new game to verify the singleton was reset
     const newGame = Blackjack.create();
@@ -103,7 +108,10 @@ describe("Blackjack with Fixed Decks", () => {
     game.handleStart();
     // Simulate player's turn by hitting until the hand becomes busted.
     while (!game.player.hand.isBusted) {
-      game.handlePlayerAction(COMMAND.HIT);
+      game.handlePlayerAction({
+        type: EVENT.VOTE_END,
+        data: { command: COMMAND.HIT },
+      });
     }
     game.handleDealerAction();
     game.handleJudge();
@@ -114,7 +122,10 @@ describe("Blackjack with Fixed Decks", () => {
     const game = Blackjack.create({ deck: "dealer-bust" });
     game.handleStart();
     // Simulate player's turn: assume player has a strong hand and stands.
-    game.handlePlayerAction(COMMAND.STAND);
+    game.handlePlayerAction({
+      type: EVENT.VOTE_END,
+      data: { command: COMMAND.STAND },
+    });
     // Let the dealer play its turn.
     game.handleDealerAction();
     while (!game.dealer.isDone) {
@@ -128,7 +139,10 @@ describe("Blackjack with Fixed Decks", () => {
     const game = Blackjack.create({ deck: "push" });
     game.handleStart();
     // For a push the player stands with a score equal to the dealer.
-    game.handlePlayerAction(COMMAND.STAND);
+    game.handlePlayerAction({
+      type: EVENT.VOTE_END,
+      data: { command: COMMAND.STAND },
+    });
     game.handleDealerAction();
     while (!game.dealer.isDone) {
       game.handleDealerAction();
@@ -151,7 +165,10 @@ describe("Blackjack with Fixed Decks", () => {
     game.handleStart();
     // Simulate player's turn by hitting until the hand becomes blackjack.
     while (!game.player.hand.isBlackjack) {
-      game.handlePlayerAction(COMMAND.HIT);
+      game.handlePlayerAction({
+        type: EVENT.VOTE_END,
+        data: { command: COMMAND.HIT },
+      });
     }
     game.handleDealerAction();
     game.handleJudge();
@@ -162,7 +179,10 @@ describe("Blackjack with Fixed Decks", () => {
     const game = Blackjack.create({ deck: "dealer-blackjack" });
     game.handleStart();
     // Simulate player's turn: assume player has a strong hand and stands.
-    game.handlePlayerAction(COMMAND.STAND);
+    game.handlePlayerAction({
+      type: EVENT.VOTE_END,
+      data: { command: COMMAND.STAND },
+    });
     game.handleDealerAction();
     while (!game.dealer.isDone) {
       game.handleDealerAction();
@@ -175,7 +195,10 @@ describe("Blackjack with Fixed Decks", () => {
     const game = Blackjack.create({ deck: "player-win" });
     game.handleStart();
     // Simulate player's turn: assume player has a strong hand and stands.
-    game.handlePlayerAction(COMMAND.STAND);
+    game.handlePlayerAction({
+      type: EVENT.VOTE_END,
+      data: { command: COMMAND.STAND },
+    });
     game.handleDealerAction();
     while (!game.dealer.isDone) {
       game.handleDealerAction();
@@ -188,7 +211,10 @@ describe("Blackjack with Fixed Decks", () => {
     const game = Blackjack.create({ deck: "dealer-win" });
     game.handleStart();
     // Simulate player's turn: assume player has a strong hand and stands.
-    game.handlePlayerAction(COMMAND.STAND);
+    game.handlePlayerAction({
+      type: EVENT.VOTE_END,
+      data: { command: COMMAND.STAND },
+    });
     game.handleDealerAction();
     while (!game.dealer.isDone) {
       game.handleDealerAction();
@@ -200,17 +226,20 @@ describe("Blackjack with Fixed Decks", () => {
 
 describe("Blackjack Event Handlers", () => {
   let game: Blackjack;
+  let eventBus: EventBus;
 
   beforeEach(() => {
     // Reset by creating and destroying
     Blackjack.destroy();
-    game = Blackjack.create();
+    eventBus = EventBus.create();
+    game = Blackjack.create(undefined, eventBus);
     // Mock the eventBus emit method
     vi.spyOn(eventBus, "emit").mockImplementation(() => {});
   });
 
   afterEach(() => {
     Blackjack.destroy();
+    EventBus.destroy();
     vi.restoreAllMocks();
   });
 
@@ -264,7 +293,10 @@ describe("Blackjack Event Handlers", () => {
     game.handleStart();
 
     // Call the handler with HIT command
-    game.handlePlayerAction(COMMAND.HIT);
+    game.handlePlayerAction({
+      type: EVENT.VOTE_END,
+      data: { command: COMMAND.HIT },
+    });
 
     // Verify the event was emitted with correct data
     expect(eventBus.emit).toHaveBeenCalledWith("gamestate", {
@@ -281,7 +313,10 @@ describe("Blackjack Event Handlers", () => {
     game.handleStart();
 
     // Call the handler with STAND command
-    game.handlePlayerAction(COMMAND.STAND);
+    game.handlePlayerAction({
+      type: EVENT.VOTE_END,
+      data: { command: COMMAND.STAND },
+    });
 
     // Verify the event was emitted with correct data
     expect(eventBus.emit).toHaveBeenCalledWith("gamestate", {
@@ -364,4 +399,3 @@ describe("Blackjack Event Handlers", () => {
     });
   });
 });
-

@@ -23,7 +23,10 @@ export function HeaderItem({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("game-text-shadow text-lg", className)} {...props}>
+    <div
+      className={cn("game-text-shadow px-4 py-2 text-lg", className)}
+      {...props}
+    >
       {children}
     </div>
   );

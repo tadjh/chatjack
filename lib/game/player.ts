@@ -1,27 +1,68 @@
-import { Card } from "@/lib/game/card";
 import { Debug } from "@/lib/debug";
-import { Hand } from "@/lib/game/hand";
+import { Card } from "@/lib/game/card";
+import { Hand, handJSONSchema } from "@/lib/game/hand";
+import { z } from "zod";
+
+export enum Role {
+  Dealer,
+  Player,
+}
+
+export const playerJSONSchema = z.object({
+  name: z.string(),
+  seat: z.number(),
+  role: z.nativeEnum(Role),
+  isDone: z.boolean(),
+  hasSplit: z.boolean(),
+  hands: z.array(handJSONSchema),
+});
+
+export type PlayerJSON = z.infer<typeof playerJSONSchema>;
+
+export type PlayerOptions = {
+  name?: string;
+  seat?: number;
+  role?: Role;
+  isDone?: boolean;
+  hasSplit?: boolean;
+  hands?: Hand[];
+};
 
 export class Player {
+  static readonly defaultOptions: Required<PlayerOptions> = {
+    name: "Player",
+    seat: 1,
+    role: Role.Player,
+    isDone: false,
+    hasSplit: false,
+    hands: [],
+  };
   readonly name: string;
   readonly seat: number;
   readonly role: Role;
-  #isDone = false;
-  #hasSplit = false;
+  #isDone;
+  #hasSplit;
   #hands: Hand[];
   protected debug: Debug;
 
   constructor(
-    name = "Player",
-    seat = 1,
-    role = Role.Player,
-    debug = new Debug(name, "Red")
+    {
+      name = Player.defaultOptions.name,
+      seat = Player.defaultOptions.seat,
+      role = Player.defaultOptions.role,
+      isDone = Player.defaultOptions.isDone,
+      hasSplit = Player.defaultOptions.hasSplit,
+      hands = Player.defaultOptions.hands,
+    }: PlayerOptions = Player.defaultOptions,
+    debug = new Debug(Player.name, "Red"),
   ) {
     this.name = name;
     this.seat = seat;
     this.role = role;
+    this.#isDone = isDone;
+    this.#hasSplit = hasSplit;
+    this.#hands = hands.length ? hands : [new Hand({ owner: this.name })];
     this.debug = debug;
-    this.#hands = [new Hand(this.name)];
   }
 
   get hand(): Hand {
@@ -69,7 +110,7 @@ export class Player {
     // TODO Support split hands
     if (
       this.#hands.every(
-        (hand) => hand.isStand || hand.isBusted || hand.isBlackjack
+        (hand) => hand.isStand || hand.isBusted || hand.isBlackjack,
       )
     ) {
       this.#isDone = true;
@@ -90,7 +131,7 @@ export class Player {
 
     if (
       this.#hands.every(
-        (hand) => hand.isStand || hand.isBusted || hand.isBlackjack
+        (hand) => hand.isStand || hand.isBusted || hand.isBlackjack,
       )
     ) {
       this.#isDone = true;
@@ -114,16 +155,27 @@ export class Player {
 
   reset() {
     this.debug.log(`${this.name} is resetting`);
-    this.#hands.forEach((hand) => hand.reset());
-    this.#hands = [new Hand(this.name)];
+    this.#hands = [new Hand({ owner: this.name })];
     this.#hasSplit = false;
     this.#isDone = false;
     return this;
   }
-}
 
-export enum Role {
-  Dealer,
-  Player,
-}
+  public toJSON(): PlayerJSON {
+    return {
+      name: this.name,
+      seat: this.seat,
+      role: this.role,
+      isDone: this.#isDone,
+      hasSplit: this.#hasSplit,
+      hands: this.#hands.map((hand) => hand.toJSON()),
+    };
+  }
 
+  public static fromJSON(json: PlayerJSON) {
+    return new Player({
+      ...json,
+      hands: json.hands.map((hand) => Hand.fromJSON(hand)),
+    });
+  }
+}

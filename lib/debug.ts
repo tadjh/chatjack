@@ -1,5 +1,14 @@
 import { rgb } from "@/lib/canvas/utils";
 import { Palette } from "@/lib/constants";
+import { z } from "zod";
+
+export const DebugSchema = z.object({
+  scope: z.string(),
+  color: z.string(),
+  enabled: z.boolean(),
+});
+
+export type DebugJSON = z.infer<typeof DebugSchema>;
 
 /**
  * Debug utility class for conditional console logging with colored scope labels.
@@ -7,23 +16,27 @@ import { Palette } from "@/lib/constants";
  */
 export class Debug {
   /** The scope label that will be prepended to log messages */
-  scope: string;
+  readonly scope: string;
 
   /** CSS color string for the scope label */
-  color: string;
+  readonly color: string;
 
   /** Whether the debug instance is enabled */
-  enabled: boolean;
+  readonly enabled: boolean;
 
   /**
    * Creates a new Debug instance with a labeled scope and color.
    * @param scope - The scope name to identify this debug instance's logs
    * @param color - RGB color vector for the scope label (defaults to Palette.Green)
    */
-  constructor(scope: string, color: keyof typeof Palette = "Green") {
+  constructor(
+    scope: string,
+    color: keyof typeof Palette = "Green",
+    enabled = process.env.NEXT_PUBLIC_DEBUG === "true",
+  ) {
     this.scope = `[${scope}]`;
     this.color = `color: ${rgb(Palette[color])}`;
-    this.enabled = process.env.NEXT_PUBLIC_DEBUG === "true";
+    this.enabled = enabled;
   }
 
   /**
@@ -46,5 +59,17 @@ export class Debug {
     if (this.enabled) {
       console.error(`%c${this.scope}`, this.color, message, ...optionalParams);
     }
+  }
+
+  public toJSON(): DebugJSON {
+    return {
+      scope: this.scope,
+      color: this.color,
+      enabled: this.enabled,
+    };
+  }
+
+  public static fromJSON(json: DebugJSON) {
+    return new Debug(json.scope, json.color, json.enabled);
   }
 }

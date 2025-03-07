@@ -1,5 +1,6 @@
 "use server";
 
+import { CURRENT_URL } from "@/lib/constants";
 import { Twitch } from "@/lib/integrations/twitch.types";
 import { cookies } from "next/headers";
 
@@ -22,7 +23,7 @@ export async function getModeratedChannels(): Promise<Twitch.ModeratedChannelsRe
 
   try {
     const data = await fetch(
-      `${process.env.VERCEL_URL}/api/auth/twitch/channels?${params.toString()}`,
+      `${CURRENT_URL}/api/auth/twitch/channels?${params.toString()}`,
     );
 
     if (!data.ok) {
@@ -83,7 +84,7 @@ export async function auth(): Promise<
 
   try {
     const res = await fetch(
-      `${process.env.VERCEL_URL}/api/auth/twitch/validate?${params.toString()}`,
+      `${CURRENT_URL}/api/auth/twitch/validate?${params.toString()}`,
       {
         // cache: "no-store",
       },

@@ -62,14 +62,16 @@ export class Blackjack {
     debug = new Debug(Blackjack.name, "Green"),
   ) {
     this.debug = debug;
+    this.debug.log(`Creating: ${Blackjack.name} instance`);
     this.shoeSize = shoeSize;
     this.fixedDeck = deck;
     this.playerCount = playerCount;
-    this.playerNames = playerNames;
+    this.playerNames = playerNames.length ? playerNames : [];
     this.#eventBus = eventBusInstance;
-    this.init();
+    this.#state = STATE.INIT;
     this.#table = this.createTable({ playerCount, playerNames });
     this.#shoe = this.createShoe({ shoeSize, fixedDeck: this.fixedDeck });
+    this.setup();
   }
 
   get dealer() {
@@ -109,13 +111,6 @@ export class Blackjack {
     return this.#isRevealed;
   }
 
-  private init() {
-    this.debug.log(`Creating: ${Blackjack.name} instance`);
-    this.state = STATE.INIT;
-    this.setup();
-    return this;
-  }
-
   private setup() {
     this.#eventBus.subscribe("mediator", this.handleMediator, Blackjack.name);
     this.#eventBus.subscribe("chat", this.handleChat, Blackjack.name);
@@ -140,7 +135,11 @@ export class Blackjack {
       new Dealer(),
       ...Array.from(
         { length: playerCount },
-        (_, i) => new Player(playerNames[i] || `Player ${i + 1}`, i + 1),
+        (_, i) =>
+          new Player({
+            name: playerNames[i] || `Player ${i + 1}`,
+            seat: i + 1,
+          }),
       ),
     ];
   }
@@ -227,7 +226,7 @@ export class Blackjack {
       this.debug.log("No more cards in the deck");
     }
 
-    const decision = this.dealer.decide(this.#shoe);
+    const decision = this.dealer.decide(this.#shoe.cards);
 
     if (decision === "stand") {
       this.dealer.stand();
