@@ -64,7 +64,8 @@ export class Mediator {
     );
   }
 
-  private teardown() {
+  public teardown() {
+    this.debug.log(`Destroying: ${Mediator.name} instance`);
     this.#eventBus.unsubscribe("chat", this.handleChat);
     this.#eventBus.unsubscribe(
       "animationComplete",
@@ -136,4 +137,12 @@ export class Mediator {
         break;
     }
   };
+
+  public updateOptions(options: MediatorOptions) {
+    this.debug.log(
+      `Mediator options updated: buffer=${this.#buffer}, timer=${this.#timer}`,
+    );
+    this.#buffer = options.buffer ?? this.#buffer;
+    this.#timer = options.timer ?? this.#timer;
+  }
 }

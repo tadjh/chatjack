@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const isProtected = (pathname: string) => {
+  const protectedPaths = ["/play"];
+
+  return protectedPaths.includes(pathname);
+};
+
 export function middleware(request: NextRequest) {
   const token = request.cookies.get(process.env.TWITCH_ACCESS_TOKEN_NAME);
   const refreshToken = request.cookies.get(
@@ -10,6 +16,10 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(
       new URL("/api/auth/twitch/refresh", request.url),
     );
+  }
+
+  if (!token && isProtected(request.nextUrl.pathname)) {
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   return NextResponse.next();

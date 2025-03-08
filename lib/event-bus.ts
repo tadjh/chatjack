@@ -167,7 +167,7 @@ const animationEventSchema = z.union([
   voteStartSchema,
 ]);
 
-const eventBusAllData = z.object({
+export const eventBusAllData = z.object({
   type: z.string(),
   data: z
     .object({
@@ -185,22 +185,22 @@ export type EventBusAllData = z.infer<typeof eventBusAllData>;
 
 export const eventBusDataSchema = z.discriminatedUnion("eventName", [
   z.object({
-    channel: z.string(),
+    channel: z.string().nonempty(),
     eventName: z.literal("chat"),
     args: chatEventSchema,
   }),
   z.object({
-    channel: z.string(),
+    channel: z.string().nonempty(),
     eventName: z.literal("mediator"),
     args: mediatorEventSchema,
   }),
   z.object({
-    channel: z.string(),
+    channel: z.string().nonempty(),
     eventName: z.literal("gamestate"),
     args: gameEventSchema,
   }),
   z.object({
-    channel: z.string(),
+    channel: z.string().nonempty(),
     eventName: z.literal("animationComplete"),
     args: animationEventSchema,
   }),
@@ -219,7 +219,7 @@ export class EventBus<Events extends Record<string, any> = EventMap> {
 
   static #instance: EventBus | null = null;
   protected debug: Debug;
-  public readonly channel: string;
+  #channel: string;
 
   public static create<T extends Record<string, any> = EventMap>(
     options?: EventBusOptions,
@@ -242,9 +242,19 @@ export class EventBus<Events extends Record<string, any> = EventMap> {
     { channel = "" }: EventBusOptions = { channel: "" },
     debug = new Debug("EventBus", "LightBlue"),
   ) {
-    this.channel = channel;
-    this.#events = {};
     this.debug = debug;
+    this.debug.log(`Creating: ${EventBus.name} instance`);
+    this.#channel = channel;
+    this.#events = {};
+  }
+
+  get channel(): string {
+    return this.#channel;
+  }
+
+  setChannel(channel: string) {
+    this.debug.log(`Setting channel to: ${channel}`);
+    this.#channel = channel;
   }
 
   public subscribe<K extends keyof Events>(
@@ -307,7 +317,7 @@ export class EventBus<Events extends Record<string, any> = EventMap> {
     this.debug.log(`Emitting: ${String(eventName)}`);
     if (this.#events[eventName]) {
       if (networked) {
-        this.emitNet(this.channel, eventName, args);
+        this.emitNet(this.#channel, eventName, args);
       }
       this.#events[eventName]?.forEach(({ callback }) => {
         callback(args);
@@ -327,7 +337,8 @@ export class EventBus<Events extends Record<string, any> = EventMap> {
     });
   }
 
-  private teardown() {
+  public teardown() {
+    this.debug.log(`Destroying: ${EventBus.name} instance`);
     this.#events = {};
   }
 
@@ -346,7 +357,9 @@ export class EventBus<Events extends Record<string, any> = EventMap> {
         }),
       });
       if (!response.ok) {
-        this.debug.error(`Failed to emit event: ${response.statusText}`);
+        this.debug.error(
+          `Channel ${channel || "unknown"} Failed to emit event ${String(eventName)}: ${response.statusText}`,
+        );
         return { success: false };
       }
 

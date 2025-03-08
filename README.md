@@ -33,6 +33,7 @@
 
 ## Quality of life
 
+- TODO caption should equal "offline" when unable to connect to twitch chat
 - TODO Rename SearchProvider to RendererOptions or something to indicate what it actually does
 - TODO Add !stop command
 - TODO Bust lower opacity

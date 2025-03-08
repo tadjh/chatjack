@@ -1,4 +1,4 @@
-import { Twitch } from "@/lib/integrations/twitch.types";
+import { ModeratedChannelsResponse } from "@/lib/integrations/twitch.types";
 import { getModeratedChannelsKey } from "@/lib/utils";
 import { kv } from "@vercel/kv";
 import { NextRequest, NextResponse } from "next/server";
@@ -24,8 +24,7 @@ export async function GET(request: NextRequest) {
   try {
     const cacheKey = getModeratedChannelsKey(user_id);
 
-    const cachedChannels =
-      await kv.get<Twitch.ModeratedChannelsResponse>(cacheKey);
+    const cachedChannels = await kv.get<ModeratedChannelsResponse>(cacheKey);
 
     if (cachedChannels) {
       return NextResponse.json(cachedChannels);
@@ -57,7 +56,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const payload = (await response.json()) as Twitch.ModeratedChannelsResponse;
+    const payload = (await response.json()) as ModeratedChannelsResponse;
 
     await kv.set(cacheKey, payload, {
       ex: 60 * 60 * 24, // 24 hours

@@ -1,11 +1,15 @@
 "use server";
 
 import { CURRENT_URL } from "@/lib/constants";
-import { Twitch } from "@/lib/integrations/twitch.types";
+import {
+  ModeratedChannelsResponse,
+  ValidateAccessTokenSessionData,
+  ValidateAccessTokenSuccess,
+} from "@/lib/integrations/twitch.types";
 import { cookies } from "next/headers";
 
-export async function getModeratedChannels(): Promise<Twitch.ModeratedChannelsResponse> {
-  const errorResult: Twitch.ModeratedChannelsResponse = {
+export async function getModeratedChannels(): Promise<ModeratedChannelsResponse> {
+  const errorResult: ModeratedChannelsResponse = {
     data: [],
     pagination: {},
   };
@@ -30,7 +34,7 @@ export async function getModeratedChannels(): Promise<Twitch.ModeratedChannelsRe
       return errorResult;
     }
 
-    const payload = (await data.json()) as Twitch.ModeratedChannelsResponse;
+    const payload = (await data.json()) as ModeratedChannelsResponse;
 
     return {
       data: [
@@ -51,7 +55,7 @@ export async function getModeratedChannels(): Promise<Twitch.ModeratedChannelsRe
 
 export async function auth(): Promise<
   | {
-      session: Twitch.ValidateAccessTokenSessionData;
+      session: ValidateAccessTokenSessionData;
       access_token: string;
       error?: never;
     }
@@ -99,7 +103,7 @@ export async function auth(): Promise<
       };
     }
 
-    const { user } = (await res.json()) as Twitch.ValidateAccessTokenSuccess;
+    const { user } = (await res.json()) as ValidateAccessTokenSuccess;
 
     return { session: user, access_token };
   } catch (err) {

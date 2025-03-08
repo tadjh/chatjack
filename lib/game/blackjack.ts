@@ -111,13 +111,18 @@ export class Blackjack {
     return this.#isRevealed;
   }
 
+  public get eventBus() {
+    return this.#eventBus;
+  }
+
   private setup() {
     this.#eventBus.subscribe("mediator", this.handleMediator, Blackjack.name);
     this.#eventBus.subscribe("chat", this.handleChat, Blackjack.name);
     return this;
   }
 
-  private teardown() {
+  public teardown() {
+    this.debug.log(`Destroying ${Blackjack.name}`);
     this.#eventBus.unsubscribe("mediator", this.handleMediator);
     this.#eventBus.unsubscribe("chat", this.handleChat);
     return this;

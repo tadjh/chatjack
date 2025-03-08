@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Twitch } from "@/lib/integrations/twitch.types";
+import { ModeratedChannelsResponse } from "@/lib/integrations/twitch.types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -40,7 +40,7 @@ const formSchema = z.object({
 export function ChannelName({
   channels,
 }: {
-  channels: Twitch.ModeratedChannelsResponse;
+  channels: ModeratedChannelsResponse;
 }) {
   const { channel, setContext } = useSearch();
   const [open, setOpen] = useState(!channel);

@@ -50,7 +50,7 @@ enum ASSETS_LOADED {
 type RenderMode = "moderator" | "spectator";
 
 export const rendererOptionsSchema = z.object({
-  channel: z.string({ message: "A channel name is required" }),
+  channel: z.string({ message: "A channel name is required" }), // TODO Make optional
   mode: z.enum(["moderator", "spectator"]),
   fps: z.number().optional(),
   caption: z.string().optional(),
@@ -120,6 +120,7 @@ export class Renderer {
     debug = new Debug(Renderer.name, "Orange"),
   ) {
     this.debug = debug;
+    this.debug.log(`Creating: ${Renderer.name} instance`);
     this.fps = fps;
     this.tickRate = 1000 / fps;
     this.animationSpeed = 1 / fps;
@@ -133,8 +134,6 @@ export class Renderer {
       this.debug.log("Renderer is not running in the browser");
       return;
     }
-
-    this.init();
   }
 
   get isLoading() {
@@ -153,13 +152,7 @@ export class Renderer {
     return this.#assetsLoaded.get(ASSETS_LOADED.LAYERS);
   }
 
-  private init() {
-    this.debug.log(`Creating: ${Renderer.name} instance`);
-    this.setup();
-    return this;
-  }
-
-  private async setup() {
+  public async setup() {
     await this.loadAssets();
     this.#eventBus.subscribe("gamestate", this.handleGamestate, Renderer.name);
     this.#eventBus.subscribe("chat", this.handleChat, Renderer.name);
@@ -167,14 +160,24 @@ export class Renderer {
     return this;
   }
 
-  private async teardown() {
+  public async teardown() {
     await this.unloadAssets();
     this.unloadTitleScreen();
     this.unloadLayers();
     this.#eventBus.unsubscribe("gamestate", this.handleGamestate);
     this.#eventBus.unsubscribe("chat", this.handleChat);
     this.#eventBus.unsubscribe("mediator", this.handleMediator);
+    this.debug.log(`Destroying: ${Renderer.name} instance`);
     return this;
+  }
+
+  public updateOptions(options: RendererOptions) {
+    const { mode, channel, caption } = options;
+    this.#mode = mode;
+    this.#channel = channel;
+    if (caption) {
+      this.#caption = caption;
+    }
   }
 
   private checkIsReady() {

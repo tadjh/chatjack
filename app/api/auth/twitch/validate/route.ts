@@ -1,11 +1,16 @@
-import { Twitch } from "@/lib/integrations/twitch.types";
+import {
+  ValidateAccessTokenError,
+  ValidateAccessTokenFailure,
+  ValidateAccessTokenSessionData,
+  ValidateAccessTokenSuccess,
+} from "@/lib/integrations/twitch.types";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   const access_token = request.nextUrl.searchParams.get("access_token");
 
   if (!access_token) {
-    return NextResponse.json<Twitch.ValidateAccessTokenFailure>(
+    return NextResponse.json<ValidateAccessTokenFailure>(
       {
         error: {
           status: 404,
@@ -24,11 +29,11 @@ export async function GET(request: NextRequest) {
     });
 
     const data = (await validateRes.json()) as
-      | Twitch.ValidateAccessTokenSessionData
-      | Twitch.ValidateAccessTokenError;
+      | ValidateAccessTokenSessionData
+      | ValidateAccessTokenError;
 
     if ("status" in data) {
-      return NextResponse.json<Twitch.ValidateAccessTokenFailure>(
+      return NextResponse.json<ValidateAccessTokenFailure>(
         {
           error: data,
         },
@@ -36,14 +41,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const response = NextResponse.json<Twitch.ValidateAccessTokenSuccess>({
+    const response = NextResponse.json<ValidateAccessTokenSuccess>({
       user: data,
     });
 
     return response;
   } catch (error) {
     console.error("Token validation error:", error);
-    return NextResponse.json<Twitch.ValidateAccessTokenFailure>(
+    return NextResponse.json<ValidateAccessTokenFailure>(
       {
         error: {
           status: 500,

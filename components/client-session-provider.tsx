@@ -1,17 +1,17 @@
 "use client";
 
-import { Twitch } from "@/lib/integrations/twitch.types";
+import { ValidateAccessTokenSessionData } from "@/lib/integrations/twitch.types";
 import { createContext, useContext, useState } from "react";
 
 const SessionContext = createContext<{
-  session: Twitch.ValidateAccessTokenSessionData | null;
+  session: ValidateAccessTokenSessionData | null;
 } | null>(null);
 
 export function ClientSessionProvider({
   initialSession,
   children,
 }: {
-  initialSession: Twitch.ValidateAccessTokenSessionData | undefined;
+  initialSession: ValidateAccessTokenSessionData | undefined;
   children: React.ReactNode;
 }) {
   const [session] = useState(initialSession ?? null);

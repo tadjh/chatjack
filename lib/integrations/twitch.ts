@@ -21,9 +21,9 @@ export class Twitch {
   #options: COMMAND[];
   #client: tmi.Client | null = null;
 
-  public static create(options: TwitchOptions, eventBus: EventBus) {
+  public static create(options: TwitchOptions) {
     if (!Twitch.#instance) {
-      Twitch.#instance = new Twitch(options, eventBus);
+      Twitch.#instance = new Twitch(options);
     }
     return Twitch.#instance;
   }
@@ -48,7 +48,7 @@ export class Twitch {
     {
       channel = Twitch.defaultOptions.channel,
     }: TwitchOptions = Twitch.defaultOptions,
-    events: EventBus,
+    events: EventBus = EventBus.create(),
     vote = new Vote(),
     debug = new Debug(Twitch.name, "Purple"),
   ) {
@@ -57,7 +57,6 @@ export class Twitch {
     this.#channel = channel;
     this.#vote = vote;
     this.#options = [COMMAND.START, COMMAND.RESTART];
-    this.setup(this.#channel);
   }
 
   get channel() {
@@ -76,6 +75,7 @@ export class Twitch {
 
   private addListener(
     event: keyof tmi.Events,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     listener: (...args: any[]) => void,
   ) {
     if (!this.#client) return;
@@ -84,6 +84,7 @@ export class Twitch {
 
   private removeListener(
     event: keyof tmi.Events,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     listener: (...args: any[]) => void,
   ) {
     if (!this.#client) return;
@@ -97,15 +98,18 @@ export class Twitch {
     }
 
     this.#channel = channel;
-    console.log("Channel", this.#channel);
-
     this.#client = Twitch.createClient(this.#channel, this.debug.enabled);
 
     this.addListener("connected", this.handleConnected);
     this.addListener("disconnected", this.handleDisconnected);
 
     this.#eventBus.subscribe("mediator", this.handleMediator, Twitch.name);
-    await this.connect();
+    try {
+      await this.#client.connect();
+    } catch (error) {
+      this.debug.error("Error connecting to Twitch", error);
+      return;
+    }
   }
 
   public async teardown() {
@@ -123,7 +127,6 @@ export class Twitch {
       clearTimeout(this.#voteTimer);
     }
 
-    const estEnd = Date.now() + event.data.duration * 1000;
     this.#voteTimer = setTimeout(() => {
       const tieVoteCommand = COMMAND.STAND;
       const popularCommand = this.#vote.tally(tieVoteCommand);

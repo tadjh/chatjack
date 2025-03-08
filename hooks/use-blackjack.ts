@@ -1,4 +1,3 @@
-import { EventBus } from "@/lib/event-bus";
 import { Blackjack, BlackjackOptions } from "@/lib/game/blackjack";
 import { Dealer } from "@/lib/game/dealer";
 import { Player } from "@/lib/game/player";
@@ -6,8 +5,8 @@ import { COMMAND, EVENT, STATE } from "@/lib/types";
 import { useEffect, useRef, useState } from "react";
 
 export interface UseBlackjackReturnType {
-  dealer: Dealer;
-  player: Player;
+  dealer: Dealer | null;
+  player: Player | null;
   hasDealt: boolean;
   isRevealed: boolean;
   isGameover: boolean;
@@ -25,17 +24,21 @@ export interface UseBlackjackReturnType {
 
 export function useBlackjack(
   options: BlackjackOptions,
-  eventBus: EventBus,
 ): UseBlackjackReturnType {
-  const blackjackRef = useRef(Blackjack.create(options, eventBus));
-  const blackjack = blackjackRef.current;
-
-  const [gameState, setGameState] = useState({
-    dealer: blackjack.dealer,
-    player: blackjack.player,
+  const blackjackRef = useRef<Blackjack | null>(null);
+  const [gameState, setGameState] = useState<{
+    dealer: Dealer | null;
+    player: Player | null;
+  }>({
+    dealer: null,
+    player: null,
   });
 
   useEffect(() => {
+    if (!blackjackRef.current) {
+      blackjackRef.current = Blackjack.create(options);
+    }
+
     const blackjack = blackjackRef.current;
 
     const updateFromInstance = () => {
@@ -45,43 +48,48 @@ export function useBlackjack(
       });
     };
 
-    const unsubscribeMediator = eventBus.subscribe(
+    const unsubscribeMediator = blackjack.eventBus.subscribe(
       "mediator",
       updateFromInstance,
       "useBlackjack",
     );
-    const unsubscribeGamestate = eventBus.subscribe(
+    const unsubscribeGamestate = blackjack.eventBus.subscribe(
       "gamestate",
       updateFromInstance,
       "useBlackjack",
     );
-    const unsubscribeChat = eventBus.subscribe(
+    const unsubscribeChat = blackjack.eventBus.subscribe(
       "chat",
       updateFromInstance,
       "useBlackjack",
     );
 
     return () => {
-      unsubscribeMediator();
-      unsubscribeGamestate();
-      unsubscribeChat();
+      if (blackjackRef.current) {
+        unsubscribeMediator();
+        unsubscribeGamestate();
+        unsubscribeChat();
+        blackjackRef.current.teardown();
+        blackjackRef.current = null;
+      }
     };
-  }, []);
+  }, [options]);
 
   function updateSnapshot() {
+    if (!blackjackRef.current) return;
     setGameState({
-      dealer: blackjack.dealer,
-      player: blackjack.player,
+      dealer: blackjackRef.current.dealer,
+      player: blackjackRef.current.player,
     });
   }
 
   function deal() {
-    blackjack.handleStart();
+    blackjackRef.current?.handleStart();
     updateSnapshot();
   }
 
   function hit() {
-    blackjack.handlePlayerAction({
+    blackjackRef.current?.handlePlayerAction({
       type: EVENT.VOTE_END,
       data: { command: COMMAND.HIT },
     });
@@ -89,7 +97,7 @@ export function useBlackjack(
   }
 
   function stand() {
-    blackjack.handlePlayerAction({
+    blackjackRef.current?.handlePlayerAction({
       type: EVENT.VOTE_END,
       data: { command: COMMAND.STAND },
     });
@@ -97,42 +105,42 @@ export function useBlackjack(
   }
 
   // function split() {
-  //   blackjack.handlePlayerTurn(COMMAND.SPLIT);
+  //   blackjackRef.current?.handlePlayerTurn(COMMAND.SPLIT);
   //   updateSnapshot();
   // }
 
   function reveal() {
-    blackjack.handleDealerAction();
+    blackjackRef.current?.handleDealerAction();
     updateSnapshot();
   }
 
   function decide() {
-    if (blackjack.dealer.isDone) {
-      blackjack.handleJudge();
+    if (blackjackRef.current?.dealer.isDone) {
+      blackjackRef.current?.handleJudge();
     } else {
-      blackjack.handleDealerAction();
+      blackjackRef.current?.handleDealerAction();
     }
     updateSnapshot();
   }
 
   function exit() {
-    blackjack.handleStop();
+    blackjackRef.current?.handleStop();
     updateSnapshot();
   }
 
   function restart() {
-    blackjack.handleStart();
+    blackjackRef.current?.handleStart();
     updateSnapshot();
   }
 
   return {
     dealer: gameState.dealer,
     player: gameState.player,
-    hasDealt: blackjack.hasDealt,
-    isRevealed: blackjack.isRevealed,
-    isGameover: blackjack.isGameover,
-    isPlayerDone: blackjack.isPlayerDone,
-    state: blackjack.state,
+    hasDealt: blackjackRef.current?.hasDealt || false,
+    isRevealed: blackjackRef.current?.isRevealed || false,
+    isGameover: blackjackRef.current?.isGameover || false,
+    isPlayerDone: blackjackRef.current?.isPlayerDone || false,
+    state: blackjackRef.current?.state || STATE.INIT,
     deal,
     hit,
     stand,

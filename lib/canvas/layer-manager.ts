@@ -14,7 +14,7 @@ export class LayerManager extends Map<LAYER, Layer> {
 
   public getEntityById<T extends EntityType>(
     layer: LAYER,
-    id: string
+    id: string,
   ): T | undefined {
     return this.get(layer)?.get(id) as T | undefined;
   }
@@ -76,4 +76,3 @@ export class LayerManager extends Map<LAYER, Layer> {
     this.forEach((layer) => layer.clear());
   }
 }
-

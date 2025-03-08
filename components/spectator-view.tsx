@@ -5,16 +5,21 @@ import { Footer } from "@/components/footer";
 import { Header, HeaderItem } from "@/components/header";
 import { useSearch } from "@/components/search-provider";
 import { createSpectatorLink } from "@/components/spectator-link";
-import { useEventBus } from "@/hooks/use-event-bus";
 import { usePusher } from "@/hooks/use-pusher";
+import { useRenderer } from "@/hooks/use-renderer";
 
 export function SpectatorView() {
-  const { debug, channel } = useSearch();
-  const eventBus = useEventBus(channel);
-  const state = usePusher(channel, eventBus, debug);
+  const { debug, fps, channel } = useSearch();
+  const renderer = useRenderer({
+    channel,
+    fps,
+    mode: "spectator",
+    caption: "connecting...",
+  });
+  const state = usePusher({ channel, debug });
   return (
     <>
-      <Canvas {...state} mode="spectator" />
+      <Canvas renderer={renderer} />
       <div className="relative z-50 flex h-full min-h-screen w-full flex-col gap-3">
         <Header>
           <HeaderItem className="opacity-50 hover:opacity-100">
