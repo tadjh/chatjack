@@ -23,6 +23,8 @@ export function useTwitch({ channel }: TwitchOptions): ChatActions {
       twitchRef.current = Twitch.create({ channel });
     }
 
+    twitchRef.current.setup(channel);
+
     if (twitchRef.current.channel !== channel) {
       twitchRef.current.teardown();
       twitchRef.current.setup(channel);

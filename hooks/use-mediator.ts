@@ -13,6 +13,7 @@ export function useMediator({ buffer, timer }: MediatorOptions) {
       mediatorRef.current = Mediator.create({ buffer, timer });
     }
 
+    mediatorRef.current.setup();
     mediatorRef.current.updateOptions({ buffer, timer });
 
     return () => {

@@ -53,6 +53,7 @@ export class Twitch {
     debug = new Debug(Twitch.name, "Purple"),
   ) {
     this.debug = debug;
+    this.debug.log(`Creating: ${Twitch.name} instance`);
     this.#eventBus = events;
     this.#channel = channel;
     this.#vote = vote;
@@ -65,11 +66,13 @@ export class Twitch {
 
   private async connect() {
     if (!this.#client) return;
+    this.debug.log("Connecting to Twitch");
     await this.#client.connect();
   }
 
   private async disconnect() {
     if (!this.#client) return;
+    this.debug.log("Disconnecting from Twitch");
     await this.#client.disconnect();
   }
 
@@ -92,6 +95,8 @@ export class Twitch {
   }
 
   public async setup(channel: string) {
+    this.debug.log(`Setup: ${channel} subscriptions`);
+
     if (!channel) {
       this.debug.error("Channel is not set");
       return;
@@ -105,7 +110,7 @@ export class Twitch {
 
     this.#eventBus.subscribe("mediator", this.handleMediator, Twitch.name);
     try {
-      await this.#client.connect();
+      await this.connect();
     } catch (error) {
       this.debug.error("Error connecting to Twitch", error);
       return;
@@ -113,6 +118,7 @@ export class Twitch {
   }
 
   public async teardown() {
+    this.debug.log(`Teardown: ${Twitch.name} subscriptions`);
     this.removeListener("connected", this.handleConnected);
     this.removeListener("disconnected", this.handleDisconnected);
 

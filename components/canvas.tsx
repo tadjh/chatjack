@@ -8,9 +8,9 @@ export function Canvas({ renderer }: { renderer: Renderer }) {
 
   return (
     <>
-      <canvas ref={bgRef} className="absolute" />
-      <canvas ref={gameRef} className="absolute" />
-      <canvas ref={uiRef} className="absolute" />
+      <canvas ref={bgRef} className="absolute" key="bg-canvas" />
+      <canvas ref={gameRef} className="absolute" key="game-canvas" />
+      <canvas ref={uiRef} className="absolute" key="ui-canvas" />
     </>
   );
 }

@@ -29,11 +29,18 @@ export class PusherService {
   #eventBus: EventBus;
   #stateChangeListeners: Set<StateChangeListener> = new Set();
 
+  public static create(): PusherService {
+    if (!PusherService.#instance) {
+      PusherService.#instance = new PusherService();
+    }
+    return PusherService.#instance;
+  }
   private constructor(
     eventBus: EventBus = EventBus.create(),
     debug = new Debug(PusherService.name, "LightGreen"),
   ) {
     this.debug = debug;
+    this.debug.log(`Creating: ${PusherService.name} instance`);
     this.#eventBus = eventBus;
     this.#state = {
       debug: false,
@@ -45,13 +52,6 @@ export class PusherService {
         data: {},
       },
     };
-  }
-
-  public static create(): PusherService {
-    if (!PusherService.#instance) {
-      PusherService.#instance = new PusherService();
-    }
-    return PusherService.#instance;
   }
 
   public getState(): PusherState {

@@ -22,9 +22,12 @@ export interface UseBlackjackReturnType {
   restart: () => void;
 }
 
-export function useBlackjack(
-  options: BlackjackOptions,
-): UseBlackjackReturnType {
+export function useBlackjack({
+  shoeSize,
+  deck,
+  playerCount,
+  playerNames,
+}: BlackjackOptions): UseBlackjackReturnType {
   const blackjackRef = useRef<Blackjack | null>(null);
   const [gameState, setGameState] = useState<{
     dealer: Dealer | null;
@@ -34,46 +37,34 @@ export function useBlackjack(
     player: null,
   });
 
+  if (!blackjackRef.current) {
+    blackjackRef.current = Blackjack.create({
+      shoeSize,
+      deck,
+      playerCount,
+      playerNames,
+    });
+  }
+
   useEffect(() => {
     if (!blackjackRef.current) {
-      blackjackRef.current = Blackjack.create(options);
+      blackjackRef.current = Blackjack.create({
+        shoeSize,
+        deck,
+        playerCount,
+        playerNames,
+      });
     }
 
-    const blackjack = blackjackRef.current;
-
-    const updateFromInstance = () => {
-      setGameState({
-        dealer: blackjack.dealer,
-        player: blackjack.player,
-      });
-    };
-
-    const unsubscribeMediator = blackjack.eventBus.subscribe(
-      "mediator",
-      updateFromInstance,
-      "useBlackjack",
-    );
-    const unsubscribeGamestate = blackjack.eventBus.subscribe(
-      "gamestate",
-      updateFromInstance,
-      "useBlackjack",
-    );
-    const unsubscribeChat = blackjack.eventBus.subscribe(
-      "chat",
-      updateFromInstance,
-      "useBlackjack",
-    );
+    blackjackRef.current.setup(setGameState);
 
     return () => {
       if (blackjackRef.current) {
-        unsubscribeMediator();
-        unsubscribeGamestate();
-        unsubscribeChat();
         blackjackRef.current.teardown();
         blackjackRef.current = null;
       }
     };
-  }, [options]);
+  }, [shoeSize, deck, playerCount, playerNames]);
 
   function updateSnapshot() {
     if (!blackjackRef.current) return;

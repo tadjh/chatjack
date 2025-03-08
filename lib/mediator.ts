@@ -44,18 +44,14 @@ export class Mediator {
     debug = new Debug(Mediator.name, "Yellow"),
   ) {
     this.debug = debug;
+    this.debug.log(`Creating: ${Mediator.name} instance`);
     this.#eventBus = eventBusInstance;
     this.#buffer = buffer;
     this.#timer = timer;
-    this.init();
   }
 
-  private init() {
-    this.debug.log(`Creating: ${Mediator.name} instance`);
-    this.setup();
-  }
-
-  private setup() {
+  public setup() {
+    this.debug.log(`Setup: ${Mediator.name} subscriptions`);
     this.#eventBus.subscribe("chat", this.handleChat, Mediator.name);
     this.#eventBus.subscribe(
       "animationComplete",
@@ -65,7 +61,7 @@ export class Mediator {
   }
 
   public teardown() {
-    this.debug.log(`Destroying: ${Mediator.name} instance`);
+    this.debug.log(`Teardown: ${Mediator.name} subscriptions`);
     this.#eventBus.unsubscribe("chat", this.handleChat);
     this.#eventBus.unsubscribe(
       "animationComplete",

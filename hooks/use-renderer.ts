@@ -15,18 +15,21 @@ export function useRenderer({ channel, mode, fps, caption }: RendererOptions) {
       rendererRef.current = Renderer.create({ channel, mode, fps, caption });
     }
 
-    rendererRef.current.setup();
-    rendererRef.current.updateOptions({ channel, mode, fps, caption });
+    const setupRenderer = async () => {
+      await rendererRef.current?.setup();
+      rendererRef.current?.updateOptions({ channel, mode, fps, caption });
 
-    if (!rendererRef.current.isRunning) {
-      rendererRef.current.start();
-    }
+      if (rendererRef.current && !rendererRef.current.isRunning) {
+        rendererRef.current.start();
+      }
+    };
+
+    setupRenderer();
 
     return () => {
       if (rendererRef.current?.isRunning) {
         rendererRef.current.stop();
         rendererRef.current.teardown();
-        rendererRef.current = null;
       }
     };
   }, [channel, mode, fps, caption]);

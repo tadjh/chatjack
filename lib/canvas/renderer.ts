@@ -248,12 +248,12 @@ export class Renderer {
   }
 
   public loadLayers(canvases: Canvases) {
-    if (this.#assetsLoaded.get(ASSETS_LOADED.LAYERS)) {
-      this.debug.log("Layers already loaded");
-      return;
-    }
     this.debug.log("Loading layers");
     this.#isLoading = true;
+
+    // Clear existing layers first
+    this.#layers.clear();
+
     const layers = Object.values(LAYER);
     for (let i = 0; i < layers.length; i++) {
       const layer = layers[i];
@@ -269,6 +269,11 @@ export class Renderer {
     }
     this.#assetsLoaded.set(ASSETS_LOADED.LAYERS, true);
     this.checkIsReady();
+
+    // If we're already running, we need to resize to ensure proper rendering
+    if (this.#isRunning) {
+      this.resize();
+    }
   }
 
   public unloadLayers() {
@@ -379,7 +384,12 @@ export class Renderer {
       if (!this.#isRunning) {
         throw new Error("Engine stopped during startup");
       }
-      this.debug.log("Waiting for assets to load");
+      this.debug.log(
+        "Waiting for assets to load",
+        [...this.#assetsLoaded.values()]
+          .map((v, i) => (!v ? ASSETS_LOADED[i] : null))
+          .filter(Boolean),
+      );
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
 

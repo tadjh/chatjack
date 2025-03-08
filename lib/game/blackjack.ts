@@ -33,6 +33,7 @@ export class Blackjack {
   #table: Table;
   #shoe: Deck;
   #eventBus: EventBus;
+  #callback: ((data: { dealer: Dealer; player: Player }) => void) | null = null;
 
   public static create(
     options?: BlackjackOptions,
@@ -71,7 +72,6 @@ export class Blackjack {
     this.#state = STATE.INIT;
     this.#table = this.createTable({ playerCount, playerNames });
     this.#shoe = this.createShoe({ shoeSize, fixedDeck: this.fixedDeck });
-    this.setup();
   }
 
   get dealer() {
@@ -115,14 +115,20 @@ export class Blackjack {
     return this.#eventBus;
   }
 
-  private setup() {
+  public setup = (
+    callback?: (data: { dealer: Dealer; player: Player }) => void,
+  ) => {
+    this.debug.log(`Setup: ${Blackjack.name} subscriptions`);
     this.#eventBus.subscribe("mediator", this.handleMediator, Blackjack.name);
     this.#eventBus.subscribe("chat", this.handleChat, Blackjack.name);
+    if (callback) {
+      this.#callback = callback;
+    }
     return this;
-  }
+  };
 
   public teardown() {
-    this.debug.log(`Destroying ${Blackjack.name}`);
+    this.debug.log(`Teardown: ${Blackjack.name} subscriptions`);
     this.#eventBus.unsubscribe("mediator", this.handleMediator);
     this.#eventBus.unsubscribe("chat", this.handleChat);
     return this;
@@ -334,9 +340,18 @@ export class Blackjack {
   private handleMediator = (event: MediatorEvent) => {
     switch (event.type) {
       case EVENT.DEALER_DECIDE:
-        return this.handleDealerAction();
+        this.handleDealerAction();
+        break;
       case EVENT.JUDGE:
-        return this.handleJudge();
+        this.handleJudge();
+        break;
+    }
+
+    if (this.#callback) {
+      this.#callback({
+        dealer: this.dealer,
+        player: this.player,
+      });
     }
   };
 
@@ -358,6 +373,13 @@ export class Blackjack {
       case COMMAND.STAND:
         this.handleStand();
         break;
+    }
+
+    if (this.#callback) {
+      this.#callback({
+        dealer: this.dealer,
+        player: this.player,
+      });
     }
   };
 
