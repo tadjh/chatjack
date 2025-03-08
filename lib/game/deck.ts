@@ -34,7 +34,7 @@ export class Deck {
     debug = new Debug(Deck.name, "Blue"),
   ) {
     this.debug = debug;
-    this.debug.log(`Constructing ${name}`);
+    this.debug.log(`Creating: ${name}`);
     this.#name = name;
     if (fixedDeck) {
       this.debug.log("Fixing deck with cards:", fixedDeck);
@@ -60,7 +60,6 @@ export class Deck {
     if (shoeSize === 0) return this;
 
     for (let i = 0; i < shoeSize; i++) {
-      this.debug.log("Adding a 52 card deck");
       const deck = Deck.createCards();
       this.#cards.push(...deck);
     }

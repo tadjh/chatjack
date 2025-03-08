@@ -56,13 +56,14 @@ export class Player {
     }: PlayerOptions = Player.defaultOptions,
     debug = new Debug(Player.name, "Red"),
   ) {
+    this.debug = debug;
+    this.debug.log(`Creating: ${name}`);
     this.name = name;
     this.seat = seat;
     this.role = role;
     this.#isDone = isDone;
     this.#hasSplit = hasSplit;
     this.#hands = hands.length ? hands : [new Hand({ owner: this.name })];
-    this.debug = debug;
   }
 
   get hand(): Hand {

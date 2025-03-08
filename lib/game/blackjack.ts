@@ -130,7 +130,6 @@ export class Blackjack {
     playerCount: number;
     playerNames: string[];
   }): Table {
-    this.debug.log("Creating table");
     return [
       new Dealer(),
       ...Array.from(
