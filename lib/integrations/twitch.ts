@@ -30,7 +30,7 @@ export class Twitch {
 
   public static destroy() {
     if (Twitch.#instance) {
-      Twitch.#instance.destroy();
+      Twitch.#instance.teardown();
     }
     Twitch.#instance = null;
   }
@@ -97,6 +97,8 @@ export class Twitch {
     }
 
     this.#channel = channel;
+    console.log("Channel", this.#channel);
+
     this.#client = Twitch.createClient(this.#channel, this.debug.enabled);
 
     this.addListener("connected", this.handleConnected);
@@ -106,12 +108,14 @@ export class Twitch {
     await this.connect();
   }
 
-  public async destroy() {
+  public async teardown() {
     this.removeListener("connected", this.handleConnected);
     this.removeListener("disconnected", this.handleDisconnected);
 
     this.#eventBus.unsubscribe("mediator", this.handleMediator);
     await this.disconnect();
+    this.#channel = "";
+    this.#client = null;
   }
 
   private startVoteTimer(event: MediatorEventType<EVENT.VOTE_START>) {
@@ -223,6 +227,6 @@ export class Twitch {
     this.#eventBus.emit("chat", {
       type: EVENT.DISCONNECTED,
     });
-    this.destroy();
+    this.teardown();
   };
 }

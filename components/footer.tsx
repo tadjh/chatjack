@@ -1,8 +1,10 @@
 import { Copyright } from "@/components/copyright";
-import { Share } from "@/components/share";
 import { cn } from "@/lib/utils";
 
-export function Footer({ className }: React.ComponentProps<"footer">) {
+export function Footer({
+  className,
+  children,
+}: React.ComponentProps<"footer">) {
   return (
     <footer
       className={cn(
@@ -10,7 +12,7 @@ export function Footer({ className }: React.ComponentProps<"footer">) {
         className,
       )}
     >
-      <Share />
+      {children}
       <Copyright />
     </footer>
   );

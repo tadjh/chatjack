@@ -35,11 +35,9 @@ export function useBlackjack(
     player: blackjack.player,
   });
 
-  // Add a state update effect that runs when events occur
   useEffect(() => {
     const blackjack = blackjackRef.current;
 
-    // Function to update the state from the blackjack instance
     const updateFromInstance = () => {
       setGameState({
         dealer: blackjack.dealer,
@@ -47,7 +45,6 @@ export function useBlackjack(
       });
     };
 
-    // Subscribe to events that should trigger state updates
     const unsubscribeMediator = eventBus.subscribe(
       "mediator",
       updateFromInstance,
@@ -64,7 +61,6 @@ export function useBlackjack(
       "useBlackjack",
     );
 
-    // Clean up subscriptions when the hook unmounts
     return () => {
       unsubscribeMediator();
       unsubscribeGamestate();
@@ -125,7 +121,6 @@ export function useBlackjack(
   }
 
   function restart() {
-    // console.clear();
     blackjack.handleStart();
     updateSnapshot();
   }

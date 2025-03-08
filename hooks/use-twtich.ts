@@ -21,17 +21,16 @@ export function useTwitch(
   useEffect(() => {
     const twitch = twitchRef.current;
 
-    if (!twitch.channel && options.channel) {
+    if (twitch.channel !== options.channel) {
       twitch.setup(options.channel);
     }
 
     return () => {
       if (twitch.channel) {
-        console.log("destroy");
-        twitch.destroy();
+        twitch.teardown();
       }
     };
-  }, []);
+  }, [options.channel]);
 
   return {
     hit: () =>

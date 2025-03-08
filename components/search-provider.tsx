@@ -79,7 +79,7 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
 export function useSearch() {
   const context = useContext(SearchContext);
   if (!context) {
-    throw new Error("Canvas context must be used within a CanvasProvider");
+    throw new Error("Canvas context must be used within a SearchProvider");
   }
 
   return context;

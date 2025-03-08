@@ -1,3 +1,5 @@
+"use client";
+
 import { useCanvas } from "@/hooks/use-canvas";
 import { useRenderer } from "@/hooks/use-renderer";
 import { useEventBus } from "@/hooks/use-event-bus";

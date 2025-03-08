@@ -948,7 +948,7 @@ export class Renderer {
       startText.layer,
       startText.id,
     );
-    this.#caption = "Loading...";
+    this.#caption = "!start";
     if (entity) {
       entity.text = this.#caption;
       this.#layers.setEntity(entity);
