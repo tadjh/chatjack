@@ -3,18 +3,15 @@
 import { Canvas } from "@/components/canvas";
 import { Footer } from "@/components/footer";
 import { Header, HeaderItem } from "@/components/header";
+import { useSearch } from "@/components/search-provider";
+import { createSpectatorLink } from "@/components/spectator-link";
 import { useEventBus } from "@/hooks/use-event-bus";
 import { usePusher } from "@/hooks/use-pusher";
-import { parseDebug } from "@/lib/utils";
-import { useSearchParams } from "next/navigation";
 
-export function SpectatorView({ channelName }: { channelName: string }) {
-  const searchParams = useSearchParams();
-  const eventBus = useEventBus(channelName);
-  const state = usePusher(channelName, eventBus);
-
-  const debug = parseDebug(searchParams.get("debug"));
-
+export function SpectatorView() {
+  const { debug, channel } = useSearch();
+  const eventBus = useEventBus(channel);
+  const state = usePusher(channel, eventBus, debug);
   return (
     <>
       <Canvas {...state} mode="spectator" />
@@ -30,5 +27,19 @@ export function SpectatorView({ channelName }: { channelName: string }) {
         <Footer className="opacity-50 hover:opacity-100" />
       </div>
     </>
+  );
+}
+
+export function SpectatorIFrame({ channel }: { channel: string }) {
+  const spectatorLink = createSpectatorLink(channel);
+
+  return (
+    <div className="absolute inset-0 z-10 h-full w-full overflow-hidden">
+      {channel ? (
+        <iframe src={spectatorLink} className="absolute right-0 bottom-0" />
+      ) : (
+        <div>No channel specified</div>
+      )}
+    </div>
   );
 }

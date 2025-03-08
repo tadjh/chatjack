@@ -1,22 +1,22 @@
 "use client";
 
+import { useSearch } from "@/components/search-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
-export function SpectatorLink() {
-  const searchParams = useSearchParams();
-  const channel = searchParams.get("channel");
-  const spectatorLink = createSpectatorLink();
+export function createSpectatorLink(channel: string) {
+  const url = new URL(window.location.href);
+  const params = new URLSearchParams();
+  params.set("c", channel);
+  url.pathname = `/spectate`;
+  url.search = params.toString();
+  return url.toString();
+}
 
-  function createSpectatorLink() {
-    const url = new URL(window.location.href);
-    url.pathname = `/spectate/${channel}`;
-    url.searchParams.delete("channel");
-    url.searchParams.delete("debug");
-    return url.toString();
-  }
+export function SpectatorLink() {
+  const { channel } = useSearch();
+  const spectatorLink = createSpectatorLink(channel);
 
   function copyLink() {
     navigator.clipboard.writeText(spectatorLink);

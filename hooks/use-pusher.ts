@@ -12,21 +12,22 @@ import {
 import { Dealer } from "@/lib/game/dealer";
 import { Player } from "@/lib/game/player";
 import { EVENT } from "@/lib/types";
-import { parseDebug } from "@/lib/utils";
-import { useSearchParams } from "next/navigation";
 import Pusher from "pusher-js";
 import { useEffect, useRef, useState } from "react";
 
-export function usePusher(channelName: string, eventBus: EventBus) {
+export interface PusherState extends RendererOptions {
+  update: EventBusAllData;
+  debug: boolean;
+}
+
+export function usePusher(
+  channelName: string,
+  eventBus: EventBus,
+  debug: boolean,
+) {
   const debugRef = useRef(new Debug("Pusher", "LightGreen"));
-  const searchParams = useSearchParams();
-  const params = {
-    debug: parseDebug(searchParams.get("debug")),
-  };
-  const [state, setState] = useState<
-    RendererOptions & { update: EventBusAllData }
-  >({
-    ...params,
+  const [state, setState] = useState<PusherState>({
+    debug,
     channel: channelName,
     mode: "spectator",
     caption: "connecting...",
@@ -35,7 +36,6 @@ export function usePusher(channelName: string, eventBus: EventBus) {
       data: {},
     },
   });
-  const debug = debugRef.current;
 
   useEffect(() => {
     const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY, {
@@ -44,8 +44,7 @@ export function usePusher(channelName: string, eventBus: EventBus) {
 
     const channel = pusher.subscribe(channelName);
     channel.bind("gamestate", ({ type, data }: GameEventSchema) => {
-      debug.log("gamestate", type, data);
-      console.log("gamestate", type, data);
+      debugRef.current.log("gamestate", type, data);
       switch (type) {
         case EVENT.DEALING:
           eventBus.emit(
@@ -135,7 +134,7 @@ export function usePusher(channelName: string, eventBus: EventBus) {
     });
 
     channel.bind("chat", (args: ChatEventSchema) => {
-      console.log("chat", args);
+      debugRef.current.log("chat", args);
       switch (args.type) {
         case EVENT.CONNECTED:
         case EVENT.DISCONNECTED:
@@ -153,7 +152,7 @@ export function usePusher(channelName: string, eventBus: EventBus) {
     });
 
     channel.bind("mediator", (args: VoteStartSchema) => {
-      console.log("mediator", args);
+      debugRef.current.log("mediator", args);
       switch (args.type) {
         case EVENT.VOTE_START:
           eventBus.emit("mediator", args, false);
@@ -168,7 +167,7 @@ export function usePusher(channelName: string, eventBus: EventBus) {
     });
 
     channel.bind("snapshot", (snapshot: RendererOptions) => {
-      console.log("snapshot", snapshot);
+      debugRef.current.log("snapshot", snapshot);
       // setState(snapshot);
     });
 

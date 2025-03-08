@@ -122,8 +122,9 @@ describe("Renderer", () => {
 
     // Create renderer instance
     renderer = Renderer.create({
+      channel: "test-channel",
+      mode: "moderator",
       fps: 60,
-      timer: 25,
     });
   });
 
@@ -146,14 +147,12 @@ describe("Renderer", () => {
       expect(defaultRenderer.fps).toBe(12); // Default FPS from constants
       expect(defaultRenderer.tickRate).toBe(1000 / 12);
       expect(defaultRenderer.animationSpeed).toBe(1 / 12);
-      expect(defaultRenderer.timer).toBe(30);
     });
 
     it("should initialize with provided options", () => {
       expect(renderer.fps).toBe(60);
       expect(renderer.tickRate).toBe(1000 / 60);
       expect(renderer.animationSpeed).toBe(1 / 60);
-      expect(renderer.timer).toBe(25);
     });
   });
 
@@ -181,7 +180,7 @@ describe("Renderer", () => {
 
       // Attempt to load layers with invalid canvases
       expect(() => renderer.loadLayers(invalidCanvases)).toThrow(
-        "Canvas not found for layer"
+        "Canvas not found for layer",
       );
     });
 
@@ -278,4 +277,3 @@ describe("Renderer", () => {
     });
   });
 });
-

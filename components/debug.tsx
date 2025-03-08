@@ -4,14 +4,14 @@ import { ChatActions } from "@/hooks/use-twtich";
 
 export function Debug({
   blackjack,
-  disabled,
+  enabled,
   chat,
 }: {
   blackjack: UseBlackjackReturnType;
-  disabled: boolean;
+  enabled?: boolean;
   chat: ChatActions;
 }) {
-  if (disabled) return null;
+  if (!enabled) return null;
 
   const {
     dealer,

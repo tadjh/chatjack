@@ -2,8 +2,8 @@
 
 ## Bugs
 
-- TODO Spectator Timer isn't synched
 - TODO Loading... shows even after connected
+- TODO Vignette fades away instead of staying visible
 - TODO !restart !start doesn't work after gameover (command is null)
 - TODO If you stand before all cards drawn, you can quick draw the dealer, also breaks timer
 - TODO hitting non-natural blackjack doesn't tint the auto-stand?
@@ -33,6 +33,7 @@
 
 ## Quality of life
 
+- TODO Rename SearchProvider to RendererOptions or something to indicate what it actually does
 - TODO Add !stop command
 - TODO Bust lower opacity
 - TODO add particle fx

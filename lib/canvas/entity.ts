@@ -12,7 +12,7 @@ import {
 import { Debug } from "@/lib/debug";
 export interface AnimationPhase<
   Phase extends string,
-  Props extends Record<string, number>
+  Props extends Record<string, number>,
 > {
   name: Phase;
   duration: number; // in seconds or ticks
@@ -24,7 +24,7 @@ export interface AnimationPhase<
 }
 export interface AnimationSpec<
   Phase extends string,
-  Props extends Record<string, number>
+  Props extends Record<string, number>,
 > {
   phases: AnimationPhase<Phase, Props>[];
   props: Props;
@@ -49,7 +49,7 @@ type Shadow =
 
 export type BaseEntityProps<
   Phase extends string,
-  Props extends Record<string, number>
+  Props extends Record<string, number>,
 > = AnimationSpec<Phase, Props> & {
   id: string;
   type: string;
@@ -98,7 +98,7 @@ export type BaseAnimationProps = {
 };
 export type BaseEntityOptionalAnimations<
   AnimationTypes extends BaseAnimationTypes | string,
-  AnimationProps extends BaseAnimationProps & Record<string, number>
+  AnimationProps extends BaseAnimationProps & Record<string, number>,
 > = Omit<BaseEntityProps<AnimationTypes, AnimationProps>, "props" | "phases"> &
   Partial<
     Pick<BaseEntityProps<AnimationTypes, AnimationProps>, "props" | "phases">
@@ -106,7 +106,7 @@ export type BaseEntityOptionalAnimations<
 
 export abstract class Entity<
   Phase extends string,
-  Props extends Record<string, number>
+  Props extends Record<string, number>,
 > implements
     AnimationSpec<Phase | BaseAnimationTypes, Props & BaseAnimationProps>
 {
@@ -162,7 +162,7 @@ export abstract class Entity<
       Phase | BaseAnimationTypes,
       Props & BaseAnimationProps
     >,
-    debug = new Debug(Entity.name, "Black")
+    debug = new Debug(Entity.name, "Black"),
   ) {
     this.id = props.id;
     this.type = props.type;
@@ -187,7 +187,7 @@ export abstract class Entity<
 
     this.totalDuration = this.phases.reduce(
       (sum, phase) => sum + phase.duration,
-      0
+      0,
     );
 
     this.speed =
@@ -262,15 +262,14 @@ export abstract class Entity<
       throw new Error("No current phase for local progress");
     }
 
-    const elapsedInPhase = this.progress * this.totalDuration - this.phaseStart;
     if (this.current.loop) {
-      // For looping animations, use performance.now() to keep progressing after progress hits 1
-      const now = (performance.now() - this.startTime) / 1000; // Convert to seconds
+      const elapsedInPhase = (performance.now() - this.startTime) / 1000;
       this.localProgress =
-        (now % this.current.duration) / this.current.duration;
+        (elapsedInPhase % this.current.duration) / this.current.duration;
     } else {
-      this.localProgress = elapsedInPhase / this.current.duration;
-      this.localProgress = clamp(this.localProgress, 0, 1);
+      const elapsedInPhase =
+        this.progress * this.totalDuration - this.phaseStart;
+      this.localProgress = clamp(elapsedInPhase / this.current.duration, 0, 1);
     }
     return this;
   }
@@ -542,7 +541,6 @@ export abstract class Entity<
     this.totalDuration = 0;
     this.phaseStart = 0;
     this.localProgress = 0;
-    this.phaseStart = 0;
     this.onBegin = undefined;
     this.onEnd = undefined;
     this.hasBeginFired = false;

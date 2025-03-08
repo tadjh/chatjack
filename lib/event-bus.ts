@@ -38,7 +38,10 @@ export type GameEvent =
 
 export type MediatorEvent =
   | EventData<EVENT.WAIT_FOR_START>
-  | EventData<EVENT.VOTE_START, { options: COMMAND[] }>
+  | EventData<
+      EVENT.VOTE_START,
+      { options: COMMAND[]; startTime: number; duration: number }
+    >
   | EventData<EVENT.DEALER_DECIDE>
   | EventData<EVENT.JUDGE>;
 
@@ -92,6 +95,8 @@ const voteStartSchema = z.object({
   type: z.literal(EVENT.VOTE_START),
   data: z.object({
     options: z.array(z.nativeEnum(COMMAND)),
+    startTime: z.number(),
+    duration: z.number(),
   }),
 });
 

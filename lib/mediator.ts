@@ -3,17 +3,27 @@ import { AnimationEvent, ChatEvent, EventBus } from "@/lib/event-bus";
 import { COMMAND, EVENT } from "@/lib/types";
 
 export type MediatorOptions = {
-  debug: boolean;
+  buffer?: number;
+  timer?: number;
 };
 
 export class Mediator {
+  public static readonly defaultOptions: Required<MediatorOptions> = {
+    buffer: 0,
+    timer: 10,
+  };
   static #instance: Mediator | null = null;
   protected debug: Debug;
   #eventBus: EventBus;
+  #buffer: number;
+  #timer: number;
 
-  public static create(eventBus?: EventBus): Mediator {
+  public static create(
+    options: MediatorOptions,
+    eventBus?: EventBus,
+  ): Mediator {
     if (!Mediator.#instance) {
-      Mediator.#instance = new Mediator(eventBus);
+      Mediator.#instance = new Mediator(options, eventBus);
     }
     return Mediator.#instance;
   }
@@ -26,11 +36,17 @@ export class Mediator {
   }
 
   private constructor(
+    {
+      buffer = Mediator.defaultOptions.buffer,
+      timer = Mediator.defaultOptions.timer,
+    }: MediatorOptions = {},
     eventBusInstance: EventBus = EventBus.create(),
     debug = new Debug(Mediator.name, "Yellow"),
   ) {
     this.debug = debug;
     this.#eventBus = eventBusInstance;
+    this.#buffer = buffer;
+    this.#timer = timer;
     this.init();
   }
 
@@ -69,6 +85,17 @@ export class Mediator {
     }
   };
 
+  private handleVoteStart() {
+    this.#eventBus.emit("mediator", {
+      type: EVENT.VOTE_START,
+      data: {
+        options: [COMMAND.HIT, COMMAND.STAND],
+        startTime: Date.now(), // + this.#buffer * 1000,
+        duration: this.#timer,
+      },
+    });
+  }
+
   public handleAnimationComplete = (event: AnimationEvent) => {
     switch (event.type) {
       case EVENT.DEALING:
@@ -76,10 +103,7 @@ export class Mediator {
         if (event.data.player.isDone) {
           this.#eventBus.emit("mediator", { type: EVENT.DEALER_DECIDE });
         } else {
-          this.#eventBus.emit("mediator", {
-            type: EVENT.VOTE_START,
-            data: { options: [COMMAND.HIT, COMMAND.STAND] }, // TODO: Support split command
-          });
+          this.handleVoteStart();
         }
         break;
       case EVENT.PLAYER_ACTION:
@@ -87,10 +111,7 @@ export class Mediator {
         if (event.data.player.isDone) {
           this.#eventBus.emit("mediator", { type: EVENT.DEALER_DECIDE });
         } else {
-          this.#eventBus.emit("mediator", {
-            type: EVENT.VOTE_START,
-            data: { options: [COMMAND.HIT, COMMAND.STAND] }, // TODO: Support split command
-          });
+          this.handleVoteStart();
         }
         break;
       case EVENT.REVEAL_HOLE_CARD:

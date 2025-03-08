@@ -31,7 +31,7 @@ export function useTwitch(
         twitch.destroy();
       }
     };
-  }, [options.channel]);
+  }, []);
 
   return {
     hit: () =>

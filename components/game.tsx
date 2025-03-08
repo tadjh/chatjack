@@ -7,21 +7,10 @@ import { useBlackjack } from "@/hooks/use-blackjack";
 import { useEventBus } from "@/hooks/use-event-bus";
 import { useMediator } from "@/hooks/use-mediator";
 import { useTwitch } from "@/hooks/use-twtich";
-import { parseDebug } from "@/lib/utils";
-
-export interface CanvasProps {
-  deck: string | null;
-  channel: string | null;
-  debug: string | null;
-  timer: string | null;
-  fps: string | null;
-}
 
 export function Game() {
   const { timer, fps, debug, deck, channel } = useSearch();
-  const eventBus = useEventBus(channel ?? "");
-  const timerValue = parseTimer(timer);
-  const fpsValue = parseFps(fps);
+  const eventBus = useEventBus(channel);
   const blackjack = useBlackjack(
     {
       deck,
@@ -30,41 +19,18 @@ export function Game() {
     },
     eventBus,
   );
-  useMediator(eventBus);
-  const fallbackChannel = channel ?? "";
+  useMediator({ buffer: 100, timer }, eventBus);
   const chat = useTwitch(
     {
-      channel: fallbackChannel,
-      timer: timerValue,
+      channel,
     },
     eventBus,
   );
 
-  const isDebug = parseDebug(debug);
-
   return (
     <>
-      <Canvas
-        channel={fallbackChannel}
-        fps={fpsValue}
-        timer={timerValue}
-        mode="moderator"
-      />
-      <Debug blackjack={blackjack} disabled={!isDebug} chat={chat} />
+      <Canvas channel={channel} fps={fps} mode="moderator" />
+      <Debug blackjack={blackjack} enabled={debug} chat={chat} />
     </>
   );
 }
-
-const parseTimer = (value: string | null) => {
-  if (!value) return;
-  const num = parseInt(value);
-  if (isNaN(num)) return;
-  return num;
-};
-
-const parseFps = (value: string | null) => {
-  if (!value) return;
-  const num = parseInt(value);
-  if (isNaN(num)) return;
-  return num;
-};

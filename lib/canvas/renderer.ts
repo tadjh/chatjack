@@ -53,7 +53,6 @@ export const rendererOptionsSchema = z.object({
   channel: z.string({ message: "A channel name is required" }),
   mode: z.enum(["moderator", "spectator"]),
   fps: z.number().optional(),
-  timer: z.number().optional(),
   caption: z.string().optional(),
 });
 
@@ -66,18 +65,16 @@ type Canvases = [
 ];
 
 export class Renderer {
-  public static readonly defaults: Required<RendererOptions> = {
-    fps: FPS,
-    timer: 30,
+  public static readonly defaultOptions: Required<RendererOptions> = {
     channel: "",
     mode: "moderator",
+    fps: FPS,
     caption: "",
   };
   static #instance: Renderer | null = null;
   readonly fps: number;
   readonly tickRate: number;
   readonly animationSpeed: number;
-  readonly timer: number;
   protected debug: Debug;
   #lastTick = 0;
   #spritesheets: Map<string, HTMLImageElement> = new Map();
@@ -113,12 +110,11 @@ export class Renderer {
 
   private constructor(
     {
-      fps = Renderer.defaults.fps,
-      timer = Renderer.defaults.timer,
-      caption = Renderer.defaults.caption,
       mode,
       channel,
-    }: RendererOptions = Renderer.defaults,
+      fps = Renderer.defaultOptions.fps,
+      caption = Renderer.defaultOptions.caption,
+    }: RendererOptions = Renderer.defaultOptions,
     eventBusInstance: EventBus = EventBus.create(),
     layers = new LayerManager(),
     debug = new Debug(Renderer.name, "Orange"),
@@ -129,7 +125,6 @@ export class Renderer {
     this.animationSpeed = 1 / fps;
     this.#layers = layers;
     this.#eventBus = eventBusInstance;
-    this.timer = timer;
     this.#caption = caption;
     this.#mode = mode;
     this.#channel = channel; // TODO use channel
@@ -422,12 +417,33 @@ export class Renderer {
     this.resize();
   }
 
-  private createTimer = () => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { phases: _p, ...props } = turnTimer;
+  private createTimer = (event: MediatorEventType<EVENT.VOTE_START>) => {
+    const now = Date.now();
+    // Calculate latency compensation
+    const latency = Math.max(0, now - event.data.startTime);
+
+    // Calculate how much time has already elapsed from the total duration
+    const elapsedTime = latency / 1000;
+    const remainingTime = Math.max(0, event.data.duration - elapsedTime);
+
+    // Safe copy of phases
+    const phases = TimerEntity.defaultPhases.map((phase) => ({
+      ...phase,
+    }));
+
+    // Adjust zoom-in phase if we still have time for it
+    phases[0].duration = Math.max(
+      (TimerEntity.zoomInDuration() - latency) / 1000,
+      0,
+    );
+
+    // Set the countdown phase to the exact remaining time
+    // Add a small buffer (0.1s) to ensure animation completes
+    phases[1].duration = remainingTime + 0.1;
+
     this.createEntity({
-      ...props,
-      duration: this.timer,
+      ...turnTimer,
+      phases,
       onEnd: (layer: LAYER, id: string) => this.#layers.removeEntity(layer, id),
     });
   };
@@ -603,7 +619,6 @@ export class Renderer {
             onComplete,
           );
         } else {
-          this.createTimer();
           if (onComplete) onComplete();
         }
       },
@@ -700,10 +715,10 @@ export class Renderer {
     return this;
   }
 
-  private createVoteText(options: COMMAND[]) {
+  private createVoteText(event: MediatorEventType<EVENT.VOTE_START>) {
     // TODO: Dynamically set options with layout support
-    hitOrStand[0].text = options[0];
-    hitOrStand[2].text = options[1];
+    hitOrStand[0].text = event.data.options[0];
+    hitOrStand[2].text = event.data.options[1];
     for (const props of hitOrStand) {
       this.createEntity(props);
     }
@@ -1045,8 +1060,8 @@ export class Renderer {
   private handleVoteStart = (event: MediatorEventType<EVENT.VOTE_START>) => {
     this.debug.log("Handling vote start", event);
     this.createVignette();
-    this.createVoteText(event.data.options);
-    this.createTimer();
+    this.createVoteText(event);
+    this.createTimer(event);
   };
 
   private handleMediator = (event: MediatorEvent) => {

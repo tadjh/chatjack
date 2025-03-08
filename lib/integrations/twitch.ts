@@ -1,3 +1,4 @@
+import { TimerEntity } from "@/lib/canvas/entity.timer";
 import { RendererOptions } from "@/lib/canvas/renderer";
 import { Debug } from "@/lib/debug";
 import { EventBus, MediatorEvent, MediatorEventType } from "@/lib/event-bus";
@@ -5,15 +6,17 @@ import { Vote } from "@/lib/integrations/vote";
 import { COMMAND, EVENT } from "@/lib/types";
 import * as tmi from "tmi.js";
 
-export type TwitchOptions = Pick<RendererOptions, "channel" | "timer">;
+export type TwitchOptions = Pick<RendererOptions, "channel">;
 
 export class Twitch {
+  public static readonly defaultOptions: Required<TwitchOptions> = {
+    channel: "",
+  };
   static #instance: Twitch | null = null;
   protected debug: Debug;
   #eventBus: EventBus;
   #channel: string;
   #voteTimer: NodeJS.Timeout | null = null;
-  #duration: number;
   #vote: Vote;
   #options: COMMAND[];
   #client: tmi.Client | null = null;
@@ -32,29 +35,26 @@ export class Twitch {
     Twitch.#instance = null;
   }
 
-  static createClient(channels: string[], debug: boolean) {
+  static createClient(channel: string, debug: boolean) {
     return new tmi.Client({
       options: {
         debug,
       },
-      // identity: {
-      //   username: process.env.NEXT_PUBLIC_TWITCH_USERNAME,
-      //   password: process.env.NEXT_PUBLIC_TWITCH_TOKEN,
-      // },
-      channels,
+      channels: [channel], // updated to accept a single channel instead of an array
     });
   }
 
   private constructor(
-    options: TwitchOptions,
+    {
+      channel = Twitch.defaultOptions.channel,
+    }: TwitchOptions = Twitch.defaultOptions,
     events: EventBus,
     vote = new Vote(),
     debug = new Debug(Twitch.name, "Purple"),
   ) {
     this.debug = debug;
     this.#eventBus = events;
-    this.#channel = options.channel;
-    this.#duration = (options.timer ?? 10) * 1000;
+    this.#channel = channel;
     this.#vote = vote;
     this.#options = [COMMAND.START, COMMAND.RESTART];
     this.setup(this.#channel);
@@ -90,18 +90,14 @@ export class Twitch {
     this.#client.removeListener(event, listener);
   }
 
-  private setChannel(channel: string) {
-    this.#channel = channel;
-    this.#client = Twitch.createClient([this.#channel], this.debug.enabled);
-  }
-
   public async setup(channel: string) {
     if (!channel) {
       this.debug.error("Channel is not set");
       return;
     }
 
-    this.setChannel(channel);
+    this.#channel = channel;
+    this.#client = Twitch.createClient(this.#channel, this.debug.enabled);
 
     this.addListener("connected", this.handleConnected);
     this.addListener("disconnected", this.handleDisconnected);
@@ -118,15 +114,17 @@ export class Twitch {
     await this.disconnect();
   }
 
-  private startVoteTimer(onEnd: (command: COMMAND) => void) {
+  private startVoteTimer(event: MediatorEventType<EVENT.VOTE_START>) {
     if (this.#voteTimer) {
       clearTimeout(this.#voteTimer);
     }
+
+    const estEnd = Date.now() + event.data.duration * 1000;
     this.#voteTimer = setTimeout(() => {
       const tieVoteCommand = COMMAND.STAND;
       const popularCommand = this.#vote.tally(tieVoteCommand);
-      onEnd(popularCommand);
-    }, this.#duration);
+      this.handlePlayerAction(popularCommand);
+    }, event.data.duration * 1000);
   }
 
   private parseMessage = (message: string): COMMAND | null => {
@@ -190,11 +188,15 @@ export class Twitch {
   private handleVoteStart = (event: MediatorEventType<EVENT.VOTE_START>) => {
     this.#vote.reset();
     this.#options = event.data.options;
+    const latency = Date.now() - event.data.startTime;
+    const delay = Math.max(0, TimerEntity.zoomInDuration() - latency);
 
-    this.#client?.addListener("message", this.handleVote);
-    this.startVoteTimer((command) => {
-      this.handlePlayerAction(command);
-    });
+    console.log("latency", latency, "delay", delay);
+
+    this.#voteTimer = setTimeout(() => {
+      this.#client?.addListener("message", this.handleVote);
+      this.startVoteTimer(event);
+    }, delay);
   };
 
   public handlePlayerAction = (command: COMMAND) => {
@@ -202,6 +204,7 @@ export class Twitch {
       clearTimeout(this.#voteTimer);
       this.#client?.removeListener("message", this.handleVote);
     }
+
     this.#eventBus.emit("chat", {
       type: EVENT.VOTE_END,
       data: { command },

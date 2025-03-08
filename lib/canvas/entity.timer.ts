@@ -13,19 +13,6 @@ type TimerEntityAnimationProps = BaseAnimationProps & {
   angle: number;
 };
 
-type OptionalDurationOrPhases =
-  | {
-      phases: AnimationPhase<
-        TimerEntityAnimationTypes,
-        TimerEntityAnimationProps
-      >[];
-      duration?: never;
-    }
-  | {
-      phases?: never;
-      duration?: number;
-    };
-
 export type TimerEntityProps = BaseEntityOptionalAnimations<
   TimerEntityAnimationTypes,
   TimerEntityAnimationProps
@@ -40,7 +27,7 @@ export type TimerEntityProps = BaseEntityOptionalAnimations<
   radius: number;
   startAngle: number;
   rotation: number;
-} & OptionalDurationOrPhases;
+};
 
 export class TimerEntity extends Entity<
   TimerEntityAnimationTypes,
@@ -74,25 +61,24 @@ export class TimerEntity extends Entity<
   readonly strokeColor?: string | CanvasGradient | CanvasPattern;
   readonly strokeScale: number = 1.05;
   readonly counterclockwise: boolean = false;
-  readonly duration: number;
   #radius: number = 0;
 
   constructor(
     props: TimerEntityProps,
-    debug = new Debug(TimerEntity.name, "LightGrey")
+    debug = new Debug(TimerEntity.name, "LightGrey"),
   ) {
     super(
       {
         ...props,
         type: "timer",
-        phases: props.phases ?? TimerEntity.setPhases(props),
+        phases: props.phases ?? TimerEntity.defaultPhases,
         props: {
           ...Entity.defaultProps,
           angle: 0,
           ...props.props,
         },
       },
-      debug
+      debug,
     );
     this.color = props.color;
     this.radius = props.radius;
@@ -104,17 +90,16 @@ export class TimerEntity extends Entity<
     this.strokeColor = props.strokeColor;
     this.strokeScale = props.strokeWidth ?? this.strokeScale;
     this.counterclockwise = props.counterclockwise ?? this.counterclockwise;
-    this.duration = props.duration ?? TimerEntity.defaultPhases[1].duration;
     this.#radius = this.radius;
     this.resize();
   }
 
-  private static setPhases(props: TimerEntityProps) {
-    const phases = TimerEntity.defaultPhases;
-    if (props.duration) {
-      phases[1].duration = props.duration;
-    }
-    return phases;
+  public static zoomInDuration() {
+    return TimerEntity.defaultPhases[0].duration * 1000;
+  }
+
+  public static zoomOutDuration() {
+    return TimerEntity.defaultPhases[2].duration * 1000;
   }
 
   public resize(): this {
@@ -148,6 +133,23 @@ export class TimerEntity extends Entity<
     return this;
   }
 
+  protected setLocalProgress(): this {
+    if (this.current === null) {
+      throw new Error("No current phase for local progress");
+    }
+
+    // Special handling for countdown phase to ensure it ignores zoom-out duration
+    if (this.current.name === "countdown") {
+      const elapsedInPhase =
+        (performance.now() - this.startTime) / 1000 + this.phaseStart;
+
+      this.localProgress = Math.min(elapsedInPhase / this.current.duration, 1);
+      return this;
+    }
+
+    return super.setLocalProgress();
+  }
+
   protected interpolate(): this {
     if (!this.current) {
       throw new Error(`No current phase to interpolate for${this.id}`);
@@ -158,8 +160,10 @@ export class TimerEntity extends Entity<
     } else {
       switch (this.current.name) {
         case "countdown":
+          // Use a more precise calculation that ensures we reach the full circle
+          const fullCircle = Math.PI * 2 + TimerEntity.epsilon;
           this.props.angle =
-            lerp(0, Math.PI * 2 + TimerEntity.epsilon, this.localProgress) +
+            Math.min(fullCircle, lerp(0, fullCircle, this.localProgress)) +
             this.rotation;
           break;
         default:
@@ -182,7 +186,7 @@ export class TimerEntity extends Entity<
         this.#radius * this.backgroundScale * scale,
         0,
         2 * Math.PI,
-        false
+        false,
       );
       ctx.closePath();
       ctx.fillStyle = this.backgroundColor;
@@ -198,7 +202,7 @@ export class TimerEntity extends Entity<
         this.#radius * this.strokeScale * scale,
         this.startAngle,
         this.props.angle,
-        this.counterclockwise
+        this.counterclockwise,
       );
       ctx.closePath();
       ctx.fillStyle = this.strokeColor;
@@ -213,7 +217,7 @@ export class TimerEntity extends Entity<
       this.#radius * scale,
       this.startAngle,
       this.props.angle,
-      this.counterclockwise || false
+      this.counterclockwise || false,
     );
     ctx.closePath();
     ctx.fillStyle = this.color;

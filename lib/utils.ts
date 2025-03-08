@@ -51,6 +51,20 @@ export function getSnapshotKey(channel: string) {
  * @param str - The string value to parse.
  * @returns A boolean value.
  */
-export function parseDebug(str: string | null) {
+export function parseBoolean(str: string | null): boolean {
   return str === "" ? true : Boolean(str);
+}
+
+/**
+ * Parses a string value as a number.
+ *
+ * @param value - The string value to parse.
+ * @param fallback - The fallback value to return if parsing fails.
+ * @returns A number value.
+ */
+export function parseNumber(value: string | null, fallback = 0): number {
+  if (!value) return fallback;
+  const num = parseInt(value);
+  if (isNaN(num)) return fallback;
+  return num;
 }

@@ -43,11 +43,11 @@ export function ChannelName({
   channels: Twitch.ModeratedChannelsResponse;
 }) {
   const { channel, setContext } = useSearch();
-  const [open, setOpen] = useState(channel ? false : true);
+  const [open, setOpen] = useState(!channel);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: channel ?? "",
+      username: channel,
     },
   });
 
@@ -63,7 +63,7 @@ export function ChannelName({
           variant="link"
           className="game-text-shadow cursor-pointer text-lg"
         >
-          {channel ? channel : "Select Channel"}
+          {channel || "Select Channel"}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md space-y-4">

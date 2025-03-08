@@ -153,14 +153,14 @@ export class Hand {
       Hand.fromJSON({
         ...hand,
         status: STATUS.PLAYING,
-        score: 0,
+        score: first.points,
         cards: [{ ...first.toJSON(), handIndex: 0 }],
       }),
       Hand.fromJSON({
         ...hand,
         status: STATUS.PLAYING,
-        score: 0,
-        cards: [{ ...second.toJSON(), handIndex: 0 }],
+        score: second.points,
+        cards: [{ ...second.toJSON(), handIndex: 1 }],
       }),
     ];
   }
