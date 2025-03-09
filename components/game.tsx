@@ -6,20 +6,13 @@ import { useSearch } from "@/components/search-provider";
 import { useBlackjack } from "@/hooks/use-blackjack";
 import { useEventBus } from "@/hooks/use-event-bus";
 import { useMediator } from "@/hooks/use-mediator";
-import { useRenderer } from "@/hooks/use-renderer";
 import { useTwitch } from "@/hooks/use-twitch";
 import { useMemo } from "react";
 
-export function Game() {
-  const { timer, fps, debug, deck, channel } = useSearch();
+export function Game({ channel }: { channel: string }) {
+  const { timer, fps, debug, deck } = useSearch();
   const playerNamesMemo = useMemo(() => ["Chat"], []);
   useEventBus(channel);
-  const renderer = useRenderer({
-    mode: "moderator",
-    fps,
-    channel,
-    caption: "connecting...",
-  });
   const blackjack = useBlackjack({
     deck,
     playerCount: 1,
@@ -32,7 +25,7 @@ export function Game() {
 
   return (
     <>
-      <Canvas renderer={renderer} />
+      <Canvas mode="play" channel={channel} fps={fps} caption="connecting..." />
       <Debug blackjack={blackjack} enabled={debug} chat={chat} />
     </>
   );

@@ -5,7 +5,7 @@ export function TwitchLogin() {
   return (
     <Button
       size="lg"
-      className="cursor-pointer bg-[#9147ff] font-bold text-white shadow-md shadow-black/25 hover:bg-[#772ce8] active:bg-[#5c16c5]"
+      className="ml-4 cursor-pointer bg-[#9147ff] font-bold text-white shadow-md shadow-black/25 hover:bg-[#772ce8] active:bg-[#5c16c5]"
       asChild
     >
       <Link href="/api/auth/twitch/login">

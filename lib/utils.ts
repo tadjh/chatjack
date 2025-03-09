@@ -1,4 +1,8 @@
+import { RenderMode } from "@/lib/canvas/renderer";
+import { CURRENT_URL } from "@/lib/constants";
+import { Props } from "@/lib/types";
 import { clsx, type ClassValue } from "clsx";
+import { Metadata } from "next";
 import { twMerge } from "tailwind-merge";
 
 /**
@@ -67,4 +71,60 @@ export function parseNumber(value: string | null, fallback = 0): number {
   const num = parseInt(value);
   if (isNaN(num)) return fallback;
   return num;
+}
+
+/**
+ * Capitolizes the first letter of a string.
+ *
+ * @param str - The string to capitalize.
+ * @returns The capitalized string.
+ */
+export function capitalize(string: string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+/**
+ * Formats metadata for a given mode and channel.
+ *
+ * @param params - The parameters for the metadata.
+ * @param mode - The mode of the metadata.
+ * @returns A Metadata object.
+ */
+export async function formatMetadata(
+  { params }: Props,
+  mode: RenderMode,
+): Promise<Metadata> {
+  const { channel } = await params;
+  const title = `${capitalize(mode)} - ${channel} - ChatJack`;
+  const description = `${mode === "play" ? "Host" : "Watch"} a ChatJack session for ${channel}`;
+  const url = `${CURRENT_URL}/${mode}/${channel}`;
+  const imageUrl = `${url}/opengraph-image`;
+  return {
+    title,
+    description,
+    authors: [{ name: "Tadjh", url: "https://tadjh.com" }],
+    keywords: ["Twitch", "Blackjack", "Chat", "Game", "Play", "ChatJack"],
+    creator: "Tadjh",
+    publisher: "Tadjh",
+    applicationName: "ChatJack",
+    openGraph: {
+      type: "website",
+      url,
+      title,
+      description,
+      siteName: "ChatJack",
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      site: "@tadjh_",
+      creator: "@tadjh_",
+    },
+  };
 }

@@ -41,17 +41,17 @@ import { COMMAND, EVENT, STATE } from "@/lib/types";
 import { z } from "zod";
 
 enum ASSETS_LOADED {
-  FONTS,
+  // FONTS,
   IMAGES,
   LAYERS,
   TITLE_SCREEN,
 }
 
-type RenderMode = "moderator" | "spectator";
+export type RenderMode = "play" | "spectate";
 
 export const rendererOptionsSchema = z.object({
   channel: z.string({ message: "A channel name is required" }), // TODO Make optional
-  mode: z.enum(["moderator", "spectator"]),
+  mode: z.enum(["play", "spectate"]),
   fps: z.number().optional(),
   caption: z.string().optional(),
 });
@@ -67,7 +67,7 @@ type Canvases = [
 export class Renderer {
   public static readonly defaultOptions: Required<RendererOptions> = {
     channel: "",
-    mode: "moderator",
+    mode: "play",
     fps: FPS,
     caption: "",
   };
@@ -84,12 +84,14 @@ export class Renderer {
   #isLoading = false;
   #isRunning = false;
   #isReady = false;
+  #isSetup = false;
   #assetsLoaded = new Map<ASSETS_LOADED, boolean>();
   #holeCardId: string = "";
   #eventBus: EventBus;
   #caption: string;
   #mode: RenderMode;
   #channel: string;
+  #loop: number | null = null;
 
   public static create(
     options?: RendererOptions,
@@ -152,8 +154,16 @@ export class Renderer {
     return this.#assetsLoaded.get(ASSETS_LOADED.LAYERS);
   }
 
-  public async setup() {
-    await this.loadAssets();
+  get isSetup() {
+    return this.#isSetup;
+  }
+
+  public async setup(canvases: Canvases) {
+    this.debug.log(`Setup: ${Renderer.name} instance`);
+    this.#isSetup = true;
+    await this.loadImages();
+    this.loadLayers(canvases);
+    this.loadTitleScreen();
     this.#eventBus.subscribe("gamestate", this.handleGamestate, Renderer.name);
     this.#eventBus.subscribe("chat", this.handleChat, Renderer.name);
     this.#eventBus.subscribe("mediator", this.handleMediator, Renderer.name);
@@ -161,13 +171,14 @@ export class Renderer {
   }
 
   public async teardown() {
-    await this.unloadAssets();
+    this.debug.log(`Teardown: ${Renderer.name} instance`);
+    this.#isSetup = false;
     this.unloadTitleScreen();
     this.unloadLayers();
+    await this.unloadImages();
     this.#eventBus.unsubscribe("gamestate", this.handleGamestate);
     this.#eventBus.unsubscribe("chat", this.handleChat);
     this.#eventBus.unsubscribe("mediator", this.handleMediator);
-    this.debug.log(`Destroying: ${Renderer.name} instance`);
     return this;
   }
 
@@ -175,9 +186,7 @@ export class Renderer {
     const { mode, channel, caption } = options;
     this.#mode = mode;
     this.#channel = channel;
-    if (caption) {
-      this.#caption = caption;
-    }
+    this.#caption = caption ?? "";
   }
 
   private checkIsReady() {
@@ -247,12 +256,12 @@ export class Renderer {
     this.checkIsReady();
   }
 
-  public loadLayers(canvases: Canvases) {
+  private loadLayers(canvases: Canvases) {
     this.debug.log("Loading layers");
     this.#isLoading = true;
 
     // Clear existing layers first
-    this.#layers.clear();
+    // this.#layers.clear();
 
     const layers = Object.values(LAYER);
     for (let i = 0; i < layers.length; i++) {
@@ -277,6 +286,7 @@ export class Renderer {
   }
 
   public unloadLayers() {
+    if (!this.#assetsLoaded.get(ASSETS_LOADED.LAYERS)) return;
     this.debug.log("Unloading layers");
     this.#layers.clear();
     this.#assetsLoaded.set(ASSETS_LOADED.LAYERS, false);
@@ -308,20 +318,20 @@ export class Renderer {
     this.checkIsReady();
   }
 
-  private loadAssets() {
-    this.#isLoading = true;
-    return Promise.all([
-      // this.loadFonts(),
-      this.loadImages(),
-    ]);
-  }
+  // private loadAssets() {
+  //   this.#isLoading = true;
+  //   return Promise.all([
+  //     // this.loadFonts(),
+  //     this.loadImages(),
+  //   ]);
+  // }
 
-  private unloadAssets() {
-    return Promise.all([
-      // this.unloadFonts(),
-      this.unloadImages(),
-    ]);
-  }
+  // private unloadAssets() {
+  //   return Promise.all([
+  //     // this.unloadFonts(),
+  //     this.unloadImages(),
+  //   ]);
+  // }
 
   private createEntity(props: EntityProps) {
     let entity: EntityType;
@@ -394,17 +404,19 @@ export class Renderer {
     }
 
     this.#lastTick = performance.now();
-    this.loadTitleScreen();
+    // this.loadTitleScreen();
 
     this.resize();
     window.addEventListener("resize", this.resize);
-    requestAnimationFrame(this.update);
+    this.#loop = requestAnimationFrame(this.update);
   }
 
   public stop() {
     this.debug.log("Stopping engine");
     this.#isRunning = false;
-    this.unloadTitleScreen();
+    if (this.#loop) {
+      cancelAnimationFrame(this.#loop);
+    }
     window.removeEventListener("resize", this.resize);
   }
 
@@ -1077,7 +1089,7 @@ export class Renderer {
     this.createTimer(event);
   };
 
-  private handleMediator = (event: MediatorEvent) => {
+  public handleMediator = (event: MediatorEvent) => {
     switch (event.type) {
       case EVENT.VOTE_START:
         this.handleVoteStart(event);

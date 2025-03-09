@@ -12,7 +12,7 @@ export function usePusher({ channel, debug }: UsePusherOptions): PusherState {
   const [state, setState] = useState<PusherState>(() => ({
     debug: debug ?? false,
     channel: channel,
-    mode: "spectator",
+    mode: "spectate",
     caption: "initializing...",
     update: {
       type: "",
@@ -29,12 +29,13 @@ export function usePusher({ channel, debug }: UsePusherOptions): PusherState {
 
     setState(pusherService.getState());
 
-    const unsubscribe = pusherService.subscribe((newState) => {
+    // const unsubscribe =
+    pusherService.subscribe((newState) => {
       setState(newState);
     });
 
     return () => {
-      unsubscribe();
+      // unsubscribe();
       pusherService.disconnect();
     };
   }, [channel]);

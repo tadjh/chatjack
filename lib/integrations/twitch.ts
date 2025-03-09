@@ -204,8 +204,6 @@ export class Twitch {
     const latency = Date.now() - event.data.startTime;
     const delay = Math.max(0, TimerEntity.zoomInDuration() - latency);
 
-    console.log("latency", latency, "delay", delay);
-
     this.#voteTimer = setTimeout(() => {
       this.#client?.addListener("message", this.handleVote);
       this.startVoteTimer(event);
@@ -236,6 +234,6 @@ export class Twitch {
     this.#eventBus.emit("chat", {
       type: EVENT.DISCONNECTED,
     });
-    this.teardown();
+    // this.teardown();
   };
 }

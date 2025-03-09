@@ -1,26 +1,11 @@
 "use client";
 
-import { Renderer } from "@/lib/canvas/renderer";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 
-export function useCanvas(renderer: Renderer) {
+export function useCanvas() {
   const bgRef = useRef<HTMLCanvasElement>(null);
   const gameRef = useRef<HTMLCanvasElement>(null);
   const uiRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    if (renderer.isLayersLoaded) {
-      renderer.unloadLayers();
-    }
-
-    renderer.loadLayers([bgRef.current, gameRef.current, uiRef.current]);
-
-    return () => {
-      if (renderer.isLayersLoaded) {
-        renderer.unloadLayers();
-      }
-    };
-  }, [renderer]);
 
   return {
     bgRef,

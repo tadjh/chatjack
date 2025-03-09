@@ -230,7 +230,6 @@ describe("Blackjack Event Handlers", () => {
 
   beforeEach(() => {
     // Reset by creating and destroying
-    Blackjack.destroy();
     eventBus = EventBus.create();
     game = Blackjack.create(undefined, eventBus);
     // Mock the eventBus emit method

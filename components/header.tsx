@@ -9,7 +9,7 @@ export function Header({
 }: React.ComponentProps<"header">) {
   return (
     <header
-      className={cn("flex min-h-20 justify-end p-3", className)}
+      className={cn("flex min-h-20 items-center justify-end p-3", className)}
       {...props}
     >
       {children}

@@ -45,7 +45,7 @@ export class PusherService {
     this.#state = {
       debug: false,
       channel: "",
-      mode: "spectator",
+      mode: "spectate",
       caption: "disconnected",
       update: {
         type: "",
@@ -59,6 +59,7 @@ export class PusherService {
   }
 
   public connect(channelName: string): void {
+    this.debug.log("Subscribing to Pusher channel:", channelName);
     if (this.#pusher) {
       this.disconnect();
     }
@@ -75,15 +76,15 @@ export class PusherService {
     });
 
     this.#channel = this.#pusher.subscribe(channelName);
-    this.debug.log("Subscribing to Pusher channel:", channelName);
 
     this.bindEvents();
   }
 
   public disconnect(): void {
     if (this.#pusher && this.#channelName) {
-      this.debug.log("Unsubscribing from Pusher channel:", this.#channelName);
-      this.#pusher.unsubscribe(this.#channelName);
+      // this.debug.log("Unsubscribing from Pusher channel:", this.#channelName);
+      // this.#pusher.unsubscribe(this.#channelName);
+      this.debug.log("Disconnecting from Pusher");
       this.#pusher.disconnect();
       this.#pusher = null;
       this.#channel = null;
@@ -91,11 +92,9 @@ export class PusherService {
     }
   }
 
-  // Add methods for state change subscription
   public subscribe(listener: StateChangeListener): () => void {
     this.#stateChangeListeners.add(listener);
 
-    // Return unsubscribe function
     return () => {
       this.#stateChangeListeners.delete(listener);
     };

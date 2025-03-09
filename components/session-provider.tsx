@@ -1,5 +1,5 @@
-import { auth } from "@/app/actions";
-import { ClientSessionProvider } from "@/components/client-session-provider";
+import { SessionClient } from "@/components/session-client";
+import { auth } from "@/lib/session";
 
 export async function SessionProvider({
   children,
@@ -8,9 +8,5 @@ export async function SessionProvider({
 }) {
   const { session } = await auth();
 
-  return (
-    <ClientSessionProvider initialSession={session}>
-      {children}
-    </ClientSessionProvider>
-  );
+  return <SessionClient initialSession={session}>{children}</SessionClient>;
 }

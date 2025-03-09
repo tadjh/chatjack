@@ -7,15 +7,13 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createContext, useContext } from "react";
 
 export interface SearchProps {
-  deck: string | null;
-  channel: string;
+  deck: string;
   debug: boolean;
   timer: number;
   fps: number;
 }
 
 enum CUSTOM_PARAMS {
-  CHANNEL = "c",
   DECK = "d",
   TIMER = "t",
   FPS = "f",
@@ -35,9 +33,8 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   const props: SearchProps = {
-    deck: searchParams.get(CUSTOM_PARAMS.DECK),
+    deck: searchParams.get(CUSTOM_PARAMS.DECK) ?? "",
     debug: parseBoolean(searchParams.get(CUSTOM_PARAMS.DEBUG)),
-    channel: searchParams.get(CUSTOM_PARAMS.CHANNEL) ?? "",
     timer: parseNumber(
       searchParams.get(CUSTOM_PARAMS.TIMER),
       Mediator.defaultOptions.timer,
@@ -52,9 +49,6 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
     const params = new URLSearchParams(searchParams);
 
     switch (key) {
-      case "channel":
-        params.set(CUSTOM_PARAMS.CHANNEL, value);
-        break;
       case "deck":
         params.set(CUSTOM_PARAMS.DECK, value);
         break;
@@ -79,7 +73,7 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
 export function useSearch() {
   const context = useContext(SearchContext);
   if (!context) {
-    throw new Error("Canvas context must be used within a SearchProvider");
+    throw new Error("SearchContext must be used within a SearchProvider");
   }
 
   return context;

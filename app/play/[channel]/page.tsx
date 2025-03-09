@@ -2,21 +2,26 @@ import { getModeratedChannels } from "@/app/actions";
 import { ChannelSelect } from "@/components/channel-select";
 import { Container } from "@/components/container";
 import { Footer } from "@/components/footer";
+import { Game } from "@/components/game";
 import { Header } from "@/components/header";
 import { Logout } from "@/components/logout";
 import { Main } from "@/components/main";
+import { Share } from "@/components/share";
 import { SignedIn } from "@/components/signed-in";
+import { Props } from "@/lib/types";
+import { formatMetadata } from "@/lib/utils";
+import { Metadata } from "next";
 
-export const metadata = {
-  title: "Play ChatJack",
-  description: "Host a ChatJack session for a Twitch channel",
-};
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  return formatMetadata(props, "play");
+}
 
-export default async function Page() {
+export default async function Page({ params }: Props) {
+  const { channel } = await params;
   const options = await getModeratedChannels();
-  const channel = "";
   return (
     <>
+      <Game channel={channel} />
       <Container>
         <Header>
           <SignedIn>
@@ -25,7 +30,9 @@ export default async function Page() {
           </SignedIn>
         </Header>
         <Main />
-        <Footer />
+        <Footer>
+          <Share />
+        </Footer>
       </Container>
     </>
   );

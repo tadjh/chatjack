@@ -3,28 +3,27 @@
 import { ValidateAccessTokenSessionData } from "@/lib/integrations/twitch.types";
 import { createContext, useContext, useState } from "react";
 
-const SessionContext = createContext<{
-  session: ValidateAccessTokenSessionData | null;
-} | null>(null);
+const ClientSessionContext =
+  createContext<ValidateAccessTokenSessionData | null>(null);
 
-export function ClientSessionProvider({
+export function SessionClient({
   initialSession,
   children,
 }: {
-  initialSession: ValidateAccessTokenSessionData | undefined;
+  initialSession: ValidateAccessTokenSessionData;
   children: React.ReactNode;
 }) {
-  const [session] = useState(initialSession ?? null);
+  const [session] = useState<ValidateAccessTokenSessionData>(initialSession);
 
   return (
-    <SessionContext.Provider value={{ session }}>
+    <ClientSessionContext.Provider value={session}>
       {children}
-    </SessionContext.Provider>
+    </ClientSessionContext.Provider>
   );
 }
 
 export function useSession() {
-  const context = useContext(SessionContext);
+  const context = useContext(ClientSessionContext);
   if (!context) {
     throw new Error("useSession must be used within a SessionProvider");
   }

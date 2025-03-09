@@ -1,11 +1,12 @@
 "use client";
 
 import { useCanvas } from "@/hooks/use-canvas";
-import { Renderer } from "@/lib/canvas/renderer";
+import { useRenderer } from "@/hooks/use-renderer";
+import { RendererOptions } from "@/lib/canvas/renderer";
 
-export function Canvas({ renderer }: { renderer: Renderer }) {
-  const { bgRef, gameRef, uiRef } = useCanvas(renderer);
-
+export function Canvas({ channel, mode, fps, caption }: RendererOptions) {
+  const { bgRef, gameRef, uiRef } = useCanvas();
+  useRenderer(bgRef, gameRef, uiRef, channel, mode, fps, caption);
   return (
     <>
       <canvas ref={bgRef} className="absolute" key="bg-canvas" />

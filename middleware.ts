@@ -3,7 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 const isProtected = (pathname: string) => {
   const protectedPaths = ["/play"];
 
-  return protectedPaths.includes(pathname);
+  return protectedPaths.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`),
+  );
 };
 
 export function middleware(request: NextRequest) {

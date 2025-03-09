@@ -64,7 +64,7 @@ export class TextEntity extends Entity<
 
   constructor(
     props: TextEntityProps,
-    debug = new Debug(TextEntity.name, "LightGrey")
+    debug = new Debug(TextEntity.name, "LightGrey"),
   ) {
     super(
       {
@@ -78,7 +78,7 @@ export class TextEntity extends Entity<
         },
         phases: props.phases ?? [],
       },
-      debug
+      debug,
     );
     this.text = props.text;
     this.color = props.color;
@@ -148,8 +148,8 @@ export class TextEntity extends Entity<
       this.textAlign === "start" || this.textAlign === "left"
         ? x
         : this.textAlign === "center"
-        ? x + this.width / 2
-        : x + this.width;
+          ? x + this.width / 2
+          : x + this.width;
     return this;
   }
 

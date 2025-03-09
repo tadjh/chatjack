@@ -3,16 +3,20 @@ import { Container } from "@/components/container";
 import { Footer } from "@/components/footer";
 import { Header, HeaderItem } from "@/components/header";
 import { Main } from "@/components/main";
+import { SpectatorView } from "@/components/spectator-view";
+import { Props } from "@/lib/types";
+import { formatMetadata } from "@/lib/utils";
+import { Metadata } from "next";
 
-export const metadata = {
-  title: "Spectate - ChatJack",
-  description: "Spectate a ChatJack session",
-};
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  return formatMetadata(props, "spectate");
+}
 
-export default async function Page() {
-  const channel = "";
+export default async function Page({ params }: Props) {
+  const { channel } = await params;
   return (
     <>
+      <SpectatorView channel={channel} />
       <Container>
         <Header>
           <ChannelInput mode="spectate" channel={channel} />

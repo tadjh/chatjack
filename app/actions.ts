@@ -1,12 +1,8 @@
 "use server";
 
 import { CURRENT_URL } from "@/lib/constants";
-import {
-  ModeratedChannelsResponse,
-  ValidateAccessTokenSessionData,
-  ValidateAccessTokenSuccess,
-} from "@/lib/integrations/twitch.types";
-import { cookies } from "next/headers";
+import { ModeratedChannelsResponse } from "@/lib/integrations/twitch.types";
+import { auth } from "@/lib/session";
 
 export async function getModeratedChannels(): Promise<ModeratedChannelsResponse> {
   const errorResult: ModeratedChannelsResponse = {
@@ -14,20 +10,17 @@ export async function getModeratedChannels(): Promise<ModeratedChannelsResponse>
     pagination: {},
   };
 
-  const { session, access_token, error } = await auth();
-
-  if (error) {
-    return errorResult;
-  }
-
-  const params = new URLSearchParams({
-    user_id: session.user_id,
-    access_token,
-  });
-
   try {
+    const { session, access_token } = await auth();
+
+    const params = new URLSearchParams({
+      user_id: session.user_id,
+      access_token,
+    });
+
     const data = await fetch(
       `${CURRENT_URL}/api/auth/twitch/channels?${params.toString()}`,
+      { cache: "force-cache" },
     );
 
     if (!data.ok) {
@@ -50,69 +43,5 @@ export async function getModeratedChannels(): Promise<ModeratedChannelsResponse>
   } catch (err) {
     console.error("Error fetching moderated channels:", err);
     return errorResult;
-  }
-}
-
-export async function auth(): Promise<
-  | {
-      session: ValidateAccessTokenSessionData;
-      access_token: string;
-      error?: never;
-    }
-  | {
-      session?: never;
-      access_token?: never;
-      error: {
-        status: number;
-        message: string;
-      };
-    }
-> {
-  const cookieStore = await cookies();
-  const access_token = cookieStore.get(
-    process.env.TWITCH_ACCESS_TOKEN_NAME,
-  )?.value;
-
-  if (!access_token) {
-    return {
-      error: {
-        status: 404,
-        message: "No token found",
-      },
-    };
-  }
-
-  const params = new URLSearchParams({
-    access_token,
-  });
-
-  try {
-    const res = await fetch(
-      `${CURRENT_URL}/api/auth/twitch/validate?${params.toString()}`,
-      {
-        // cache: "no-store",
-      },
-    );
-
-    if (!res.ok) {
-      return {
-        error: {
-          status: res.status,
-          message: res.statusText,
-        },
-      };
-    }
-
-    const { user } = (await res.json()) as ValidateAccessTokenSuccess;
-
-    return { session: user, access_token };
-  } catch (err) {
-    console.error("Auth validation error:", err);
-    return {
-      error: {
-        status: 500,
-        message: "Internal server error",
-      },
-    };
   }
 }

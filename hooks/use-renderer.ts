@@ -1,14 +1,18 @@
 "use client";
 
-import { Renderer, RendererOptions } from "@/lib/canvas/renderer";
-import { useEffect, useRef } from "react";
+import { Renderer, RenderMode } from "@/lib/canvas/renderer";
+import { RefObject, useEffect, useRef } from "react";
 
-export function useRenderer({ channel, mode, fps, caption }: RendererOptions) {
+export function useRenderer(
+  bgRef: RefObject<HTMLCanvasElement | null>,
+  gameRef: RefObject<HTMLCanvasElement | null>,
+  uiRef: RefObject<HTMLCanvasElement | null>,
+  channel: string,
+  mode: RenderMode,
+  fps?: number,
+  caption?: string,
+) {
   const rendererRef = useRef<Renderer | null>(null);
-
-  if (!rendererRef.current) {
-    rendererRef.current = Renderer.create({ channel, mode, fps, caption });
-  }
 
   useEffect(() => {
     if (!rendererRef.current) {
@@ -16,11 +20,17 @@ export function useRenderer({ channel, mode, fps, caption }: RendererOptions) {
     }
 
     const setupRenderer = async () => {
-      await rendererRef.current?.setup();
       rendererRef.current?.updateOptions({ channel, mode, fps, caption });
 
-      if (rendererRef.current && !rendererRef.current.isRunning) {
-        rendererRef.current.start();
+      if (!rendererRef.current?.isSetup && bgRef && gameRef && uiRef) {
+        await rendererRef.current?.setup([
+          bgRef.current,
+          gameRef.current,
+          uiRef.current,
+        ]);
+        if (!rendererRef.current?.isRunning) {
+          rendererRef.current?.start();
+        }
       }
     };
 
@@ -32,7 +42,7 @@ export function useRenderer({ channel, mode, fps, caption }: RendererOptions) {
         rendererRef.current.teardown();
       }
     };
-  }, [channel, mode, fps, caption]);
+  }, [channel, mode, fps, caption, bgRef, gameRef, uiRef]);
 
   return rendererRef.current;
 }

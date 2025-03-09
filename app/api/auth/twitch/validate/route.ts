@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
       headers: {
         Authorization: `OAuth ${access_token}`,
       },
+      cache: "no-store",
     });
 
     const data = (await validateRes.json()) as
@@ -44,6 +45,17 @@ export async function GET(request: NextRequest) {
     const response = NextResponse.json<ValidateAccessTokenSuccess>({
       user: data,
     });
+
+    // Add cache control headers based on token expiration
+    // Twitch tokens typically expire in hours, so cache accordingly
+    if ("expires_in" in data) {
+      // If token has expiration info, use it (subtract a safety margin)
+      const maxAge = Math.max(0, data.expires_in - 300);
+      response.headers.set("Cache-Control", `private, max-age=${maxAge}`);
+    } else {
+      // Default cache time (1 hour)
+      response.headers.set("Cache-Control", "private, max-age=3600");
+    }
 
     return response;
   } catch (error) {

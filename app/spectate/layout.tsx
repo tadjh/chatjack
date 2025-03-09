@@ -1,4 +1,3 @@
-import { SearchProvider } from "@/components/search-provider";
 import { Toaster } from "@/components/ui/sonner";
 
 export default function Layout({
@@ -8,7 +7,7 @@ export default function Layout({
 }>) {
   return (
     <>
-      <SearchProvider>{children}</SearchProvider>
+      {children}
       <Toaster
         position="top-right"
         toastOptions={{

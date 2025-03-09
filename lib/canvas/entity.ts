@@ -15,11 +15,10 @@ export interface AnimationPhase<
   Props extends Record<string, number>,
 > {
   name: Phase;
-  duration: number; // in seconds or ticks
+  duration: number; // seconds
   magnitude?: number;
   loop?: boolean;
   easing?: (t: number) => Props;
-  // Function to compute the property value from a local progress (0 to 1)
   interpolate?: (t: number) => Props;
 }
 export interface AnimationSpec<
@@ -28,7 +27,6 @@ export interface AnimationSpec<
 > {
   phases: AnimationPhase<Phase, Props>[];
   props: Props;
-  // Optional overall callbacks:
   onBegin?: (layer: LAYER, id: string) => void;
   onEnd?: (layer: LAYER, id: string) => void;
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import { useSearch } from "@/components/search-provider";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,35 +24,39 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RenderMode } from "@/lib/canvas/renderer";
 import { ModeratedChannelsResponse } from "@/lib/integrations/twitch.types";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { redirect } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 const formSchema = z.object({
-  username: z.string().min(1, {
+  channel: z.string().min(1, {
     message: "Username must be at least 1 character.",
   }),
 });
 
-export function ChannelName({
-  channels,
+export function ChannelSelect({
+  mode,
+  channel,
+  options,
 }: {
-  channels: ModeratedChannelsResponse;
+  mode: RenderMode;
+  channel: string;
+  options: ModeratedChannelsResponse;
 }) {
-  const { channel, setContext } = useSearch();
   const [open, setOpen] = useState(!channel);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: channel,
+      channel,
     },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    setContext("channel", values.username);
-    setOpen(false);
+    redirect(`/${mode}/${values.channel}`);
   }
 
   return (
@@ -77,10 +80,10 @@ export function ChannelName({
           >
             <FormField
               control={form.control}
-              name="username"
+              name="channel"
               render={({ field }) => (
                 <FormItem className="grid space-y-4">
-                  <FormLabel>Username</FormLabel>
+                  <FormLabel>Channel</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
@@ -91,7 +94,7 @@ export function ChannelName({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {channels.data.map((channel) => (
+                      {options.data.map((channel) => (
                         <SelectItem
                           key={channel.broadcaster_id}
                           value={channel.broadcaster_login}

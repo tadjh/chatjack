@@ -1,5 +1,15 @@
 import { vi } from "vitest";
 
+// Mock window.requestAnimationFrame
+window.requestAnimationFrame = (callback: FrameRequestCallback): number => {
+  return setTimeout(() => callback(performance.now()), 0) as unknown as number;
+};
+
+// Mock window.cancelAnimationFrame
+window.cancelAnimationFrame = (handle: number): void => {
+  clearTimeout(handle);
+};
+
 // Mock for OffscreenCanvas
 class MockOffscreenCanvas {
   width: number;
@@ -51,3 +61,33 @@ vi.mock("next/font/google", () => ({
     },
   }),
 }));
+
+// Mock Uint8Array.from for buffer handling
+const originalFrom = Uint8Array.from;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(global as any).Uint8Array.from = function (buffer: any) {
+  if (buffer instanceof Buffer) {
+    return originalFrom.call(this, buffer);
+  }
+  return new Uint8Array(buffer);
+};
+
+// Mock TextEncoder for JSX serialization if needed
+if (!global.TextEncoder) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (global as any).TextEncoder = class TextEncoder {
+    encode(text: string) {
+      return Buffer.from(text);
+    }
+  };
+}
+
+// Add proper process.cwd mock
+vi.mock("node:process", () => {
+  return {
+    cwd: () => "/mock-cwd",
+    default: {
+      cwd: () => "/mock-cwd",
+    },
+  };
+});
