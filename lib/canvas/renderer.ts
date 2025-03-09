@@ -556,7 +556,7 @@ export class Renderer {
     const isDealer = card.owner === "Dealer";
     const spriteX = card.isHidden
       ? 0
-      : status === "stand"
+      : status === "stand" || status === "blackjack"
         ? (card.suit % 12) * 1024 + cardSprite.spriteWidth * 3
         : (card.suit % 12) * 1024 + cardSprite.spriteWidth * 2;
 

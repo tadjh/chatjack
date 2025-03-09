@@ -288,7 +288,7 @@ export const fixedDecks: Record<string, CardJSON[]> = {
       owner: "player",
       hidden: false,
       handIndex: 1,
-    }, // player card 2, (should stand)
+    }, // player card 2
     {
       card: Rank.Seven + Suit.Clubs,
       owner: "dealer",

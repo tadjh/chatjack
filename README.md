@@ -4,7 +4,6 @@
 
 - TODO Vignette fades away instead of staying visible
 - TODO Dealer blackjack doesn't tint
-- TODO hitting non-natural blackjack doesn't tint the auto-stand?
 - TODO Screen flickers on restart (missing render call?)
 - TODO disconnected caption
 - TODO Disabled timer zoom in, until I can fix the fact that angle increments based on start time not phase start seemingly
