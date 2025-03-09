@@ -796,14 +796,11 @@ export class Renderer {
   }
 
   private updateHand(hand: Hand) {
-    this.debug.log("Updating hand", hand.status);
     hand.cards.forEach((card) => {
       if (this.#layers.hasEntityById(cardSprite.layer, card.id)) {
-        this.debug.log("Entity found", card.id);
         if (hand.isBusted) this.updateBustCard(card);
         if (hand.isStand || hand.isBlackjack) this.updateStandCard(card);
       } else {
-        this.debug.log("Entity not found", card.id);
         this.createCard(card, 0, hand.status);
       }
     });
@@ -820,7 +817,7 @@ export class Renderer {
     }
     const cardX = (holeCard.suit % 12) * 1024;
     const cardY = holeCard.rank * entity.spriteHeight;
-
+    const isBlackjack = dealer.hand.isBlackjack;
     this.createEntity({
       ...entity,
       id: holeCard.id,
@@ -839,8 +836,9 @@ export class Renderer {
         { x: cardX + 512, y: cardY },
       ],
       onEnd: () => {
-        this.debug.log("DONE hole card should tint now");
-        this.updateHand(dealer.hand);
+        if (isBlackjack) {
+          this.updateHand(dealer.hand);
+        }
       },
     });
 
@@ -933,11 +931,11 @@ export class Renderer {
     );
 
     if (this.#cache.has(cacheKey)) {
-      // this.debug.log(`Cache hit for ${cacheKey}`);
+      this.debug.log(`Cache hit for ${cacheKey}`);
       return this.#cache.get(cacheKey)!;
     }
 
-    // this.debug.log(`Cache miss for ${cacheKey}, creating new bitmap`);
+    this.debug.log(`Cache miss for ${cacheKey}, creating new bitmap`);
     const bitmap = entity.createImageBitmap(this.#spritesheets, spriteIndex);
     this.#cache.set(cacheKey, bitmap);
     return bitmap;
