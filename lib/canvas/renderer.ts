@@ -551,12 +551,12 @@ export class Renderer {
     card: Card,
     delay = 0,
     status: STATUS,
-    callback?: () => void,
+    callback?: (layer: LAYER, id: string) => void,
   ) {
     const isDealer = card.owner === "Dealer";
     const spriteX = card.isHidden
       ? 0
-      : status === "stand" || status === "blackjack"
+      : status === STATUS.STAND
         ? (card.suit % 12) * 1024 + cardSprite.spriteWidth * 3
         : (card.suit % 12) * 1024 + cardSprite.spriteWidth * 2;
 
@@ -589,8 +589,8 @@ export class Renderer {
       ],
       shadowOffsetX: isDealer ? 8 : 12,
       shadowOffsetY: isDealer ? 8 : 12,
-      onEnd: () => {
-        if (callback) callback();
+      onEnd: (layer: LAYER, id: string) => {
+        if (callback) callback(layer, id);
       },
     };
 
@@ -778,11 +778,11 @@ export class Renderer {
     this.#layers.setEntity(entity);
   }
 
-  private updateStandCard(card: Card) {
-    this.debug.log("Updating stand card", card.id);
+  private updateStandCard(id: string) {
+    this.debug.log("Updating stand card", id);
     const entity = this.#layers.getEntityById<SpriteEntity>(
       cardSprite.layer,
-      card.id,
+      id,
     )!;
     const spriteIndex = entity.props.spriteIndex;
     const coords = entity.getSprite(spriteIndex);
@@ -799,9 +799,13 @@ export class Renderer {
     hand.cards.forEach((card) => {
       if (this.#layers.hasEntityById(cardSprite.layer, card.id)) {
         if (hand.isBusted) this.updateBustCard(card);
-        if (hand.isStand || hand.isBlackjack) this.updateStandCard(card);
+        if (hand.isStand || hand.isBlackjack) this.updateStandCard(card.id);
       } else {
-        this.createCard(card, 0, hand.status);
+        this.createCard(card, 0, hand.status, (layer, id) => {
+          if (hand.isBlackjack) {
+            this.updateStandCard(id);
+          }
+        });
       }
     });
   }
@@ -848,11 +852,13 @@ export class Renderer {
   }
 
   private createVignette() {
+    this.debug.log("Creating vignette");
     this.createEntity({ id: "vignette", type: "vignette", layer: LAYER.GAME });
     return this;
   }
 
   private destroyVignette() {
+    this.debug.log("Destroying vignette");
     const entity = this.#layers.getEntityById<VignetteEntity>(
       LAYER.GAME,
       "vignette",

@@ -61,7 +61,7 @@ export class VignetteEntity extends Entity<
       0,
       this.#centerX,
       this.#centerY,
-      this.#radius
+      this.#radius,
     );
     gradient.addColorStop(0, "rgba(0, 0, 0, 0)");
     gradient.addColorStop(0.7, "rgba(0, 0, 0, 0)");
@@ -74,7 +74,7 @@ export class VignetteEntity extends Entity<
     this.#centerX = window.innerWidth / 2;
     this.#centerY = window.innerHeight / 2;
     this.#radius = Math.sqrt(
-      this.#centerX * this.#centerX + this.#centerY * this.#centerY
+      this.#centerX * this.#centerX + this.#centerY * this.#centerY,
     );
     this.#gradient = null;
     return this;
@@ -94,4 +94,3 @@ export class VignetteEntity extends Entity<
     return this;
   }
 }
-

@@ -7,6 +7,7 @@
 - TODO Screen flickers on restart (missing render call?)
 - TODO disconnected caption
 - TODO Disabled timer zoom in, until I can fix the fact that angle increments based on start time not phase start seemingly
+- TODO Blackjack state is set on hand before final dealer card will be drawn so hand will tint before last card is drawn
 
 ## Development
 
