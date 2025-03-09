@@ -444,27 +444,18 @@ export class Renderer {
 
   private createTimer = (event: MediatorEventType<EVENT.VOTE_START>) => {
     const now = Date.now();
-    // Calculate latency compensation
     const latency = Math.max(0, now - event.data.startTime);
-
-    // Calculate how much time has already elapsed from the total duration
     const elapsedTime = latency / 1000;
     const remainingTime = Math.max(0, event.data.duration - elapsedTime);
-
-    // Safe copy of phases
     const phases = TimerEntity.defaultPhases.map((phase) => ({
       ...phase,
     }));
-
-    // Adjust zoom-in phase if we still have time for it
-    phases[0].duration = Math.max(
-      (TimerEntity.zoomInDuration() - latency) / 1000,
-      0,
-    );
-
-    // Set the countdown phase to the exact remaining time
-    // Add a small buffer (0.1s) to ensure animation completes
-    phases[1].duration = remainingTime + 0.1;
+    phases[0].duration = 0;
+    // Math.max(
+    //   (TimerEntity.zoomInDuration() - latency) / 1000,
+    //   0,
+    // );
+    phases[1].duration = remainingTime; // + 0.1;
 
     this.createEntity({
       ...turnTimer,
@@ -777,6 +768,7 @@ export class Renderer {
   }
 
   private updateBustCard(card: Card) {
+    this.debug.log("Updating bust card", card.id);
     const entity = this.#layers.getEntityById<SpriteEntity>(
       cardSprite.layer,
       card.id,
@@ -787,6 +779,7 @@ export class Renderer {
   }
 
   private updateStandCard(card: Card) {
+    this.debug.log("Updating stand card", card.id);
     const entity = this.#layers.getEntityById<SpriteEntity>(
       cardSprite.layer,
       card.id,
@@ -803,11 +796,14 @@ export class Renderer {
   }
 
   private updateHand(hand: Hand) {
+    this.debug.log("Updating hand", hand.status);
     hand.cards.forEach((card) => {
       if (this.#layers.hasEntityById(cardSprite.layer, card.id)) {
+        this.debug.log("Entity found", card.id);
         if (hand.isBusted) this.updateBustCard(card);
-        if (hand.isStand) this.updateStandCard(card);
+        if (hand.isStand || hand.isBlackjack) this.updateStandCard(card);
       } else {
+        this.debug.log("Entity not found", card.id);
         this.createCard(card, 0, hand.status);
       }
     });
@@ -842,6 +838,10 @@ export class Renderer {
         { x: cardX + 256, y: cardY },
         { x: cardX + 512, y: cardY },
       ],
+      onEnd: () => {
+        this.debug.log("DONE hole card should tint now");
+        this.updateHand(dealer.hand);
+      },
     });
 
     this.#layers.removeEntity(entity.layer, entity.id);

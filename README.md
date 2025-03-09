@@ -4,10 +4,10 @@
 
 - TODO Vignette fades away instead of staying visible
 - TODO Dealer blackjack doesn't tint
-- TODO If you stand before all cards drawn, you can quick draw the dealer, also breaks timer
 - TODO hitting non-natural blackjack doesn't tint the auto-stand?
 - TODO Screen flickers on restart (missing render call?)
 - TODO disconnected caption
+- TODO Disabled timer zoom in, until I can fix the fact that angle increments based on start time not phase start seemingly
 
 ## Development
 
@@ -17,6 +17,7 @@
 
 ## Features
 
+- TODO Randomize subtitles
 - TODO have tadjh\_ talk in chat for donation link
 - TODO Add donation link
 - TODO Optionally type gamestate into chat as it happens as a anti-latency accessibility feature, complete with unicode cards and symbols
@@ -24,7 +25,6 @@
 - TODO add DYNAMIC ui layer
 - TODO rename ui layer to STATIC
 - TODO move action text to dynamic ui layer
-- TODO Randomize subtitles
 
 ## Quality of life
 
