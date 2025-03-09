@@ -142,13 +142,27 @@ export class Twitch {
 
   private parseMessage = (message: string): COMMAND | null => {
     const command = message.toLowerCase();
-    if (this.#options.includes(command as COMMAND)) {
-      return command as COMMAND;
+
+    switch (command) {
+      case "!hit":
+        return COMMAND.HIT;
+      case "!stand":
+        return COMMAND.STAND;
+      case "!start":
+        return COMMAND.START;
+      case "!restart":
+        return COMMAND.RESTART;
+      case "!stop":
+        return COMMAND.STOP;
+      default:
+        return null;
     }
-    return null;
   };
 
-  private handleWaitForStart = () => {
+  private handleWaitForStart = (
+    event: MediatorEventType<EVENT.WAIT_FOR_START>,
+  ) => {
+    this.#options = event.data.options;
     const waitForStart = (
       channel: string,
       user: tmi.ChatUserstate,
@@ -157,7 +171,7 @@ export class Twitch {
     ) => {
       if (self || !user.username) return;
       const command = this.parseMessage(message);
-      if (command !== COMMAND.START) return;
+      if (!command || !this.#options.includes(command)) return;
       this.handlePlayerAction(command);
       this.removeListener("message", waitForStart);
     };
@@ -168,7 +182,7 @@ export class Twitch {
   private handleMediator = (event: MediatorEvent) => {
     switch (event.type) {
       case EVENT.WAIT_FOR_START:
-        this.handleWaitForStart();
+        this.handleWaitForStart(event);
         break;
       case EVENT.VOTE_START:
         this.handleVoteStart(event);
@@ -183,7 +197,6 @@ export class Twitch {
     self: boolean,
   ) => {
     if (self || !user.username) return;
-    this.debug.log(channel, user, message);
     const command = this.parseMessage(message);
     if (!command) return;
     return this.handleVoteUpdate(user.username, command);

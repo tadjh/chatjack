@@ -73,11 +73,17 @@ export class Mediator {
     switch (event.type) {
       case EVENT.CONNECTED:
         this.debug.log("Waiting for start");
-        this.#eventBus.emit("mediator", { type: EVENT.WAIT_FOR_START });
+        this.#eventBus.emit("mediator", {
+          type: EVENT.WAIT_FOR_START,
+          data: { options: [COMMAND.START, COMMAND.RESTART] },
+        });
         break;
       case EVENT.DISCONNECTED:
         this.debug.log("Disconnected");
-        this.#eventBus.emit("mediator", { type: EVENT.WAIT_FOR_START });
+        this.#eventBus.emit("mediator", {
+          type: EVENT.WAIT_FOR_START,
+          data: { options: [COMMAND.START, COMMAND.RESTART] },
+        });
         break;
     }
   };
@@ -129,7 +135,10 @@ export class Mediator {
         break;
       case EVENT.JUDGE:
         this.debug.log("Judge animation complete");
-        this.#eventBus.emit("mediator", { type: EVENT.WAIT_FOR_START });
+        this.#eventBus.emit("mediator", {
+          type: EVENT.WAIT_FOR_START,
+          data: { options: [COMMAND.START, COMMAND.RESTART] },
+        });
         break;
     }
   };

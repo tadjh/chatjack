@@ -37,10 +37,10 @@ export type GameEvent =
   | EventData<EVENT.STOP, { state: STATE }>;
 
 export type MediatorEvent =
-  | EventData<EVENT.WAIT_FOR_START>
+  | EventData<EVENT.WAIT_FOR_START, { options: [COMMAND, ...COMMAND[]] }>
   | EventData<
       EVENT.VOTE_START,
-      { options: COMMAND[]; startTime: number; duration: number }
+      { options: [COMMAND, ...COMMAND[]]; startTime: number; duration: number }
     >
   | EventData<EVENT.DEALER_DECIDE>
   | EventData<EVENT.JUDGE>;
