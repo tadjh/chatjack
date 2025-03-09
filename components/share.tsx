@@ -9,7 +9,7 @@ import { SpectatorLink } from "@/components/spectator-link";
 import { Button } from "@/components/ui/button";
 import { DialogDescription } from "@/components/ui/dialog";
 
-export function Share() {
+export function Share({ channel }: { channel: string }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -28,7 +28,7 @@ export function Share() {
             friends and fans who want to watch along.
           </DialogDescription>
         </DialogHeader>
-        <SpectatorLink />
+        <SpectatorLink channel={channel} />
       </DialogContent>
     </Dialog>
   );

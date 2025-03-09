@@ -31,7 +31,7 @@ export default async function Page({ params }: Props) {
         </Header>
         <Main />
         <Footer>
-          <Share />
+          <Share channel={channel} />
         </Footer>
       </Container>
     </>

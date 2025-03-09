@@ -1,8 +1,10 @@
 "use client";
 
 import { Canvas } from "@/components/canvas";
+import { Container } from "@/components/container";
 import { Footer } from "@/components/footer";
 import { Header, HeaderItem } from "@/components/header";
+import { Main } from "@/components/main";
 import { useSearch } from "@/components/search-provider";
 import { createSpectatorLink } from "@/components/spectator-link";
 import { usePusher } from "@/hooks/use-pusher";
@@ -18,17 +20,17 @@ export function SpectatorView({ channel }: { channel: string }) {
         fps={fps}
         caption="connecting..."
       />
-      <div className="relative z-50 flex h-full min-h-screen w-full flex-col gap-3">
+      <Container>
         <Header>
-          <HeaderItem className="opacity-50 hover:opacity-100">
+          <HeaderItem className="cursor-none opacity-50 hover:opacity-100">
             Spectating
           </HeaderItem>
         </Header>
-        <div className="flex grow overflow-auto">
+        <Main className="flex-start">
           {debug && <pre>{JSON.stringify(state, null, 2)}</pre>}
-        </div>
+        </Main>
         <Footer className="opacity-50 hover:opacity-100" />
-      </div>
+      </Container>
     </>
   );
 }
@@ -37,12 +39,12 @@ export function SpectatorIFrame({ channel }: { channel: string }) {
   const spectatorLink = createSpectatorLink(channel);
 
   return (
-    <div className="absolute inset-0 z-10 h-full w-full overflow-hidden">
-      {channel ? (
-        <iframe src={spectatorLink} className="absolute right-0 bottom-0" />
-      ) : (
-        <div>No channel specified</div>
-      )}
+    <div className="absolute right-0 bottom-0 z-10 border-2">
+      <iframe
+        src={spectatorLink}
+        draggable
+        className="aspect-video min-h-auto min-w-md"
+      />
     </div>
   );
 }

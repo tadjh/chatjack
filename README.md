@@ -13,7 +13,6 @@
 
 - TODO make snapshots during big state changes
 - TODO harden publish/snapshot endpoint
-- TODO invalidate get paths when user logs out or token expires
 - TODO Add test coverage for twitch integration and mediator
 
 ## Features
@@ -39,4 +38,5 @@
 
 ## Performance & Optimization
 
+- TODO invalidate get paths when user logs out or token expires
 - TODO Don't connect on spectate paths that haven't been registered by mods of said channel

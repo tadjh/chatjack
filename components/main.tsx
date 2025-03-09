@@ -4,7 +4,7 @@ export function Main({ className, children }: React.ComponentProps<"main">) {
   return (
     <main
       className={cn(
-        "flex grow flex-col items-center justify-center",
+        "relative flex grow flex-col items-center justify-center",
         className,
       )}
     >

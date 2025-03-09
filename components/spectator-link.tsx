@@ -1,21 +1,17 @@
 "use client";
 
-import { useSearch } from "@/components/search-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
 export function createSpectatorLink(channel: string) {
   const url = new URL(window.location.href);
-  const params = new URLSearchParams();
-  params.set("c", channel);
-  url.pathname = `/spectate`;
-  url.search = params.toString();
+  url.pathname = `/spectate/${channel}`;
+  url.search = "";
   return url.toString();
 }
 
-export function SpectatorLink() {
-  const { channel } = useSearch();
+export function SpectatorLink({ channel }: { channel: string }) {
   const spectatorLink = createSpectatorLink(channel);
 
   function copyLink() {
