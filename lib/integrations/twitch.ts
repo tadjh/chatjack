@@ -21,9 +21,14 @@ export class Twitch {
   #options: COMMAND[];
   #client: tmi.Client | null = null;
 
-  public static create(options: TwitchOptions) {
+  public static create(
+    options?: TwitchOptions,
+    events?: EventBus,
+    vote?: Vote,
+    debug?: Debug,
+  ) {
     if (!Twitch.#instance) {
-      Twitch.#instance = new Twitch(options);
+      Twitch.#instance = new Twitch(options, events, vote, debug);
     }
     return Twitch.#instance;
   }
@@ -64,24 +69,6 @@ export class Twitch {
     return this.#channel;
   }
 
-  private addListener(
-    event: keyof tmi.Events,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    listener: (...args: any[]) => void,
-  ) {
-    if (!this.#client) return;
-    this.#client.addListener(event, listener);
-  }
-
-  private removeListener(
-    event: keyof tmi.Events,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    listener: (...args: any[]) => void,
-  ) {
-    if (!this.#client) return;
-    this.#client.removeListener(event, listener);
-  }
-
   public async setup(channel: string) {
     this.debug.log(`Setup: ${channel} subscriptions`);
 
@@ -92,9 +79,8 @@ export class Twitch {
 
     this.#channel = channel;
     this.#client = Twitch.createClient(this.#channel, this.debug.enabled);
-
-    this.addListener("connected", this.handleConnected);
-    this.addListener("disconnected", this.handleDisconnected);
+    this.#client.addListener("connected", this.handleConnected);
+    this.#client.addListener("disconnected", this.handleDisconnected);
 
     this.#eventBus.subscribe("mediator", this.handleMediator, Twitch.name);
     try {
@@ -108,12 +94,11 @@ export class Twitch {
 
   public async teardown() {
     this.debug.log(`Teardown: ${Twitch.name} subscriptions`);
-    this.removeListener("connected", this.handleConnected);
-    this.removeListener("disconnected", this.handleDisconnected);
-
     this.#eventBus.unsubscribe("mediator", this.handleMediator);
     if (this.#client) {
       this.debug.log("Disconnecting from Twitch");
+      this.#client.removeListener("connected", this.handleConnected);
+      this.#client.removeListener("disconnected", this.handleDisconnected);
       await this.#client.disconnect();
     }
     this.#channel = "";
@@ -132,8 +117,9 @@ export class Twitch {
     }, event.data.duration * 1000);
   }
 
-  private parseMessage = (message: string): COMMAND | null => {
-    const command = message.toLowerCase();
+  static parseMessage = (message: string): COMMAND | null => {
+    const sanitizedMessage = message.replace(/[^\x20-\x7E]/g, "");
+    const command = sanitizedMessage.trim().split(/\s+/)[0].toLowerCase();
 
     switch (command) {
       case "!hit":
@@ -162,13 +148,23 @@ export class Twitch {
       self: boolean,
     ) => {
       if (self || !user.username) return;
-      const command = this.parseMessage(message);
+      const command = Twitch.parseMessage(message);
+      this.debug.log(
+        "Message",
+        message,
+        "Command",
+        command,
+        "Options",
+        this.#options,
+        "Includes",
+        command ? this.#options.includes(command) : null,
+      );
       if (!command || !this.#options.includes(command)) return;
       this.handlePlayerAction(command);
-      this.removeListener("message", waitForStart);
+      this.#client?.removeListener("message", waitForStart);
     };
 
-    this.addListener("message", waitForStart);
+    this.#client?.addListener("message", waitForStart);
   };
 
   private handleMediator = (event: MediatorEvent) => {
@@ -189,7 +185,7 @@ export class Twitch {
     self: boolean,
   ) => {
     if (self || !user.username) return;
-    const command = this.parseMessage(message);
+    const command = Twitch.parseMessage(message);
     if (!command) return;
     return this.handleVoteUpdate(user.username, command);
   };
