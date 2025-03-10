@@ -18,20 +18,14 @@
 - TODO Add donation link
 - TODO Optionally type gamestate into chat as it happens as a anti-latency accessibility feature, complete with unicode cards and symbols
 - TODO Add render order list to layer dynamic
-- TODO add DYNAMIC ui layer
-- TODO rename ui layer to STATIC
-- TODO move action text to dynamic ui layer
-
-## Quality of life
-
-- TODO Add Jack Queen and King portraits to cards
-- TODO Rename SearchProvider to RendererOptions or something to indicate what it actually does
-- TODO Add !stop command
-- TODO Bust lower opacity
 - TODO add particle fx
   - dust when cards hit table or flip over
   - sparkles when blackjack
   - random orbs on title screens a la vegas
+
+## Quality of life
+
+- TODO Add Jack Queen and King portraits to cards
 
 ## Performance & Optimization
 

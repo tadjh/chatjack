@@ -45,7 +45,7 @@ export class Twitch {
       options: {
         debug,
       },
-      channels: [channel], // updated to accept a single channel instead of an array
+      channels: [channel],
     });
   }
 

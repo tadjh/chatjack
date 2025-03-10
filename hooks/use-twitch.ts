@@ -1,6 +1,5 @@
 import { Twitch, TwitchOptions } from "@/lib/integrations/twitch";
 import { COMMAND } from "@/lib/types";
-import { randUser } from "@ngneat/falso";
 import { useEffect, useRef } from "react";
 
 export interface ChatActions {
@@ -34,10 +33,8 @@ export function useTwitch({ channel }: TwitchOptions): ChatActions {
   }, [channel]);
 
   return {
-    hit: () =>
-      twitchRef.current?.handleVoteUpdate(randUser().username, COMMAND.HIT),
-    stand: () =>
-      twitchRef.current?.handleVoteUpdate(randUser().username, COMMAND.STAND),
+    hit: () => twitchRef.current?.handleVoteUpdate(channel, COMMAND.HIT),
+    stand: () => twitchRef.current?.handleVoteUpdate(channel, COMMAND.STAND),
     start: () => twitchRef.current?.handlePlayerAction(COMMAND.START),
     restart: () => twitchRef.current?.handlePlayerAction(COMMAND.RESTART),
     stop: () => twitchRef.current?.handlePlayerAction(COMMAND.STOP),
