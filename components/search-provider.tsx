@@ -14,9 +14,9 @@ export interface SearchProps {
 }
 
 enum CUSTOM_PARAMS {
-  DECK = "d",
-  TIMER = "t",
-  FPS = "f",
+  DECK = "deck",
+  TIMER = "timer",
+  FPS = "fps",
   DEBUG = "debug",
 }
 
