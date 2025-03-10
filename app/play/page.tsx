@@ -7,6 +7,8 @@ import { Logout } from "@/components/logout";
 import { Main } from "@/components/main";
 import { SignedIn } from "@/components/signed-in";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Play ChatJack",
   description: "Host a ChatJack session for a Twitch channel",
