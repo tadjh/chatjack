@@ -2,7 +2,6 @@
 
 ## Bugs
 
-- TODO Vignette fades away instead of staying visible
 - TODO Dealer blackjack doesn't tint
 - TODO Screen flickers on restart (missing render call?)
 - TODO disconnected caption

@@ -334,7 +334,9 @@ export abstract class Entity<
     }
 
     this.progress = Math.min(this.progress + this.speed, 1);
-    this.setPhase();
+    if (!this.current?.loop) {
+      this.setPhase();
+    }
     this.setLocalProgress();
 
     if (!this.current) {
