@@ -94,7 +94,7 @@ export type ChatEventSchema = z.infer<typeof chatEventSchema>;
 const voteStartSchema = z.object({
   type: z.literal(EVENT.VOTE_START),
   data: z.object({
-    options: z.array(z.nativeEnum(COMMAND)),
+    options: z.array(z.nativeEnum(COMMAND)).nonempty(),
     startTime: z.number(),
     duration: z.number(),
   }),
