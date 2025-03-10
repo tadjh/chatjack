@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const cookieState = request.cookies.get(process.env.TWITCH_STATE_NAME)?.value;
+  const cookieState = request.cookies.get(process.env.STATE_TOKEN_NAME)?.value;
 
   if (!state || state !== cookieState) {
     return NextResponse.json({ error: "Invalid state" }, { status: 400 });
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     client_secret: process.env.TWITCH_CLIENT_SECRET,
     code: code,
     grant_type: "authorization_code",
-    redirect_uri: `${CURRENT_URL}${process.env.TWITCH_CALLBACK_URL}`,
+    redirect_uri: `${CURRENT_URL}${process.env.AUTH_CALLBACK_URL}`,
   });
 
   try {
@@ -60,14 +60,14 @@ export async function GET(request: NextRequest) {
     };
 
     response.cookies.set(
-      process.env.TWITCH_ACCESS_TOKEN_NAME,
+      process.env.ACCESS_TOKEN_NAME,
       tokenData.access_token,
       cookieOptions,
     );
 
     if (tokenData.refresh_token) {
       response.cookies.set(
-        process.env.TWITCH_REFRESH_TOKEN_NAME,
+        process.env.REFRESH_TOKEN_NAME,
         tokenData.refresh_token,
         {
           ...cookieOptions,

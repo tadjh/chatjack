@@ -9,7 +9,7 @@ export async function GET() {
 
   const params = new URLSearchParams({
     client_id: process.env.TWITCH_CLIENT_ID,
-    redirect_uri: `${CURRENT_URL}${process.env.TWITCH_CALLBACK_URL}`,
+    redirect_uri: `${CURRENT_URL}${process.env.AUTH_CALLBACK_URL}`,
     response_type: "code",
     scope: scopes,
     state: state,
@@ -19,7 +19,7 @@ export async function GET() {
     `${process.env.TWITCH_AUTH_URL}?${params.toString()}`,
   );
 
-  response.cookies.set(process.env.TWITCH_STATE_NAME, state, {
+  response.cookies.set(process.env.STATE_TOKEN_NAME, state, {
     httpOnly: true,
     path: "/",
     secure: process.env.NODE_ENV === "production",

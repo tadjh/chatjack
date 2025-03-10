@@ -19,7 +19,7 @@ export async function getModeratedChannels(): Promise<ModeratedChannelsResponse>
     });
 
     const data = await fetch(
-      `${CURRENT_URL}/api/auth/twitch/channels?${params.toString()}`,
+      `${CURRENT_URL}${process.env.AUTH_CHANNELS_URL}?${params.toString()}`,
       { cache: "force-cache" },
     );
 

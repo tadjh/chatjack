@@ -348,14 +348,17 @@ export class EventBus<Events extends Record<string, any> = EventMap> {
     args: Events[K],
   ) {
     try {
-      const response = await fetch(`${CURRENT_URL}/api/publish/event`, {
-        method: "POST",
-        body: JSON.stringify({
-          channel,
-          eventName,
-          args,
-        }),
-      });
+      const response = await fetch(
+        `${CURRENT_URL}${process.env.PUBLISH_EVENT_URL}`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            channel,
+            eventName,
+            args,
+          }),
+        },
+      );
       if (!response.ok) {
         this.debug.error(
           `Channel ${channel || "unknown"} Failed to emit event ${String(eventName)}: ${response.statusText}`,

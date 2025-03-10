@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   const cookieStore = await cookies();
-  const refreshToken = cookieStore.get(process.env.TWITCH_REFRESH_TOKEN_NAME);
+  const refreshToken = cookieStore.get(process.env.REFRESH_TOKEN_NAME);
 
   if (!refreshToken) {
     return NextResponse.redirect(new URL("/", request.url));
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     const response = NextResponse.redirect(new URL("/", request.url));
 
     response.cookies.set(
-      process.env.TWITCH_ACCESS_TOKEN_NAME,
+      process.env.ACCESS_TOKEN_NAME,
       tokenData.access_token,
       {
         httpOnly: true,
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
 
     if (tokenData.refresh_token) {
       response.cookies.set(
-        process.env.TWITCH_REFRESH_TOKEN_NAME,
+        process.env.REFRESH_TOKEN_NAME,
         tokenData.refresh_token,
         {
           httpOnly: true,

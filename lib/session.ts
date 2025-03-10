@@ -72,9 +72,7 @@ export async function auth(): Promise<Session> {
  */
 export const getAuthSession = cache(async (): Promise<SessionResponse> => {
   const cookieStore = await cookies();
-  const access_token = cookieStore.get(
-    process.env.TWITCH_ACCESS_TOKEN_NAME,
-  )?.value;
+  const access_token = cookieStore.get(process.env.ACCESS_TOKEN_NAME)?.value;
 
   if (!access_token) {
     return {
@@ -92,7 +90,7 @@ export const getAuthSession = cache(async (): Promise<SessionResponse> => {
 
   try {
     const res = await fetch(
-      `${CURRENT_URL}/api/auth/twitch/validate?${params.toString()}`,
+      `${CURRENT_URL}${process.env.TWITCH_VALIDATE_URL}?${params.toString()}`,
       {
         cache: "force-cache",
         next: { revalidate: 3600 },

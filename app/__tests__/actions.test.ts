@@ -51,7 +51,7 @@ describe("getModeratedChannels", () => {
     // Assertions
     expect(auth).toHaveBeenCalled();
     expect(global.fetch).toHaveBeenCalledWith(
-      `${CURRENT_URL}/api/auth/twitch/channels?user_id=user123&access_token=test-token`,
+      `${CURRENT_URL}${process.env.AUTH_CHANNELS_URL}?user_id=user123&access_token=test-token`,
       { cache: "force-cache" },
     );
     expect(result).toEqual({

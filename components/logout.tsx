@@ -8,7 +8,7 @@ export function Logout() {
       className="game-text-shadow cursor-pointer text-lg"
       asChild
     >
-      <Link href="/api/auth/twitch/logout">Logout</Link>
+      <Link href={process.env.AUTH_LOGOUT_URL}>Logout</Link>
     </Button>
   );
 }

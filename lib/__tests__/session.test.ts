@@ -75,12 +75,12 @@ describe("Session Module", () => {
 
       // Verify cookie was accessed with correct name
       expect(mockCookieStore.get).toHaveBeenCalledWith(
-        process.env.TWITCH_ACCESS_TOKEN_NAME,
+        process.env.ACCESS_TOKEN_NAME,
       );
 
       // Verify fetch was called with correct URL
       expect(mockFetch).toHaveBeenCalledWith(
-        `${CURRENT_URL}/api/auth/twitch/validate?access_token=${mockAccessToken}`,
+        `${CURRENT_URL}${process.env.TWITCH_VALIDATE_URL}?access_token=${mockAccessToken}`,
         expect.objectContaining({
           cache: "force-cache",
           next: { revalidate: 3600 },

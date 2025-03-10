@@ -2,6 +2,7 @@ import { Canvas } from "@/components/canvas";
 import { Container } from "@/components/container";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
+import { Logout } from "@/components/logout";
 import { Main } from "@/components/main";
 import { SignedIn } from "@/components/signed-in";
 import { SignedOut } from "@/components/signed-out";
@@ -30,13 +31,7 @@ export default async function Home() {
             >
               <Link href="/play">Play</Link>
             </Button>
-            <Button
-              variant="link"
-              className="game-text-shadow cursor-pointer text-lg"
-              asChild
-            >
-              <Link href="/api/auth/twitch/logout">Logout</Link>
-            </Button>
+            <Logout />
           </SignedIn>
           <SignedOut>
             <TwitchLogin />

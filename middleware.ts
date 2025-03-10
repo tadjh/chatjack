@@ -9,14 +9,12 @@ const isProtected = (pathname: string) => {
 };
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get(process.env.TWITCH_ACCESS_TOKEN_NAME);
-  const refreshToken = request.cookies.get(
-    process.env.TWITCH_REFRESH_TOKEN_NAME,
-  );
+  const token = request.cookies.get(process.env.ACCESS_TOKEN_NAME);
+  const refreshToken = request.cookies.get(process.env.REFRESH_TOKEN_NAME);
 
   if (!token && refreshToken) {
     return NextResponse.redirect(
-      new URL("/api/auth/twitch/refresh", request.url),
+      new URL(process.env.AUTH_REFRESH_URL, request.url),
     );
   }
 
