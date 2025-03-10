@@ -1,8 +1,13 @@
 import { CURRENT_URL } from "@/lib/constants";
 import { TwitchTokenResponse } from "@/lib/integrations/twitch.types";
+import { kv } from "@vercel/kv";
 import { NextResponse, NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const state = searchParams.get("state");
@@ -16,7 +21,9 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const cookieState = request.cookies.get(process.env.STATE_TOKEN_NAME)?.value;
+  const cookieState = request.cookies.get(
+    process.env.BOT_STATE_TOKEN_NAME,
+  )?.value;
 
   if (!state || state !== cookieState) {
     return NextResponse.json({ error: "Invalid state" }, { status: 400 });
@@ -27,11 +34,11 @@ export async function GET(request: NextRequest) {
   }
 
   const params = new URLSearchParams({
-    client_id: process.env.TWITCH_CLIENT_ID,
-    client_secret: process.env.TWITCH_CLIENT_SECRET,
+    client_id: process.env.TWITCH_BOT_CLIENT_ID,
+    client_secret: process.env.TWITCH_BOT_CLIENT_SECRET,
     code: code,
     grant_type: "authorization_code",
-    redirect_uri: `${CURRENT_URL}${process.env.AUTH_CALLBACK_URL}`,
+    redirect_uri: `${CURRENT_URL}${process.env.BOT_CALLBACK_URL}`,
   });
 
   try {
@@ -50,24 +57,29 @@ export async function GET(request: NextRequest) {
 
     const tokenData = (await tokenRes.json()) as TwitchTokenResponse;
 
-    const response = NextResponse.redirect(new URL("/", request.url));
+    await kv.set(process.env.BOT_ACCESS_TOKEN_NAME, tokenData, {
+      ex: tokenData.expires_in,
+    });
+    await kv.set(process.env.BOT_REFRESH_TOKEN_NAME, tokenData.refresh_token, {
+      ex: 30 * 24 * 60 * 60, // 30 days
+    });
 
+    const response = NextResponse.redirect(new URL("/", request.url));
     const cookieOptions = {
       httpOnly: true,
       path: "/",
-      secure: process.env.NODE_ENV === "production",
+      // secure: process.env.NODE_ENV === "production",
       sameSite: "lax" as const,
       expires: new Date(Date.now() + tokenData.expires_in * 1000),
     };
-
     response.cookies.set(
-      process.env.ACCESS_TOKEN_NAME,
-      tokenData.access_token,
+      process.env.BOT_ACCESS_TOKEN_NAME,
+      JSON.stringify(tokenData),
       cookieOptions,
     );
 
     response.cookies.set(
-      process.env.REFRESH_TOKEN_NAME,
+      process.env.BOT_REFRESH_TOKEN_NAME,
       tokenData.refresh_token,
       {
         ...cookieOptions,

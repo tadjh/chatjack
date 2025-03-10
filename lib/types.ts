@@ -3,7 +3,10 @@ import { SearchProps } from "@/components/search-provider";
 export type Vector3 = [number, number, number];
 
 export type Props = {
-  params: Promise<{ channel: string }>;
+  params: Promise<{
+    channel: string;
+    broadcaster_id: string;
+  }>;
   searchParams: Promise<Partial<SearchProps>>;
 };
 

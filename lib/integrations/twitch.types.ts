@@ -39,3 +39,27 @@ export type ModeratedChannelsResponse = {
   data: ModeratedChannel[];
   pagination: Pagination;
 };
+
+export type TwitchTokenResponse = {
+  access_token: string;
+  expires_in: number;
+  refresh_token: string;
+  scope: string[];
+  token_type: "bearer";
+};
+
+export type TwitchChatResponse =
+  | TwitchChatSuccessResponse
+  | TwitchChatErrorResponse;
+
+interface TwitchChatSuccessResponse {
+  data: { message_id: string; is_sent: true; drop_reason: null }[];
+}
+
+interface TwitchChatErrorResponse {
+  data: {
+    message_id: "";
+    is_sent: false;
+    drop_reason: { code: string; message: string };
+  }[];
+}

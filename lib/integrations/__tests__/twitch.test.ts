@@ -65,13 +65,13 @@ describe("Twitch", () => {
   describe("Instance Management", () => {
     it("should create a singleton instance", () => {
       const instance1 = Twitch.create(
-        { channel: "test" },
+        { channel: "test", broadcaster_id: "123" },
         eventBus,
         vote,
         debug,
       );
       const instance2 = Twitch.create(
-        { channel: "test2" },
+        { channel: "test2", broadcaster_id: "123" },
         eventBus,
         vote,
         debug,
@@ -82,14 +82,14 @@ describe("Twitch", () => {
 
     it("should properly destroy the instance", () => {
       const instance = Twitch.create(
-        { channel: "test" },
+        { channel: "test", broadcaster_id: "123" },
         eventBus,
         vote,
         debug,
       );
       Twitch.destroy();
       const newInstance = Twitch.create(
-        { channel: "test" },
+        { channel: "test", broadcaster_id: "123" },
         eventBus,
         vote,
         debug,
@@ -101,7 +101,12 @@ describe("Twitch", () => {
 
   describe("Setup and Connection", () => {
     it("should not setup with empty channel", async () => {
-      const instance = Twitch.create({ channel: "" }, eventBus, vote, debug);
+      const instance = Twitch.create(
+        { channel: "", broadcaster_id: "" },
+        eventBus,
+        vote,
+        debug,
+      );
       await instance.setup("");
 
       expect(tmi.Client).not.toHaveBeenCalled();
@@ -109,7 +114,7 @@ describe("Twitch", () => {
 
     it("should setup with valid channel", async () => {
       const instance = Twitch.create(
-        { channel: "test" },
+        { channel: "test", broadcaster_id: "123" },
         eventBus,
         vote,
         debug,
@@ -174,7 +179,7 @@ describe("Twitch", () => {
   describe("Vote Handling", () => {
     it("should handle vote updates", () => {
       const instance = Twitch.create(
-        { channel: "test" },
+        { channel: "test", broadcaster_id: "123" },
         eventBus,
         vote,
         debug,
@@ -205,7 +210,7 @@ describe("Twitch", () => {
 
     it("should handle player actions", () => {
       const instance = Twitch.create(
-        { channel: "test" },
+        { channel: "test", broadcaster_id: "123" },
         eventBus,
         vote,
         debug,
@@ -224,7 +229,7 @@ describe("Twitch", () => {
   describe("Event Bus Integration", () => {
     it("should emit connected event when client connects", async () => {
       const instance = Twitch.create(
-        { channel: "test" },
+        { channel: "test", broadcaster_id: "123" },
         eventBus,
         vote,
         debug,
@@ -247,7 +252,7 @@ describe("Twitch", () => {
 
     it("should emit disconnected event when client disconnects", async () => {
       const instance = Twitch.create(
-        { channel: "test" },
+        { channel: "test", broadcaster_id: "123" },
         eventBus,
         vote,
         debug,
@@ -270,7 +275,7 @@ describe("Twitch", () => {
 
     it("should subscribe to mediator events during setup", async () => {
       const instance = Twitch.create(
-        { channel: "test" },
+        { channel: "test", broadcaster_id: "123" },
         eventBus,
         vote,
         debug,
@@ -287,7 +292,7 @@ describe("Twitch", () => {
 
     it("should unsubscribe from mediator events during teardown", async () => {
       const instance = Twitch.create(
-        { channel: "test" },
+        { channel: "test", broadcaster_id: "123" },
         eventBus,
         vote,
         debug,
@@ -308,7 +313,7 @@ describe("Twitch", () => {
       vi.useFakeTimers();
 
       const instance = Twitch.create(
-        { channel: "test" },
+        { channel: "test", broadcaster_id: "123" },
         eventBus,
         vote,
         debug,
@@ -356,7 +361,7 @@ describe("Twitch", () => {
 
     it("should handle wait for start event", async () => {
       const instance = Twitch.create(
-        { channel: "test" },
+        { channel: "test", broadcaster_id: "123" },
         eventBus,
         vote,
         debug,
@@ -393,7 +398,7 @@ describe("Twitch", () => {
 
     it("should process vote updates", () => {
       const instance = Twitch.create(
-        { channel: "test" },
+        { channel: "test", broadcaster_id: "123" },
         eventBus,
         vote,
         debug,
@@ -410,7 +415,7 @@ describe("Twitch", () => {
 
     it("should handle player actions and clear vote timer", () => {
       const instance = Twitch.create(
-        { channel: "test" },
+        { channel: "test", broadcaster_id: "123" },
         eventBus,
         vote,
         debug,
@@ -440,7 +445,7 @@ describe("Twitch", () => {
   describe("Channel and Options", () => {
     it("should return correct channel value", () => {
       const instance = Twitch.create(
-        { channel: "testChannel" },
+        { channel: "testChannel", broadcaster_id: "123" },
         eventBus,
         vote,
         debug,

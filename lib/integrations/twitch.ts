@@ -1,21 +1,36 @@
 import { TimerEntity } from "@/lib/canvas/entity.timer";
-import { RendererOptions } from "@/lib/canvas/renderer";
+import { CURRENT_URL } from "@/lib/constants";
 import { Debug } from "@/lib/debug";
 import { EventBus, MediatorEvent, MediatorEventType } from "@/lib/event-bus";
+import { TwitchChatResponse } from "@/lib/integrations/twitch.types";
 import { Vote } from "@/lib/integrations/vote";
 import { COMMAND, EVENT } from "@/lib/types";
 import * as tmi from "tmi.js";
+import { z } from "zod";
 
-export type TwitchOptions = Pick<RendererOptions, "channel">;
+export const chatMessageSchema = z.object({
+  broadcaster_id: z.string(),
+  sender_id: z.string(),
+  message: z.string(),
+});
+
+export type ChatMessage = z.infer<typeof chatMessageSchema>;
+
+export type TwitchOptions = {
+  channel: string;
+  broadcaster_id: string;
+};
 
 export class Twitch {
   public static readonly defaultOptions: Required<TwitchOptions> = {
     channel: "",
+    broadcaster_id: "",
   };
   static #instance: Twitch | null = null;
   protected debug: Debug;
   #eventBus: EventBus;
   #channel: string;
+  #broadcasterId: string;
   #voteTimer: NodeJS.Timeout | null = null;
   #vote: Vote;
   #options: COMMAND[];
@@ -52,6 +67,7 @@ export class Twitch {
   private constructor(
     {
       channel = Twitch.defaultOptions.channel,
+      broadcaster_id = Twitch.defaultOptions.broadcaster_id,
     }: TwitchOptions = Twitch.defaultOptions,
     events: EventBus = EventBus.create(),
     vote = new Vote(),
@@ -61,12 +77,17 @@ export class Twitch {
     this.debug.log(`Creating: ${Twitch.name} instance`);
     this.#eventBus = events;
     this.#channel = channel;
+    this.#broadcasterId = broadcaster_id;
     this.#vote = vote;
     this.#options = [COMMAND.START, COMMAND.RESTART];
   }
 
   get channel() {
     return this.#channel;
+  }
+
+  get broadcasterId() {
+    return this.#broadcasterId;
   }
 
   public async setup(channel: string) {
@@ -213,11 +234,77 @@ export class Twitch {
     });
   };
 
-  private handleConnected = () => {
+  private async sendChatMessage(chatMessage: Omit<ChatMessage, "sender_id">) {
+    try {
+      const res = await fetch(
+        `${CURRENT_URL}${process.env.NEXT_PUBLIC_PUBLISH_CHAT_URL}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            broadcaster_id: chatMessage.broadcaster_id,
+            message: chatMessage.message,
+          }),
+        },
+      );
+
+      console.log("res", JSON.stringify(res));
+
+      if (!res.ok) {
+        this.debug.error(
+          `Error sending chat: ${res.statusText} (${res.status})`,
+        );
+        return;
+      }
+      const data = (await res.json()) as TwitchChatResponse;
+
+      if (!data.data[0].is_sent) {
+        this.debug.error(
+          `Error [${data.data[0].drop_reason.code}] sending chat: ${data.data[0].drop_reason.message}`,
+        );
+        return;
+      }
+      return data;
+    } catch (error) {
+      this.debug.error(`Error sending chat: ${error}`);
+    }
+  }
+
+  private handleConnected = async () => {
     this.debug.log("Connected to Twitch");
     this.#eventBus.emit("chat", {
       type: EVENT.CONNECTED,
     });
+
+    const greetings = [
+      "Welcome to the game! Type !start to begin!",
+      "Hello, everyone! Type !start to kick things off!",
+      "Hey there! Type !start to get started!",
+      "Welcome! Type !start to start the game!",
+      "Greetings! Type !start to begin the fun!",
+      "Hi, everyone! Type !start to start the game!",
+      "Hello! Type !start to kick off the game!",
+    ];
+
+    const randomGreeting =
+      greetings[Math.floor(Math.random() * greetings.length)];
+    try {
+      const result = await this.sendChatMessage({
+        broadcaster_id: this.#broadcasterId,
+        message: randomGreeting,
+      });
+
+      if (!result) {
+        this.debug.error("Failed to send greeting message");
+        return;
+      }
+
+      this.debug.log(`Sent: ${randomGreeting}`);
+    } catch (error) {
+      this.debug.error(`Error sending greeting2: ${JSON.stringify(error)}`);
+    }
   };
 
   private handleDisconnected = () => {

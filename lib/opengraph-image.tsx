@@ -35,9 +35,11 @@ export async function loadAssets(): Promise<LoadedAssets> {
 export default async function OpenGraphImage({
   params,
 }: {
-  params: { channel: string };
+  params: { channel?: string };
 }) {
   const { pressStart2P, bgImageSrc } = await loadAssets();
+
+  const channelText = params.channel ? params.channel : "";
 
   return new ImageResponse(
     (
@@ -76,7 +78,7 @@ export default async function OpenGraphImage({
             objectFit: "cover",
           }}
         />
-        <p>{params.channel}</p>
+        <p>{channelText}</p>
       </div>
     ),
     {

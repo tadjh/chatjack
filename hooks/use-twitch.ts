@@ -10,16 +10,19 @@ export interface ChatActions {
   stop: () => void;
 }
 
-export function useTwitch({ channel }: TwitchOptions): ChatActions {
+export function useTwitch({
+  channel,
+  broadcaster_id,
+}: TwitchOptions): ChatActions {
   const twitchRef = useRef<Twitch | null>(null);
 
   if (!twitchRef.current) {
-    twitchRef.current = Twitch.create({ channel });
+    twitchRef.current = Twitch.create({ channel, broadcaster_id });
   }
 
   useEffect(() => {
     if (!twitchRef.current) {
-      twitchRef.current = Twitch.create({ channel });
+      twitchRef.current = Twitch.create({ channel, broadcaster_id });
     }
 
     twitchRef.current.setup(channel);
@@ -30,7 +33,7 @@ export function useTwitch({ channel }: TwitchOptions): ChatActions {
         twitchRef.current = null;
       }
     };
-  }, [channel]);
+  }, [channel, broadcaster_id]);
 
   return {
     hit: () => twitchRef.current?.handleVoteUpdate(channel, COMMAND.HIT),

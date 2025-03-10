@@ -27,7 +27,7 @@ export function Debug({
   const { hit, stand, start, restart, stop } = chat;
 
   return (
-    <div className="fixed top-1/2 left-0 z-[9999] flex h-full -translate-y-1/2 flex-col justify-center gap-2 p-4 font-mono">
+    <div className="fixed top-1/2 left-0 z-49 flex h-full -translate-y-1/2 flex-col justify-center gap-2 p-4 font-mono">
       <div className="grid gap-2">
         <div className="flex gap-2">
           <Button

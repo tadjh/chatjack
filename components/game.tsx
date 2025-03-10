@@ -9,7 +9,13 @@ import { useMediator } from "@/hooks/use-mediator";
 import { useTwitch } from "@/hooks/use-twitch";
 import { useMemo } from "react";
 
-export function Game({ channel }: { channel: string }) {
+export function Game({
+  channel,
+  broadcaster_id,
+}: {
+  channel: string;
+  broadcaster_id: string;
+}) {
   const { timer, fps, debug, deck } = useSearch();
   const playerNamesMemo = useMemo(() => ["Chat"], []);
   useEventBus(channel);
@@ -21,6 +27,7 @@ export function Game({ channel }: { channel: string }) {
   useMediator({ buffer: 100, timer });
   const chat = useTwitch({
     channel,
+    broadcaster_id,
   });
 
   return (

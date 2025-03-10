@@ -91,10 +91,13 @@ export function capitalize(string: string) {
  * @returns A Metadata object.
  */
 export async function formatMetadata(
-  { params }: Props,
+  { params }: Pick<Props, "params">,
   mode: RenderMode,
 ): Promise<Metadata> {
   const { channel } = await params;
+  if (!channel) {
+    throw new Error("Channel is required for metadata formatting");
+  }
   const title = `${capitalize(mode)} - ${channel} - ChatJack`;
   const description = `${mode === "play" ? "Host" : "Watch"} a ChatJack session for ${channel}`;
   const url = `${CURRENT_URL}/${mode}/${channel}`;

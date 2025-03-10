@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const isProtected = (pathname: string) => {
-  const protectedPaths = ["/play"];
+  const protectedPaths = ["/play", "/api/publish"];
 
   return protectedPaths.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`),
@@ -29,11 +29,12 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api (API routes)
+     * - api (API routes) except for api/publish
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico, sitemap.xml, robots.txt (metadata files)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+    "/((?!api(?!/publish)|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+    "/api/publish/:path*",
   ],
 };

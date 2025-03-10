@@ -56,7 +56,11 @@ export function ChannelSelect({
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    redirect(`/${mode}/${values.channel}`);
+    const option = options.data.find(
+      (option) => option.broadcaster_login === values.channel,
+    )!;
+
+    redirect(`/${mode}/${values.channel}/${option.broadcaster_id}`);
   }
 
   return (

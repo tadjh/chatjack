@@ -11,17 +11,22 @@ import { SignedIn } from "@/components/signed-in";
 import { Props } from "@/lib/types";
 import { formatMetadata } from "@/lib/utils";
 import { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
   return formatMetadata(props, "play");
 }
 
 export default async function Page({ params }: Props) {
-  const { channel } = await params;
+  const { channel, broadcaster_id } = await params;
+  if (!channel || !broadcaster_id) {
+    return redirect("/play");
+  }
+
   const options = await getModeratedChannels();
   return (
     <>
-      <Game channel={channel} />
+      <Game channel={channel} broadcaster_id={broadcaster_id} />
       <Container>
         <Header>
           <SignedIn>

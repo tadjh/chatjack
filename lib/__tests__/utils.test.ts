@@ -11,7 +11,6 @@ import {
 import { RenderMode } from "@/lib/canvas/renderer";
 import { CURRENT_URL } from "@/lib/constants";
 import { describe, it, expect, vi } from "vitest";
-import { Props } from "@/lib/types";
 
 // Simple mock setup
 vi.mock("../utils", async (importOriginal) => {
@@ -105,14 +104,15 @@ describe("capitalize", () => {
 
 describe("formatMetadata", () => {
   it("should format metadata for play mode correctly", async () => {
-    const params = Promise.resolve({ channel: "testchannel" });
-    const searchParams = Promise.resolve({});
+    const params = Promise.resolve<{ channel: string; broadcaster_id: string }>(
+      {
+        channel: "testchannel",
+        broadcaster_id: "someId",
+      },
+    );
     const mode = "play" as RenderMode;
 
-    const result = await formatMetadata(
-      { params, searchParams } as Props,
-      mode,
-    );
+    const result = await formatMetadata({ params }, mode);
 
     expect(result).toEqual({
       title: "Play - testchannel - ChatJack",
@@ -145,14 +145,15 @@ describe("formatMetadata", () => {
   });
 
   it("should format metadata for watch mode correctly", async () => {
-    const params = Promise.resolve({ channel: "testchannel" });
-    const searchParams = Promise.resolve({});
+    const params = Promise.resolve<{ channel: string; broadcaster_id: string }>(
+      {
+        channel: "testchannel",
+        broadcaster_id: "someId",
+      },
+    );
     const mode = "watch" as RenderMode;
 
-    const result = await formatMetadata(
-      { params, searchParams } as Props,
-      mode,
-    );
+    const result = await formatMetadata({ params }, mode);
 
     expect(result).toEqual({
       title: "Watch - testchannel - ChatJack",
