@@ -328,6 +328,38 @@ export const fixedDecks: Record<string, CardJSON[]> = {
       handIndex: 1,
     }, // dealer hole card 2
   ],
+  "dealer-blackjack-2": [
+    {
+      card: Rank.Ten + Suit.Spades,
+      owner: "player",
+      hidden: false,
+      handIndex: 0,
+    }, // player card 1
+    {
+      card: Rank.King + Suit.Hearts,
+      owner: "dealer",
+      hidden: false,
+      handIndex: 0,
+    }, // dealer card 1
+    {
+      card: Rank.King + Suit.Diamonds,
+      owner: "player",
+      hidden: false,
+      handIndex: 1,
+    }, // player card 2, (should stand)
+    {
+      card: Rank.Five + Suit.Clubs,
+      owner: "dealer",
+      hidden: true,
+      handIndex: 1,
+    }, // dealer hole card 2
+    {
+      card: Rank.Six + Suit.Diamonds,
+      owner: "dealer",
+      hidden: false,
+      handIndex: 2,
+    }, // dealer card 3
+  ],
   "player-win": [
     {
       card: Rank.Ten + Suit.Spades,

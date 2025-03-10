@@ -795,15 +795,15 @@ export class Renderer {
     this.#layers.setEntity(entity);
   }
 
-  private updateHand(hand: Hand) {
-    hand.cards.forEach((card) => {
+  private updateHand(hand: Hand, forceUpdate = false) {
+    hand.cards.forEach((card, index) => {
       if (this.#layers.hasEntityById(cardSprite.layer, card.id)) {
         if (hand.isBusted) this.updateBustCard(card);
-        if (hand.isStand || hand.isBlackjack) this.updateStandCard(card.id);
+        if (hand.isStand || forceUpdate) this.updateStandCard(card.id);
       } else {
-        this.createCard(card, 0, hand.status, (layer, id) => {
-          if (hand.isBlackjack) {
-            this.updateStandCard(id);
+        this.createCard(card, 0, hand.status, () => {
+          if (hand.isBlackjack && index === hand.cards.length - 1) {
+            this.updateHand(hand, true);
           }
         });
       }

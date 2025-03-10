@@ -2,11 +2,9 @@
 
 ## Bugs
 
-- TODO Dealer blackjack doesn't tint
 - TODO Screen flickers on restart (missing render call?)
 - TODO disconnected caption
 - TODO Disabled timer zoom in, until I can fix the fact that angle increments based on start time not phase start seemingly
-- TODO Blackjack state is set on hand before final dealer card will be drawn so hand will tint before last card is drawn
 
 ## Development
 
@@ -27,6 +25,7 @@
 
 ## Quality of life
 
+- TODO Add Jack Queen and King portraits to cards
 - TODO Rename SearchProvider to RendererOptions or something to indicate what it actually does
 - TODO Add !stop command
 - TODO Bust lower opacity
