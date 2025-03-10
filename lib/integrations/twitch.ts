@@ -64,18 +64,6 @@ export class Twitch {
     return this.#channel;
   }
 
-  private async connect() {
-    if (!this.#client) return;
-    this.debug.log("Connecting to Twitch");
-    await this.#client.connect();
-  }
-
-  private async disconnect() {
-    if (!this.#client) return;
-    this.debug.log("Disconnecting from Twitch");
-    await this.#client.disconnect();
-  }
-
   private addListener(
     event: keyof tmi.Events,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -110,7 +98,8 @@ export class Twitch {
 
     this.#eventBus.subscribe("mediator", this.handleMediator, Twitch.name);
     try {
-      await this.connect();
+      this.debug.log("Connecting to Twitch");
+      await this.#client.connect();
     } catch (error) {
       this.debug.error("Error connecting to Twitch", error);
       return;
@@ -123,7 +112,10 @@ export class Twitch {
     this.removeListener("disconnected", this.handleDisconnected);
 
     this.#eventBus.unsubscribe("mediator", this.handleMediator);
-    await this.disconnect();
+    if (this.#client) {
+      this.debug.log("Disconnecting from Twitch");
+      await this.#client.disconnect();
+    }
     this.#channel = "";
     this.#client = null;
   }

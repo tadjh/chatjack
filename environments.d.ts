@@ -13,6 +13,7 @@ declare namespace NodeJS {
     AUTH_CALLBACK_URL: string;
     AUTH_REFRESH_URL: string;
     AUTH_CHANNELS_URL: string;
+    AUTH_VALIDATE_URL: string;
     // Auth Token Names
     STATE_TOKEN_NAME: string;
     ACCESS_TOKEN_NAME: string;
@@ -26,8 +27,8 @@ declare namespace NodeJS {
     TWITCH_CLIENT_ID: string;
     TWITCH_CLIENT_SECRET: string;
     // Publish Endpoints
-    PUBLISH_EVENT_URL: string;
-    PUBLISH_SNAPSHOT_URL: string;
+    NEXT_PUBLIC_PUBLISH_EVENT_URL: string;
+    NEXT_PUBLIC_PUBLISH_SNAPSHOT_URL: string;
     // Pusher Credentials
     PUSHER_APP_ID: string;
     NEXT_PUBLIC_PUSHER_KEY: string;

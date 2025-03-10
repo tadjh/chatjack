@@ -90,7 +90,7 @@ export const getAuthSession = cache(async (): Promise<SessionResponse> => {
 
   try {
     const res = await fetch(
-      `${CURRENT_URL}${process.env.TWITCH_VALIDATE_URL}?${params.toString()}`,
+      `${CURRENT_URL}${process.env.AUTH_VALIDATE_URL}?${params.toString()}`,
       {
         cache: "force-cache",
         next: { revalidate: 3600 },

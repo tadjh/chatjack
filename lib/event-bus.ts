@@ -349,7 +349,7 @@ export class EventBus<Events extends Record<string, any> = EventMap> {
   ) {
     try {
       const response = await fetch(
-        `${CURRENT_URL}${process.env.PUBLISH_EVENT_URL}`,
+        `${CURRENT_URL}${process.env.NEXT_PUBLIC_PUBLISH_EVENT_URL}`,
         {
           method: "POST",
           body: JSON.stringify({
