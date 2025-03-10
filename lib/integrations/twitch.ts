@@ -149,16 +149,6 @@ export class Twitch {
     ) => {
       if (self || !user.username) return;
       const command = Twitch.parseMessage(message);
-      this.debug.log(
-        "Message",
-        message,
-        "Command",
-        command,
-        "Options",
-        this.#options,
-        "Includes",
-        command ? this.#options.includes(command) : null,
-      );
       if (!command || !this.#options.includes(command)) return;
       this.handlePlayerAction(command);
       this.#client?.removeListener("message", waitForStart);

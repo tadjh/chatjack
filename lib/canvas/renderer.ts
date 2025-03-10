@@ -874,39 +874,77 @@ export class Renderer {
 
   private createGameoverText(state: STATE, callback?: () => void) {
     let title;
-    let subtitle;
+    let subtitles: string[];
+
     switch (state) {
       case STATE.PLAYER_BUST:
         title = "Chat Bust!";
-        subtitle = "Better luck next time!";
+        subtitles = [
+          "Better luck next time!",
+          "That's too many cards!",
+          "Should've stayed...",
+          "So close, yet so far!",
+        ];
         break;
       case STATE.DEALER_BUST:
         title = "Dealer Bust!";
-        subtitle = "How unfortunate...";
+        subtitles = [
+          "How unfortunate...",
+          "Dealer went over!",
+          "Chat's strategy worked!",
+          "The house doesn't always win!",
+        ];
         break;
       case STATE.PUSH:
         title = "Push!";
-        subtitle = "No winner...";
+        subtitles = [
+          "No winner...",
+          "A tie!",
+          "Evenly matched!",
+          "Nobody wins this one.",
+        ];
         break;
       case STATE.PLAYER_BLACKJACK:
         title = "Blackjack!";
-        subtitle = "Chat Wins!";
+        subtitles = [
+          "Chat Wins!",
+          "Perfect hand!",
+          "Lucky cards!",
+          "Couldn't be better!",
+        ];
         break;
       case STATE.DEALER_BLACKJACK:
         title = "Dealer hit 21!";
-        subtitle = "Better luck next time!";
+        subtitles = [
+          "The dealer got lucky!",
+          "So close...",
+          "The house wins this round!",
+          "The dealer's on a roll!",
+        ];
         break;
       case STATE.PLAYER_WIN:
         title = "Chat Wins!";
-        subtitle = "Your hand is stronger!";
+        subtitles = [
+          "Your hand is stronger!",
+          "Great decision making!",
+          "Teamwork makes the dream work!",
+          "Chat played it perfectly!",
+        ];
         break;
       case STATE.DEALER_WIN:
         title = "Dealer Wins!";
-        subtitle = "Better luck next time!";
+        subtitles = [
+          "The house has the advantage!",
+          "Close, but not enough!",
+          "The dealer's hand was better.",
+          "The dealer's got the edge!",
+        ];
         break;
       default:
         throw new Error(`Cannot create gameover text for state: ${state}`);
     }
+
+    const subtitle = subtitles[Math.floor(Math.random() * subtitles.length)];
 
     for (const props of gameoverText) {
       if (props.id === "title") {

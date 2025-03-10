@@ -14,7 +14,6 @@
 
 ## Features
 
-- TODO Randomize subtitles
 - TODO have tadjh\_ talk in chat for donation link
 - TODO Add donation link
 - TODO Optionally type gamestate into chat as it happens as a anti-latency accessibility feature, complete with unicode cards and symbols
