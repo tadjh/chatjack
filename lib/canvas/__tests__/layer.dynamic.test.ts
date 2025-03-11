@@ -201,8 +201,8 @@ describe("DynamicLayer", () => {
     expect(mockCtx.clearRect).toHaveBeenCalledWith(
       0,
       0,
-      window.innerWidth,
-      window.innerHeight
+      document.documentElement.clientWidth,
+      document.documentElement.clientHeight,
     );
 
     // Verify entity's render method was called
@@ -289,7 +289,7 @@ describe("DynamicLayer", () => {
 
     // Verify action entity was rendered after regular entity
     expect(regularRenderSpy.mock.invocationCallOrder[0]).toBeLessThan(
-      actionRenderSpy.mock.invocationCallOrder[0]
+      actionRenderSpy.mock.invocationCallOrder[0],
     );
   });
 
@@ -385,10 +385,14 @@ describe("DynamicLayer", () => {
 
     // Verify canvas dimensions were set correctly
     const ratio = window.devicePixelRatio;
-    expect(canvas.width).toBe(window.innerWidth * ratio);
-    expect(canvas.height).toBe(window.innerHeight * ratio);
-    expect(canvas.style.width).toBe(`${window.innerWidth}px`);
-    expect(canvas.style.height).toBe(`${window.innerHeight}px`);
+    expect(canvas.width).toBe(document.documentElement.clientWidth * ratio);
+    expect(canvas.height).toBe(document.documentElement.clientHeight * ratio);
+    expect(canvas.style.width).toBe(
+      `${document.documentElement.clientWidth}px`,
+    );
+    expect(canvas.style.height).toBe(
+      `${document.documentElement.clientHeight}px`,
+    );
 
     // Verify scale was called
     expect(mockCtx.scale).toHaveBeenCalledWith(ratio, ratio);
@@ -438,8 +442,8 @@ describe("DynamicLayer", () => {
     expect(mockCtx.clearRect).toHaveBeenCalledWith(
       0,
       0,
-      window.innerWidth,
-      window.innerHeight
+      document.documentElement.clientWidth,
+      document.documentElement.clientHeight,
     );
 
     // Verify all entities were removed
@@ -450,4 +454,3 @@ describe("DynamicLayer", () => {
     expect(dynamicLayer.shouldRender).toBe(true);
   });
 });
-

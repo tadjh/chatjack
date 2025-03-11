@@ -99,7 +99,7 @@ describe("SpriteEntity", () => {
 
     it("should throw error when getting sprite with invalid index", () => {
       expect(() => spriteEntity.getSprite(5)).toThrow(
-        "Sprite index out of bounds"
+        "Sprite index out of bounds",
       );
     });
 
@@ -111,7 +111,7 @@ describe("SpriteEntity", () => {
 
     it("should throw error when setting sprite with invalid index", () => {
       expect(() => spriteEntity.setSprite(5, { x: 0, y: 0 })).toThrow(
-        "Sprite index out of bounds"
+        "Sprite index out of bounds",
       );
     });
 
@@ -165,7 +165,7 @@ describe("SpriteEntity", () => {
     it("should throw error when image is not found", () => {
       const mockSpritesheets = new Map<string, HTMLImageElement>();
       expect(() => spriteEntity.createImageBitmap(mockSpritesheets, 0)).toThrow(
-        "Image not found"
+        "Image not found",
       );
     });
   });
@@ -385,9 +385,13 @@ describe("SpriteEntity", () => {
       const initialWidth = spriteEntity.width;
       const initialHeight = spriteEntity.height;
 
-      // Mock window resize
-      Object.defineProperty(window, "innerWidth", { value: 2048 });
-      Object.defineProperty(window, "innerHeight", { value: 1536 });
+      // Mock document dimensions
+      Object.defineProperty(document.documentElement, "clientWidth", {
+        value: 2048,
+      });
+      Object.defineProperty(document.documentElement, "clientHeight", {
+        value: 1536,
+      });
 
       // Resize
       spriteEntity.resize();
@@ -429,4 +433,3 @@ describe("SpriteEntity", () => {
     });
   });
 });
-

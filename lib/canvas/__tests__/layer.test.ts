@@ -152,7 +152,7 @@ describe("Layer", () => {
     vi.spyOn(canvas, "getContext").mockReturnValue(null);
 
     expect(() => new TestLayer(LAYER.UI, canvas)).toThrow(
-      "2d rendering context not supported"
+      "2d rendering context not supported",
     );
   });
 
@@ -162,8 +162,8 @@ describe("Layer", () => {
     expect(mockCtx.clearRect).toHaveBeenCalledWith(
       0,
       0,
-      window.innerWidth,
-      window.innerHeight
+      document.documentElement.clientWidth,
+      document.documentElement.clientHeight,
     );
     expect(layer.size).toBe(0);
     expect(layer.shouldUpdate).toBe(true);
@@ -175,10 +175,14 @@ describe("Layer", () => {
 
     layer.resize();
 
-    expect(canvas.width).toBe(window.innerWidth * ratio);
-    expect(canvas.height).toBe(window.innerHeight * ratio);
-    expect(canvas.style.width).toBe(`${window.innerWidth}px`);
-    expect(canvas.style.height).toBe(`${window.innerHeight}px`);
+    expect(canvas.width).toBe(document.documentElement.clientWidth * ratio);
+    expect(canvas.height).toBe(document.documentElement.clientHeight * ratio);
+    expect(canvas.style.width).toBe(
+      `${document.documentElement.clientWidth}px`,
+    );
+    expect(canvas.style.height).toBe(
+      `${document.documentElement.clientHeight}px`,
+    );
     expect(mockCtx.scale).toHaveBeenCalledWith(ratio, ratio);
   });
 
@@ -399,4 +403,3 @@ describe("Layer", () => {
     expect(textEntity.render).not.toHaveBeenCalled();
   });
 });
-

@@ -19,6 +19,14 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("utils", () => {
+  beforeEach(() => {
+    vi.stubGlobal("document", {
+      documentElement: {
+        clientWidth: 1024,
+        clientHeight: 768,
+      },
+    });
+  });
   it("should create font string", () => {
     expect(font(16, "Arial")).toBe("16px Arial");
     expect(font(24, "Helvetica")).toBe("24px Helvetica");
@@ -92,7 +100,7 @@ describe("utils", () => {
 
     it("should return minimum of horizontal and vertical scale factors", () => {
       expect(getScaleFactor()).toBe(
-        Math.min(1024 / BASELINE_WIDTH, 768 / BASELINE_HEIGHT)
+        Math.min(1024 / BASELINE_WIDTH, 768 / BASELINE_HEIGHT),
       );
     });
 
@@ -130,7 +138,7 @@ describe("utils", () => {
 
       // Test first half (ease in)
       expect(easeInOutBounce(0.25)).toBeCloseTo(
-        0.5 * (1 - easeOutBounce(1 - 0.5))
+        0.5 * (1 - easeOutBounce(1 - 0.5)),
       );
 
       // Test second half (ease out)
@@ -144,4 +152,3 @@ describe("utils", () => {
     });
   });
 });
-

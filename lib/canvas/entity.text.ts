@@ -113,7 +113,7 @@ export class TextEntity extends Entity<
     let fontSize = this.scaleFactor * this.fontSize;
     this.#offCtx.font = font(fontSize, this.fontFamily);
     const textWidth = this.#offCtx.measureText(this.text).width;
-    const maxWidth = window.innerWidth - this.padding * 2;
+    const maxWidth = document.documentElement.clientWidth - this.padding * 2;
     if (textWidth > maxWidth) {
       fontSize *= maxWidth / textWidth;
     }
@@ -169,7 +169,7 @@ export class TextEntity extends Entity<
     const pos = this.getPosition();
     this.setX(pos.x);
     // this.setY(pos.y);
-    // this.#offsetX = this.offsetX > 0 ? window.innerWidth / this.offsetX : 0;
+    // this.#offsetX = this.offsetX > 0 ? document.documentElement.clientWidth / this.offsetX : 0;
     this.#offsetY = getVerticalScaleFactor() * this.offsetY;
     this.#strokeWidth = this.strokeWidth * this.scaleFactor;
     return this;
@@ -262,9 +262,9 @@ export class TextEntity extends Entity<
     // Remove debug visualization
     // ctx.fillRect(this.#x, this.#y, this.width, this.height);
     // ctx.fillStyle = "red";
-    // ctx.fillRect(0, window.innerHeight / 4, window.innerWidth, 10);
-    // ctx.fillRect(0, (window.innerHeight / 4) * 2, window.innerWidth, 10);
-    // ctx.fillRect(0, (window.innerHeight / 4) * 3, window.innerWidth, 10);
+    // ctx.fillRect(0, document.documentElement.clientHeight / 4, document.documentElement.clientWidth, 10);
+    // ctx.fillRect(0, (document.documentElement.clientHeight / 4) * 2, document.documentElement.clientWidth, 10);
+    // ctx.fillRect(0, (document.documentElement.clientHeight / 4) * 3, document.documentElement.clientWidth, 10);
 
     ctx.restore();
     return this;

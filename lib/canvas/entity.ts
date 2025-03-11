@@ -279,47 +279,50 @@ export abstract class Entity<
     switch (this.position) {
       case POSITION.CENTER:
         return {
-          x: (window.innerWidth - this.width) / 2,
-          y: (window.innerHeight - this.height) / 2,
+          x: (document.documentElement.clientWidth - this.width) / 2,
+          y: (document.documentElement.clientHeight - this.height) / 2,
         };
       case POSITION.EYELINE:
         return {
-          x: (window.innerWidth - this.width) / 2,
-          y: window.innerHeight / 4 - this.height / 2,
+          x: (document.documentElement.clientWidth - this.width) / 2,
+          y: document.documentElement.clientHeight / 4 - this.height / 2,
         };
       case POSITION.TOP:
-        return { x: (window.innerWidth - this.width) / 2, y: this.padding };
+        return {
+          x: (document.documentElement.clientWidth - this.width) / 2,
+          y: this.padding,
+        };
       case POSITION.RIGHT:
         return {
-          x: window.innerWidth - this.width - this.padding,
-          y: (window.innerHeight - this.height) / 2,
+          x: document.documentElement.clientWidth - this.width - this.padding,
+          y: (document.documentElement.clientHeight - this.height) / 2,
         };
       case POSITION.BOTTOM:
         return {
-          x: (window.innerWidth - this.width) / 2,
-          y: window.innerHeight - this.height - this.padding,
+          x: (document.documentElement.clientWidth - this.width) / 2,
+          y: document.documentElement.clientHeight - this.height - this.padding,
         };
       case POSITION.LEFT:
         return {
           x: this.padding,
-          y: (window.innerHeight - this.height) / 2,
+          y: (document.documentElement.clientHeight - this.height) / 2,
         };
       case POSITION.TOP_LEFT:
         return { x: this.padding, y: this.padding };
       case POSITION.TOP_RIGHT:
         return {
-          x: window.innerWidth - this.width - this.padding,
+          x: document.documentElement.clientWidth - this.width - this.padding,
           y: this.padding,
         };
       case POSITION.BOTTOM_LEFT:
         return {
           x: this.padding,
-          y: window.innerHeight - this.height - this.padding,
+          y: document.documentElement.clientHeight - this.height - this.padding,
         };
       case POSITION.BOTTOM_RIGHT:
         return {
-          x: window.innerWidth - this.width - this.padding,
-          y: window.innerHeight - this.height - this.padding,
+          x: document.documentElement.clientWidth - this.width - this.padding,
+          y: document.documentElement.clientHeight - this.height - this.padding,
         };
       default:
         return { x: this.x, y: this.y };

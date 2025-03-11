@@ -27,8 +27,8 @@ vi.mock("@/lib/canvas/utils", async () => {
 
 describe("LayoutManager", () => {
   // Mock window dimensions
-  const originalInnerWidth = window.innerWidth;
-  const originalInnerHeight = window.innerHeight;
+  const originalInnerWidth = document.documentElement.clientWidth;
+  const originalInnerHeight = document.documentElement.clientHeight;
   let originalOffscreenCanvas: typeof global.OffscreenCanvas;
 
   beforeEach(() => {
@@ -135,7 +135,7 @@ describe("LayoutManager", () => {
     // Verify entity positions were updated
     expect(entity1.y).toBe(BASELINE_PADDING); // TOP position starts at padding
     expect(entity2.y).toBe(
-      window.innerHeight - BASELINE_PADDING - entity2.height,
+      document.documentElement.clientHeight - BASELINE_PADDING - entity2.height,
     ); // BOTTOM position
   });
 
@@ -164,13 +164,15 @@ describe("LayoutManager", () => {
 
     expect(topEntity.y).toBe(BASELINE_PADDING);
     expect(bottomEntity.y).toBe(
-      window.innerHeight - BASELINE_PADDING - bottomEntity.height,
+      document.documentElement.clientHeight -
+        BASELINE_PADDING -
+        bottomEntity.height,
     );
     expect(centerEntity.y).toBe(
-      window.innerHeight / 2 - centerEntity.height / 2,
+      document.documentElement.clientHeight / 2 - centerEntity.height / 2,
     );
     expect(eyeLineEntity.y).toBe(
-      window.innerHeight / 4 - eyeLineEntity.height / 2,
+      document.documentElement.clientHeight / 4 - eyeLineEntity.height / 2,
     );
   });
 

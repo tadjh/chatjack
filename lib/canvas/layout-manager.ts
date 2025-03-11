@@ -52,17 +52,17 @@ export class LayoutManager {
         case POSITION.BOTTOM:
         case POSITION.BOTTOM_LEFT:
         case POSITION.BOTTOM_RIGHT:
-          initialY = window.innerHeight - this.#padding;
+          initialY = document.documentElement.clientHeight - this.#padding;
           direction = DIRECTION.UP;
           break;
         case POSITION.EYELINE:
-          initialY = window.innerHeight / 4;
+          initialY = document.documentElement.clientHeight / 4;
           gutterMultiplier = 4;
           break;
         case POSITION.CENTER:
         case POSITION.LEFT:
         case POSITION.RIGHT:
-          initialY = window.innerHeight / 2;
+          initialY = document.documentElement.clientHeight / 2;
           break;
         default:
           initialY = this.#padding;

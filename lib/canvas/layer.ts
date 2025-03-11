@@ -14,7 +14,7 @@ export abstract class Layer extends Map<string, EntityType> {
     id: LAYER,
     type: "static" | "dynamic",
     canvas: HTMLCanvasElement,
-    debug = new Debug(id, "Tan")
+    debug = new Debug(id, "Tan"),
   ) {
     super();
     this.#canvas = canvas;
@@ -44,7 +44,12 @@ export abstract class Layer extends Map<string, EntityType> {
   }
 
   protected clearRect() {
-    this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    this.ctx.clearRect(
+      0,
+      0,
+      document.documentElement.clientWidth,
+      document.documentElement.clientHeight,
+    );
   }
 
   abstract render(): void;
@@ -52,10 +57,12 @@ export abstract class Layer extends Map<string, EntityType> {
   public resize() {
     this.debug.log(`Resizing ${this.id}`);
     const ratio = window.devicePixelRatio || 1;
-    this.#canvas.width = window.innerWidth * ratio;
-    this.#canvas.height = window.innerHeight * ratio;
-    this.#canvas.style.width = `${window.innerWidth}px`;
-    this.#canvas.style.height = `${window.innerHeight}px`;
+    const width = document.documentElement.clientWidth;
+    const height = document.documentElement.clientHeight;
+    this.#canvas.width = Math.floor(width * ratio);
+    this.#canvas.height = Math.floor(height * ratio);
+    this.#canvas.style.width = `${width}px`;
+    this.#canvas.style.height = `${height}px`;
     this.ctx.scale(ratio, ratio);
     this.forEach((entity) => entity.resize());
   }

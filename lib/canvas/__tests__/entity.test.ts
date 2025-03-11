@@ -29,8 +29,8 @@ describe("Entity", () => {
   let onEndSpy: ReturnType<typeof vi.fn>;
 
   // Mock window dimensions
-  const originalInnerWidth = window.innerWidth;
-  const originalInnerHeight = window.innerHeight;
+  const originalInnerWidth = document.documentElement.clientWidth;
+  const originalInnerHeight = document.documentElement.clientHeight;
 
   beforeEach(() => {
     // Mock window dimensions
@@ -312,8 +312,12 @@ describe("Entity", () => {
       const originalPadding = entityInstance.padding;
 
       // Mock different window size
-      Object.defineProperty(window, "innerWidth", { value: 2048 });
-      Object.defineProperty(window, "innerHeight", { value: 1536 });
+      Object.defineProperty(document.documentElement, "clientWidth", {
+        value: 2048,
+      });
+      Object.defineProperty(document.documentElement, "clientHeight", {
+        value: 1536,
+      });
 
       entity.resize();
 
@@ -622,8 +626,12 @@ describe("Entity", () => {
       const centerEntityWithMethod =
         centerEntity as unknown as EntityWithGetPosition;
       const centerPos = centerEntityWithMethod.getPosition();
-      expect(centerPos.x).toBe((window.innerWidth - 100) / 2);
-      expect(centerPos.y).toBe((window.innerHeight - 100) / 2);
+      expect(centerPos.x).toBe(
+        (document.documentElement.clientWidth - 100) / 2,
+      );
+      expect(centerPos.y).toBe(
+        (document.documentElement.clientHeight - 100) / 2,
+      );
 
       // Test TOP_LEFT position
       const topLeftEntity = createEntityWithPosition(POSITION.TOP_LEFT);
@@ -649,12 +657,15 @@ describe("Entity", () => {
         padding: number;
       };
       expect(bottomRightPos.x).toBe(
-        window.innerWidth - 100 - bottomRightEntityWithPadding.padding
+        document.documentElement.clientWidth -
+          100 -
+          bottomRightEntityWithPadding.padding,
       );
       expect(bottomRightPos.y).toBe(
-        window.innerHeight - 100 - bottomRightEntityWithPadding.padding
+        document.documentElement.clientHeight -
+          100 -
+          bottomRightEntityWithPadding.padding,
       );
     });
   });
 });
-

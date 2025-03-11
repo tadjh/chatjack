@@ -71,8 +71,8 @@ export class VignetteEntity extends Entity<
 
   public resize(): this {
     super.resize();
-    this.#centerX = window.innerWidth / 2;
-    this.#centerY = window.innerHeight / 2;
+    this.#centerX = document.documentElement.clientWidth / 2;
+    this.#centerY = document.documentElement.clientHeight / 2;
     this.#radius = Math.sqrt(
       this.#centerX * this.#centerX + this.#centerY * this.#centerY,
     );
@@ -88,7 +88,12 @@ export class VignetteEntity extends Entity<
     ctx.save();
     ctx.globalAlpha = this.props.opacity;
     ctx.fillStyle = this.#gradient;
-    ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+    ctx.fillRect(
+      0,
+      0,
+      document.documentElement.clientWidth,
+      document.documentElement.clientHeight,
+    );
     ctx.restore();
 
     return this;

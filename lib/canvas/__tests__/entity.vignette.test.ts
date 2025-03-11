@@ -12,14 +12,11 @@ describe("VignetteEntity", () => {
   let createGradientFn: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    // Mock window dimensions
-    Object.defineProperty(window, "innerWidth", {
-      value: 1024,
-      configurable: true,
-    });
-    Object.defineProperty(window, "innerHeight", {
-      value: 768,
-      configurable: true,
+    vi.stubGlobal("document", {
+      documentElement: {
+        clientWidth: 1024,
+        clientHeight: 768,
+      },
     });
 
     // Mock gradient
@@ -111,27 +108,27 @@ describe("VignetteEntity", () => {
 
       // Check gradient creation
       expect(createGradientFn).toHaveBeenCalledWith(
-        512, // window.innerWidth / 2
-        384, // window.innerHeight / 2
+        512, // document.documentElement.clientWidth / 2
+        384, // document.documentElement.clientHeight / 2
         0,
         512,
         384,
-        expect.any(Number) // radius calculation
+        expect.any(Number), // radius calculation
       );
 
       // Check gradient color stops
       expect(mockGradient.addColorStop).toHaveBeenCalledTimes(3);
       expect(mockGradient.addColorStop).toHaveBeenCalledWith(
         0,
-        "rgba(0, 0, 0, 0)"
+        "rgba(0, 0, 0, 0)",
       );
       expect(mockGradient.addColorStop).toHaveBeenCalledWith(
         0.7,
-        "rgba(0, 0, 0, 0)"
+        "rgba(0, 0, 0, 0)",
       );
       expect(mockGradient.addColorStop).toHaveBeenCalledWith(
         1,
-        "rgba(0, 0, 0, 0.5)"
+        "rgba(0, 0, 0, 0.5)",
       );
     });
 
@@ -172,16 +169,12 @@ describe("VignetteEntity", () => {
       vignetteEntity.render(mockCtx);
       const initialCalls = createGradientFn.mock.calls.length;
 
-      // Change window dimensions
-      Object.defineProperty(window, "innerWidth", {
-        value: 800,
-        configurable: true,
+      vi.stubGlobal("document", {
+        documentElement: {
+          clientWidth: 800,
+          clientHeight: 600,
+        },
       });
-      Object.defineProperty(window, "innerHeight", {
-        value: 600,
-        configurable: true,
-      });
-
       // Resize and render
       vignetteEntity.resize();
       vignetteEntity.render(mockCtx);
@@ -189,12 +182,12 @@ describe("VignetteEntity", () => {
       // Should create new gradient with updated dimensions
       expect(createGradientFn.mock.calls.length).toBe(initialCalls + 1);
       expect(createGradientFn).toHaveBeenLastCalledWith(
-        400, // new window.innerWidth / 2
-        300, // new window.innerHeight / 2
+        400, // new document.documentElement.clientWidth / 2
+        300, // new document.documentElement.clientHeight / 2
         0,
         400,
         300,
-        expect.any(Number) // new radius calculation
+        expect.any(Number), // new radius calculation
       );
     });
 
@@ -214,4 +207,3 @@ describe("VignetteEntity", () => {
     });
   });
 });
-
