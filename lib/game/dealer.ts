@@ -39,7 +39,7 @@ export class Dealer extends Player {
         ...Dealer.defaultOptions,
         isDone,
         hasSplit,
-        hands: hands.length ? hands : [new Hand({ owner: Dealer.name })],
+        hands: hands.length ? hands : [new Hand({ owner: "Dealer" })],
       },
       debug,
     );

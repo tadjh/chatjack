@@ -276,57 +276,75 @@ export abstract class Entity<
     x: number;
     y: number;
   } {
+    const viewportWidth = document.documentElement.clientWidth;
+    const viewportHeight = document.documentElement.clientHeight;
+
+    let result = { x: this.x, y: this.y };
+
     switch (this.position) {
       case POSITION.CENTER:
-        return {
-          x: (document.documentElement.clientWidth - this.width) / 2,
-          y: (document.documentElement.clientHeight - this.height) / 2,
+        result = {
+          x: (viewportWidth - this.width) / 2,
+          y: (viewportHeight - this.height) / 2,
         };
+        break;
       case POSITION.EYELINE:
-        return {
-          x: (document.documentElement.clientWidth - this.width) / 2,
-          y: document.documentElement.clientHeight / 4 - this.height / 2,
+        result = {
+          x: (viewportWidth - this.width) / 2,
+          y: viewportHeight / 4 - this.height / 2,
         };
+        break;
       case POSITION.TOP:
-        return {
-          x: (document.documentElement.clientWidth - this.width) / 2,
+        result = {
+          x: (viewportWidth - this.width) / 2,
           y: this.padding,
         };
+        break;
       case POSITION.RIGHT:
-        return {
-          x: document.documentElement.clientWidth - this.width - this.padding,
-          y: (document.documentElement.clientHeight - this.height) / 2,
+        result = {
+          x: viewportWidth - this.width - this.padding,
+          y: (viewportHeight - this.height) / 2,
         };
+        break;
       case POSITION.BOTTOM:
-        return {
-          x: (document.documentElement.clientWidth - this.width) / 2,
-          y: document.documentElement.clientHeight - this.height - this.padding,
+        result = {
+          x: (viewportWidth - this.width) / 2,
+          y: viewportHeight - this.height - this.padding,
         };
+        break;
       case POSITION.LEFT:
-        return {
+        result = {
           x: this.padding,
-          y: (document.documentElement.clientHeight - this.height) / 2,
+          y: (viewportHeight - this.height) / 2,
         };
+        break;
       case POSITION.TOP_LEFT:
-        return { x: this.padding, y: this.padding };
+        result = { x: this.padding, y: this.padding };
+        break;
       case POSITION.TOP_RIGHT:
-        return {
-          x: document.documentElement.clientWidth - this.width - this.padding,
+        result = {
+          x: viewportWidth - this.width - this.padding,
           y: this.padding,
         };
+        break;
       case POSITION.BOTTOM_LEFT:
-        return {
+        result = {
           x: this.padding,
-          y: document.documentElement.clientHeight - this.height - this.padding,
+          y: viewportHeight - this.height - this.padding,
         };
+        break;
       case POSITION.BOTTOM_RIGHT:
-        return {
-          x: document.documentElement.clientWidth - this.width - this.padding,
-          y: document.documentElement.clientHeight - this.height - this.padding,
+        result = {
+          x: viewportWidth - this.width - this.padding,
+          y: viewportHeight - this.height - this.padding,
         };
+        break;
       default:
-        return { x: this.x, y: this.y };
+        // Use the explicit x,y coordinates
+        break;
     }
+
+    return result;
   }
 
   public update(): this {
