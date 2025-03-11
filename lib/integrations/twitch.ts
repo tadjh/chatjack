@@ -35,6 +35,7 @@ export class Twitch {
   #vote: Vote;
   #options: COMMAND[];
   #client: tmi.Client | null = null;
+  #started: boolean = false;
 
   public static create(
     options?: TwitchOptions,
@@ -162,17 +163,25 @@ export class Twitch {
     event: MediatorEventType<EVENT.WAIT_FOR_START>,
   ) => {
     this.#options = event.data.options;
-    const waitForStart = (
+    this.#started = false;
+    const waitForStart = async (
       channel: string,
       user: tmi.ChatUserstate,
       message: string,
       self: boolean,
     ) => {
+      if (this.#started) return;
       if (self || !user.username) return;
       const command = Twitch.parseMessage(message);
       if (!command || !this.#options.includes(command)) return;
+
       this.handlePlayerAction(command);
       this.#client?.removeListener("message", waitForStart);
+
+      if (!this.#started) {
+        this.#started = true;
+        await this.incrementRounds();
+      }
     };
 
     this.#client?.addListener("message", waitForStart);
@@ -233,6 +242,35 @@ export class Twitch {
       data: { command },
     });
   };
+
+  private async incrementRounds() {
+    try {
+      const res = await fetch(
+        `${CURRENT_URL}${process.env.NEXT_PUBLIC_PUBLISH_ROUNDS_URL}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
+      if (!res.ok) {
+        this.debug.error(
+          `Error updating round count: ${res.statusText} (${res.status})`,
+        );
+        return;
+      }
+      const data = (await res.json()) as { roundCount: number };
+      if (data.roundCount === undefined) {
+        this.debug.error("Error updating round count: Invalid response");
+        return;
+      }
+      this.debug.log(`Updated round count: ${data.roundCount}`);
+      return data;
+    } catch (error) {
+      this.debug.error(`Error updating round count: ${error}`);
+    }
+  }
 
   private async sendChatMessage(chatMessage: Omit<ChatMessage, "sender_id">) {
     try {

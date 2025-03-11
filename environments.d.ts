@@ -45,6 +45,7 @@ declare namespace NodeJS {
     NEXT_PUBLIC_PUBLISH_CHAT_URL: string;
     NEXT_PUBLIC_PUBLISH_EVENT_URL: string;
     NEXT_PUBLIC_PUBLISH_SNAPSHOT_URL: string;
+    NEXT_PUBLIC_PUBLISH_ROUNDS_URL: string;
     // Pusher Credentials
     PUSHER_APP_ID: string;
     NEXT_PUBLIC_PUSHER_KEY: string;

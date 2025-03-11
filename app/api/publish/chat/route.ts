@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
   if (!userAccessToken) {
     return NextResponse.json(
       {
-        error: `Error sending chat: You don't have permission to perform this action.`,
+        error: `You don't have permission to perform this action.`,
       },
       { status: 401 },
     );
