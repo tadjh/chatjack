@@ -3,7 +3,7 @@ import { Vector3 } from "./types";
 export const CURRENT_URL =
   process.env.NODE_ENV === "development"
     ? `http://localhost:3000`
-    : `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+    : `https://${process.env.NEXT_PUBLIC_CURRENT_URL}`;
 
 export const Palette: Record<string, Vector3> = {
   White: [255, 255, 255], // "#ffffff"

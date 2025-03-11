@@ -52,5 +52,6 @@ declare namespace NodeJS {
     NEXT_PUBLIC_PUSHER_CLUSTER: string;
     // Enable Debug Logs
     NEXT_PUBLIC_DEBUG: string;
+    NEXT_PUBLIC_CURRENT_URL: string;
   }
 }
