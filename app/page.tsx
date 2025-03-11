@@ -1,5 +1,6 @@
 import { Canvas } from "@/components/canvas";
 import { Container } from "@/components/container";
+import { Donate } from "@/components/donate";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { Logout } from "@/components/logout";
@@ -44,7 +45,9 @@ export default async function Home() {
           </SignedOut>
         </Header>
         <Main />
-        <Footer />
+        <Footer>
+          <Donate />
+        </Footer>
       </Container>
     </>
   );
