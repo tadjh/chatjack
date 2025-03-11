@@ -10,7 +10,7 @@ export type MediatorOptions = {
 export class Mediator {
   public static readonly defaultOptions: Required<MediatorOptions> = {
     buffer: 0,
-    timer: 10,
+    timer: 30,
   };
   static #instance: Mediator | null = null;
   protected debug: Debug;
