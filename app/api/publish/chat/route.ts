@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
   }
   let access_token = process.env.TWITCH_BOT_OAUTH_TOKEN;
   let refresh_token = process.env.TWITCH_BOT_REFRESH_TOKEN;
-  console.log("ENV");
+  // console.log("ENV");
   const cookieAccess = cookieStore.get(process.env.BOT_ACCESS_TOKEN_NAME);
   const cookieRefresh = cookieStore.get(process.env.BOT_REFRESH_TOKEN_NAME);
   const response = NextResponse.json({ success: true });
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
   if (cookieRefresh && cookieAccess) {
     access_token = cookieAccess.value;
     refresh_token = cookieRefresh.value;
-    console.log("COOKIE");
+    // console.log("COOKIE");
   } else {
     const token = await kv.get<TwitchTokenResponse>(
       process.env.BOT_ACCESS_TOKEN_NAME,
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     if (token) {
       access_token = token.access_token;
       refresh_token = token.refresh_token;
-      console.log("KV");
+      // console.log("KV");
     }
   }
 
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
 
       access_token = tokenData.access_token;
       refresh_token = tokenData.refresh_token;
-      console.log("REFERSH");
+      // console.log("REFERSH");
 
       await kv.set(process.env.BOT_ACCESS_TOKEN_NAME, tokenData, {
         ex: tokenData.expires_in,
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
     // if (!res.ok) throw new Error("Failed to send chat message");
 
     const result = (await res.json()) as TwitchChatResponse;
-    console.log("data", JSON.stringify(result, null, 2));
+    // console.log("data", JSON.stringify(result, null, 2));
 
     if (!result.data[0].is_sent) {
       return NextResponse.json(

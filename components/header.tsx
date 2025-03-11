@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
+// import Link from "next/link";
 
 export function Header({
   className,
@@ -32,21 +32,21 @@ export function HeaderItem({
   );
 }
 
-export function HeaderLink({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<typeof Link>) {
-  return (
-    <Button
-      variant="link"
-      className={cn(
-        "game-text-shadow cursor-pointer text-lg hover:underline",
-        className,
-      )}
-      asChild
-    >
-      <Link {...props}>{children}</Link>
-    </Button>
-  );
-}
+// export function HeaderLink({
+//   className,
+//   children,
+//   ...props
+// }: React.ComponentProps<typeof Link>) {
+//   return (
+//     <Button
+//       variant="link"
+//       className={cn(
+//         "game-text-shadow cursor-pointer text-lg hover:underline",
+//         className,
+//       )}
+//       asChild
+//     >
+//       <Link {...props}>{children}</Link>
+//     </Button>
+//   );
+// }

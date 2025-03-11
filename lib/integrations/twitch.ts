@@ -250,8 +250,6 @@ export class Twitch {
         },
       );
 
-      console.log("res", JSON.stringify(res));
-
       if (!res.ok) {
         this.debug.error(
           `Error sending chat: ${res.statusText} (${res.status})`,

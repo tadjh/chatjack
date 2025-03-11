@@ -8,7 +8,7 @@ export function TwitchLogin() {
       className="ml-4 cursor-pointer bg-[#9147ff] font-bold text-white shadow-md shadow-black/25 hover:bg-[#772ce8] active:bg-[#5c16c5]"
       asChild
     >
-      <Link href={process.env.AUTH_LOGIN_URL}>
+      <Link href={process.env.AUTH_LOGIN_URL} prefetch={false}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           xmlnsXlink="http://www.w3.org/1999/xlink"

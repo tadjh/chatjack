@@ -6,9 +6,12 @@ export function Logout() {
     <Button
       variant="link"
       className="game-text-shadow cursor-pointer text-lg"
+      type="button"
       asChild
     >
-      <Link href={process.env.AUTH_LOGOUT_URL}>Logout</Link>
+      <Link href={process.env.AUTH_LOGOUT_URL} prefetch={false}>
+        Logout
+      </Link>
     </Button>
   );
 }

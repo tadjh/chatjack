@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
       response.headers.set("Cache-Control", "private, max-age=3600");
     }
 
-    console.log("user id", data.user_id);
+    // console.log("user id", data.user_id);
 
     return response;
   } catch (error) {

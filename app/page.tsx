@@ -19,17 +19,23 @@ export default async function Home() {
           <Button
             variant="link"
             className="game-text-shadow cursor-pointer text-lg"
+            type="button"
             asChild
           >
-            <Link href="/spectate">Spectate</Link>
+            <Link href="/spectate" prefetch={false}>
+              Spectate
+            </Link>
           </Button>
           <SignedIn>
             <Button
               variant="link"
               className="game-text-shadow cursor-pointer text-lg"
+              type="button"
               asChild
             >
-              <Link href="/play">Play</Link>
+              <Link href="/play" prefetch={false}>
+                Play
+              </Link>
             </Button>
             <Logout />
           </SignedIn>
